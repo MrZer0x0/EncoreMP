@@ -49,8 +49,8 @@ namespace MWGui
                 const ItemStack& item = mSourceModel->getItem(i);
                 MWWorld::Ptr itemPtr = item.mBase;
                 if (itemPtr.isEmpty())
-                    continue; // don't know if I strictly needed to do this, but it's a robust guarding, I think technically
-                              // some NPCs can carry light sources as psuedo items
+                    continue; // don't know if I needed to do this but its here just in case, I think 
+                              // NPCs can carry non-item light sources as psuedo items as per base game behaviour, unsure if it would be an issue
 
                 int singleValue = itemPtr.getClass().getValue(itemPtr);
                 int count = item.mCount;

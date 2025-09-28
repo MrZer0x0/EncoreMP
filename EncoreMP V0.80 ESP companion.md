@@ -110,7 +110,7 @@ Shield 2 -> 0.6
 Swift swim 2 -> 0.2  
 All three elemental shields 3 -> 1  
 Jump: unchanged (3)  
-Levitate 3 -> 6
+Levitate 3 -> 6  
 Slowfall 3 -> 2  
 Water breathing 3 -> 2  
 Water walking 3 -> 2  
@@ -147,7 +147,7 @@ Disintegrate armour 6 -> 2
 Night eye 0.2 -> 0.3    
 Light: unchanged (0.2)  
 Sanctuary: unchanged (1)  
-Chameleon 1 (unchanged)  
+Chameleon: unchanged (1)  
 Rally target: unchanged (0.2)  
 Frenzy target 1 -> 3  
 Demoralize target 1 -> 0.5 (Also demoralize humanoid was set to the illusion school, not mysticism as in the base game)  
@@ -184,7 +184,7 @@ Resist common disease 2 -> 0.1
 Resist fire/frost/shock/poison 2 -> 0.4    
 Resist magicka 2 -> 0.5    
 Resist blight disease 5 -> 0.2    
-Resist corprus disease 5 (unchanged)  
+Resist corprus disease unchanged (5)  
 Fortify attribute 1 -> 0.5    
 Fortify skill 1 -> 1.5  
 Restore attribute 1 -> 5   

@@ -348,7 +348,7 @@ namespace MWGui
         mTradeModel->transferItems();
         playerItemModel->transferItems();
 
-        ///snapshot the gold you recieve, if any, for DC XP calculations further down
+        ///snapshot the gold you recieve, if any, for EncoreMP XP calculations further down
         int goldRecieved = 0;
         if (mCurrentBalance > 0)
         {
@@ -381,7 +381,7 @@ namespace MWGui
             */
         }
 
-        /// DC system for calcualting XP gained from sales
+        /// EncoreMP system for calcualting XP gained from sales
 
         int sumBaseSold = 0;
         int sumBasePurchased = 0;
@@ -465,7 +465,7 @@ namespace MWGui
         }
 
 
-        /// end of DC xp gain system
+        /// end of EncoreMP xp gain system
 
 
         eventTradeDone();
@@ -584,8 +584,9 @@ namespace MWGui
         // The offered price must be capped at 75% of the base price to avoid exploits
         // connected to buying and selling the same item.
         // This value has been determined by researching the limitations of the vanilla formula
-        // and may not be sufficient if getBarterOffer behavior has been changed.
-        // DC, I changed it, it wasn't sufficient when you considered haggling as well
+        // and may not be sufficient if getBarterOffer behavior has been changed
+
+        // EncoreMP: I changed it, the above comments were from openMW, it wasn't sufficient when you considered haggling as well
         const std::vector<ItemStack>& playerBorrowed = playerTradeModel->getItemsBorrowedToUs();
         for (const ItemStack& itemStack : playerBorrowed)
         {

@@ -2,19 +2,6 @@
 Note the section headings and version references are out of date in places - but the code changes shown are current (V0.8.0), as is the reasoning behind them
 
 # 3, Compiling Changelog
-All files changed:
-`openmw\enchanting.cpp`
-`openmw\spellutil.cpp`
-`npcstats.cpp`
-`trainingwindow.cpp`
-`spellcasting.cpp` - headers added
-`inventorystore.cpp`
-`repair.cpp`
-`npc.cpp` - header additions
-`combat.cpp` - header additions
-`movementsolver.hpp` - header additions
-`difficultyscaling.hpp`
-`difficultyscaling.cpp`
 
 ## 3.1, Enchanting
 `openmw\enchanting.cpp`
@@ -41,7 +28,7 @@ All files changed:
 	- `const float enchantpointsforpenalty = getEnchantPoints();` defined in block for point value checks
 	- `fEnchantmentConstantChanceMult` no longer used at all
 	- Code block on lines 547-549 is required to get the base skill of the players enchanting (ignoring buffs or drain/damage effects), which is used to determine constant effect success rate
-	- `"mechanicsmanagerimp.hpp"`, `"../mwclass/creature.hpp"`, and `"../mwworld/player.hpp"` now required in header to get the base skill value (actually I don't think they all are, I got lazy and pasted in all three instead of checking)
+	- `"mechanicsmanagerimp.hpp"`, `"../mwclass/creature.hpp"`, and `"../mwworld/player.hpp"` were added to the header to get the base skill value (I'm not sure I needed to add them, this was early on and I pasted a whole block because I wasn't sure how to check yet)
 	- Constant effects now require a base (unmodified) enchanting skill of 75 to be made, any skill value below this has a 0% success chance. At 75 you can make up to 30 points of CE with guaranteed success rate, and above 30 the chance drops to 0% again. The amount you can make increased in 15 point increments for every 5 skill levels, reaching 90 CE points at 95 skill. At 100 skill all constant effect enchantments succeed regardless of point cost.
 	- On-use and on-strike effects are easier to make below 5 points, and become significantly harder beyond 20 and 25 points. 30 is a practical hard cap if you stay within the 200 max skill level allowed by the tes3mp server setup. You can get higher otherwise with buffs, but it was balanced around the assumption you won't.
 	- Cast-once (scrolls) use the same logic, but with an additional flat +25% success rate to position them as low level enchanting items (and to provide a practical way to train the skill when starting at very low skill levels)
@@ -204,7 +191,7 @@ The result is that behaviour is unchanged for on-use items, but for on-strike it
 ## 3.3, Training costs
 `trainingwindow.cpp`
 - [ ] Training costs
-- `trainingwindow.cpp` modified in two locations as in section 1.1 work area 2, using the values on google sheets, in such a way as to produce a non-linear increase in training costs for all skills whilst respecting the GMST. So the GMST setting of 10 can be doubled to 20, for example, and the non-linear price increases will also double uniformly.
+- `trainingwindow.cpp` modified in two locations as in section 1.1 work area 2 in such a way as to produce a non-linear increase in training costs for all skills whilst respecting the GMST. So the GMST setting of 10 can be doubled to 20, for example, and the non-linear price increases will also double uniformly.
 - Note that two edits were required (with duplicate code) as this file calculates the cost mechanically and the cost in the UI (training window) independently
 
 ## 3.4, MR cap
@@ -228,7 +215,7 @@ The result is that behaviour is unchanged for on-use items, but for on-strike it
 - Added a single conditional clause that returns the function if the skill-up gain is from a book and the base skill is 95 or above. The relevant function is `increaseSkill` in `npcstats.cpp` under the `if (readBook)` check
 
 - [ ] Reduced the armorer sounds by changing the `repair` function within `repair.cpp` to play the sound at 0.5 instead of 1.0. 
-- This has to be done twice, as the tes3mp also sends a pakcet with the same information for others to hear. Also whilst the original values (from openmw) are written as "1.0" (which makes them doubles), I had to manually define them as floats when changing this otherwise a type conversion error was called. No effect on gameplay or code behaviour, just worth noting as an implicit conversion that has been made explicit
+- This has to be done twice, as the tes3mp also sends a packet with the same information for others to hear. Also whilst the original values (from openmw) are written as "1.0" (which makes them doubles), I had to manually define them as floats when changing this otherwise a type conversion error was called. No effect on gameplay or code behaviour, just worth noting as an implicit conversion that has been made explicit
 ## 3.6, Melee changes
 `npc.cpp`
 `combat.cpp`
@@ -264,21 +251,21 @@ The result is that behaviour is unchanged for on-use items, but for on-strike it
 `movementsolver.hpp`
 Headers added (to call base player skill)
 
-The `static bool isWalkableSlope` logic within `movementsolver.hpp` was updated to check if it is the player (only the player is affected by this change), and to get the players base acrobatics skill and scale the climbing angle allowed based on skill as described in mechanics (2.8).
+The `static bool isWalkableSlope` logic within `movementsolver.hpp` was updated to check if it is the player (only the player is affected by this change), and to get the players base acrobatics skill and scale the climbing angle allowed based on skill as described in the mechanics changes.
 
-The climbing angle is hard capped at 89° to minimise the risk of unusual behaviour (this will all potentially interact with stepping upwards on stairs, and hitting steep surfaces when walking).
+The climbing angle is hard capped at 89° to minimise the risk of unusual behaviour (90° proved to cause some unusual behaviour during testing that would require a more extensive change to the movement logic).
 
  - [ ] This change adjust the criteria for the engine to determine the boolean `iswalkableslope` and restricts it to the player
  - [ ] There is not effect on the default value (47°) at 30 skill or below, and no benefit beyond 92 base skill (the angle you can climb to is hard capped to 89° for compatibility reasons)
  - [ ] Increasing the angle to 90° (or beyond) does not allow true wall climbing, due to separate logic checks in the openmw engine that exist  to prevent wall collision/sticking
 	 - [ ] I did not attempt to resolve this, as this would require a more extensive rework of the physics engine which would further risk compatibility with new content.
 	 - [ ] In short, whilst wall climbing is technically possible with some changes it meant (in the version I trialled) that you "stuck" to every wall you touched, which meant your speed slowed down to a crawl as you attempted to being moving vertically up it at greatly reduced speed, which was a huge problem in many urban areas and most interiors
-- [ ] The `sMaxSlope` variable is seemingly hard coded and not accessible to the compiler (47°) but it can be worked around in the way I have done without issues.
+- [ ] The `sMaxSlope` variable is seemingly not accessible to the compiler (47° - is it in the ESM file?) but it can be worked around in the way I have done without issues.
 - [ ] There remain risks of floor detection failing when climbing, or clipping through ceilings, this will be investigated as playtesting continues.
 - [ ] Several functions within `movementsolver.cpp` call the Boolean `iswalkableslope`, these have been checked for unintended knock-on effects, and of the functions within the `cpp` file there are only two are of potential concern (although no issues have been seen yet during playtesting)
 	- `osg::Vec3f MovementSolver::traceDown` beginning on line 80, but the bool starts getting called around line 106
 		- I have no idea what the ray tracing logic does here, but it seems only to be involved in whether you can walk or not on a slope (so probably the actual post-hoc function that is implementing this change)
-		- But since it involves ray tracing and ground offset there could be some object detection/collision issues that result in clipping(?)
+		- But since it involves ray tracing and ground offset there could be some object detection/collision issues that result in clipping(none seen yet during testing)
 	- Also called twice between lines 367 to 392, to determine actor collision and determining if on slope. Again no idea what the impact of this is, but playtesting has not yet found an issue
 	- Other areas of code checked and certainly of no concern for unintended behaviour, these two I couldn't pick apart in the time I spent on this (I am way out of my depth with the physics engine stuff)
 
@@ -289,7 +276,8 @@ Modified files:
 `difficultyscaling.cpp`
 `spellcasting.cpp` - headers added
 
-[Note that in addition to these changes, further functions were added in V0.70, see 3.25, hand to hand, which also affects the difficulty scaling files.]
+[Note that in addition to these changes, further changes were made in later sections detailed here such as for hand to hand, which also affect the difficulty scaling files]
+
 ### 3.9.1, Tier function
 In `difficultyscaling.hpp`
 - `int difficultyTier();` function defined
@@ -416,7 +404,7 @@ float scaleDamage(float damage, const MWWorld::Ptr& attacker, const MWWorld::Ptr
 
 Via the following changes, on-strike enchantments specifically are tied to their own damage scaling table, which also operates off of difficulty tier - for now it is identical to melee damage dealt, but it is coded separately for ease of balancing
 
-Tested and working for all effects, all sources of effect and also confirmed that absorb health correctly halves the magnitude of damage done and haling received (it should do automatically, and it did, just checking)
+Tested and working for all effects, all sources of effect and also confirmed that absorb health correctly halves the magnitude of damage done and haling received  
 
 | Difficulty setting | Tier | % Melee Dealt | % Melee Taken | % Enchantment damage dealt |
 | ------------------ | ---- | ------------- | ------------- | -------------------------- |
@@ -464,7 +452,8 @@ The final block inserted within the `inflict` function in `spellcasting.cpp` -
 ```
 
 
-[Base function without enchantment type]
+[Notes on the base function without enchantment type additions]
+
 First of all `!spell` checks the spell effect being inflicted is not in the players spell book (note that the `inflict` function processes all spell damaging effects)
 `target != player` checks that the target is not the player (since this function is going to scale down damage, and we want to keep monster damage dealt the same)
 `mCaster == player` checks the originator of the effect is the player, `mCaster` is already available in the base game, as it being handed to the generic `castspell` which is being overloaded into inflict
@@ -480,6 +469,7 @@ All of that (still excluding the `mEnchantmentType` check logic for now) would r
 - Who effect is on the pre-defined list (each effect has it's magnitude checked, modified and applied separately, as per the base game functions in `spellcasting.cpp`)
 
 [Adding enchantment type part 1 - header file + overload function]
+
 That might be enough, but the only check so far (prior to me adding `mEnchantmentype`) to see that this was an on-strike was to check it was not a spell the player new, which probably was never going to work (scrolls may have been caught in this, as may have just about any other misc effects I wasn't expecting)
 
 So then I wanted to give the function access to the type of enchantment which was the source of the effect, this was more complex as it involved tracing back the functions...
@@ -573,7 +563,7 @@ if (mEnchantmentType == ESM::Enchantment::WhenStrikes && target != player && mCa
 
 ### 3.9.4, Castonce enchantment damage scaling
 
-I scaled down the damage less aggressively than with melee, as unlike melee you can run out of mana/charge when casting, so it is a more premium resource
+I scaled down this damage less aggressively than with melee, as unlike melee you can run out of mana/charge when casting, so it is a finite resource
 
 | Difficulty Tier | % Enchantment magic damage dealt |
 | --------------- | -------------------------------- |
@@ -617,7 +607,7 @@ if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::
 
 ### 3.9.5, On-use enchantment damage scaling
 
-Done via updating the start of the above function in 4.2, to allow for either `castonce` or `whenused`. No other changes needed, working, they both use the same damage scaling function as a result (intended)
+Done via updating the start of the above function to allow for either `castonce` or `whenused`. No other changes needed, working, they both use the same damage scaling function as a result (intended)
 
 ```
 if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::Enchantment::WhenUsed)
@@ -628,18 +618,28 @@ if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::
 One change was left unfinished as it is not yet required, but will be:
 - The actual scaling function that processes the spell magnitude in `difficultyscaling.cpp` is the same one that does enchanted items, etc, as for now I decided the scaling for each could match, but in the next revision it would be better to separate them so that they can be scaled separately 
 
-**Summary**
+**Summary**  
+
 `spellcasting.hpp`
+
 [1] `spellcasting.hpp` updated with new `enum class SourceType`, for use in tracking spell effect source/origin
+
 [2] `spellcasting.hpp` also updated to initialise `SourceType` via the line
+
 `SourceType mSourceType{ SourceType::None };` 
+
 which was inserted at the bottom of the public space starting with
+
 `bool mStack{false};`
+
 [3] at some point in the `spellcasting.hpp` file I think I changed the order things are declared in that same public namespace, from what was default, I remember this was not necessary - in the end I can't see that I kept this change, but just keep it in mind in case there is an apparent different in line order in my version compared to the original, it was for this reason if so
+
 `spellcasting.cpp`
-[4] See the working out section below, it became a little involved and whilst it is all documented i need to summarise it for this section
+
+[4] Also see the working out section below
 
 **Working out**
+
 Originally I just wanted to do something like
 ```
 if ( spell && castByPlayer )
@@ -706,6 +706,7 @@ The `CastSpell::CastSpell` overload was updated to include the line
 
 
 **Working out for the spellcasting.cpp file as opposed to the header**
+
 Within `spellcasting.cpp`,
 I updated the basic ` CastSpell::CastSpell` function to include the line
 `, mSourceType(SourceType::Spell)` as shown below
@@ -792,9 +793,11 @@ passes to either the potion, ingredient, spell or item & ptr function, where at 
 (and some bug fixes detailed below),
 then the data for source type is automatically made accessible in the inflict function and be used to filter spells by source
 
-**The bug fixes**
+**Bug fixes**
+
 Two issues with the above,
-1. `bool CastSpell::cast(const MWWorld::Ptr &item, bool launchProjectile)` actually handles both items and spells saved in the game BSA/ESP files (so ever spell you can learn which you do not make yourself), so they would otherwise bypass the cast as a spell function and be left with the enchanted item tag
+
+1. `bool CastSpell::cast(const MWWorld::Ptr &item, bool launchProjectile)` actually handles both items and spells saved in the game BSA/ESP files (so every spell you can learn which you do not make yourself), so they would otherwise bypass the cast as a spell function and be left with the enchanted item tag
 
 This was fixed by adding the clause I detailed above,
 
@@ -875,8 +878,11 @@ float magicdamagetaken();
 The `spellcasting.cpp` has a lot of guarding on, to be certain that spell magnitude is only being amplified under specific circumstances:
 
 `if (target == player && mCaster != player` - ensures only the player is affected, and only when the player is not the source of the effect
+
 `&& !caster.isEmpty()` and `&& caster.getClass().isActor() ` - is how non actor sources are filtered out, unless there is an actual entity that cast the spell it won't be modified, so this excludes (confirmed via testing) traps and scripted effects. This was added for traps, but also to proof this clause as strongly as I can against modded content where scripted effects are being used as effect sources (which they rarely are if at all in the base game)
+
 `&& !reflected ` - for the reflect logic, covered in the section below
+
 `&& (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))` - restricts it just to directly damaging effects: fire, frost, shock, poison, absorb health, damage health, drain health
 
 Between the `&& !caster.isEmpty()` and `&& caster.getClass().isActor()` I think the former is now redundant - in testing it did not filter traps (didn't test it with scrips) as even an object springing a trap counted as being a caster, the latter is more watertight and may function on it's own, as it requires the caster is an actor (which excludes objects and the world, only NPCs and creatures fit this category)
@@ -903,7 +909,7 @@ I did not fix this on purpose for balance reasons, but it could be in the same w
 
 The reasoning was that already in the base game, getting a spell reflected onto you is potentially lethal if you are not prepared for it - spellcasters will typically have lower health (if they are not min-maxing their attributes as they level), and are less likely to pick high endurance starts if they are roleplaying.
 
-That and the base game has an unusual health scaling curve (which I may be going to fix later) which in effect means that until mid to high levels, and especially without good endurance, the player has much less health than monsters and relies more on healing, armour and positioning - which is great until you cast a 50 point shock spell and it's reflected onto your 80 health pool at level 10 (if you had 40 endurance from level 1 to 10). 
+That and the base game has a non-linear health vs monster level curve (in practise, nothing in the code, just how the original developers designed creatures) for creatures which in effect means that until mid to high levels, and especially without good endurance, the player has much less health than monsters and relies more on healing, armour and positioning - which is great until you cast a 50 point shock spell and it's reflected onto your 80 health pool at level 10 (if you had 40 endurance from level 1 to 10). 
 In other words the base game requires player spell damage output be disproportionally high compared to their own health pools due to the health it gives to monsters beyond the early game.
 
 So for those reasons I intentionally did not correct player damage taken for now, for balance reasons, and it remains a flat 1x when reflected regardless of difficulty tier.
@@ -916,24 +922,28 @@ target == player && mCaster != player
 
 It checks the target is the player (which it is when reflected) and the `mCaster` (essentially the original caster for the purpose of the current, base, overload implementation) is not the player - however in the case of a monster reflection, the `mCaster` is still the player (although the game does update the `caster` variable, which is tracked separately, to the monster as the new local `caster` within the overload loop)
 
-**Damage reflected on monsters**
-This I did fix, as without these fixes it allowed the player to cheese all high difficulty settings but just reflecting monster spells back to them at 1x damage (for the same if statement logic reasons as above), by-passing the intended player magic damage done step-down of up to x0.15
+**Damage reflected onto monsters**
+
+This I did fix, as without these fixes it allowed the player to exploit at high difficulty settings by just reflecting monster spells back at them at 1x damage (for the same if statement logic reasons as above), letting the player bypass the intended player magic damage done step-down
 
 The monster magic damage taken was checking (via the three separate functions that track spells, on-hit spells, and on-use together with cast-once sources),
+
 `&& target != player && mCaster == player`
-So it checks the target is not the player via `target != player` (which is fine),
+- So it checks the target is not the player via `target != player` (which is fine),
 but it was also originally checking,
+
 `mCaster == player`,
-so it was also requiring the original source of the spell effect to be the player, hence it was implicitly excluding all monster originating effects that were being reflected onto monsters - thus escaping out out of the effect magnitude reduction that should otherwise have applied
+- so it was also requiring the original source of the spell effect to be the player, hence it was implicitly excluding all monster originating effects that were being reflected onto monsters - thus escaping out out of the effect magnitude reduction that should otherwise have applied
 
 the fix was to change it to
+
 `target != player && caster == player`
-so that instead it looks for effects locally originating from the player, regardless of the original source, and so now it includes all reflected effects and properly steps them down on high difficulties
+- so that instead it looks for effects locally originating from the player, regardless of the original source, and so now it includes all reflected effects and properly steps them down on high difficulties
 
 
 ## 3.9a Elemental shield damage scaling bug
 
-Elemental shield was, up until V0.40, still operating off of the base game damage scaling function, and so was being scaled as if it were melee damage.
+Elemental shield was, up until V0.40 (pre public release), still operating off of the base game damage scaling function, and so was being scaled as if it were melee damage.
 
 This was changed to bring it in line with all other spell effect difficulty scaling
 
@@ -1035,7 +1045,7 @@ Within `npc.cpp` the function `getArmorRating` calculates player armour rating l
 
 The function has a fork in it's logic for if the armour class is being calculated for the player. The below logic fork was inserted into the original function, immediately after it calculates the unarmoured score normally via `ratings[i] = (fUnarmoredBase1 * unarmoredSkill) * (fUnarmoredBase2 * unarmoredSkill);.`
 
-It was done this way so that for all entities the engine still generates an original armour score, and then the if pointer is player fork simply overwrites that score with the new one.
+It was done this way for testing. The engine still generates the armour score using the original logic first, and then the if the pointer is the player, then the new logic fork overwrites that value with the new one.
 
 I could also have done a true fork to split the old and new equations, but I structured it in this way (to be overwritten) purely for code testing purposes and have not reverted it. It doesn't matter either way, the effect is the same, that the following code block is what calculates the player's unarmoured score.
 
@@ -1101,7 +1111,7 @@ x1.25 at 100 speed
 
                     playerunarmoured *= statmultiplier;
 	                
-	                /// this x10 mod goes in just so that the GMST holds
+	            /// this x10 multiplier was added so that the GMST could be left at the base game value of 0.1f
                     playerunarmoured *= 10.0f;
 
                     playerunarmoured *= fUnarmoredBase1;
@@ -1906,7 +1916,7 @@ This change
 `tradewindow.cpp`
 `trading.cpp`
 
-To facilitate the changes listed in 2.16.2, the following changes were made at an engine level
+To facilitate the changes listed in the mechanics changelog, the following changes were made at an engine level
 
 ### 3.16.2.1, Mercantile disposition has reduced effect on bartering
 `mechanicsmanagerimp.cpp`
@@ -1977,7 +1987,7 @@ This gets the ratio between what the player wants and what the merchant wants. I
 
 This way you can still haggle past this point for one off purchases, but you cannot sell or buy anything that has been haggled past 10% of the original offer value. Combined with the previous buy cap of 90% (in the buy rate fix above) and the sell cap of 60%, this means at the absolute best you can haggle to a 80% buy and 70% sell rate, which prevents breaking even and circulating items infinitely for free XP (in the new XP gain system, covered below).
 
-This is a very aggressive and crude fix, and will likely be replaced with something more nuanced in a later version, but for now it serves it's purpose without introduces any bugs.
+This is a very aggressive and crude fix, and will likely be replaced with something more nuanced in a later version, but for now it serves it's purpose without introducing any bugs.
 
 ### 3.16.2.5, XP gain overhaul
 
@@ -2059,6 +2069,7 @@ Experience gain from haggling has been removed, now XP is gained from the value 
 Within `tradewindow.cpp` the `onOfferButtonClicked` function was updated extensively.
 
 **The final function additions are:**
+
 [1] Snapshot the amount of gold being transferred, if it is positive (meaning if it is towards the player). This is used in part [2]. This addition was done right before the sub-function tagged with `// transfer the gold`.
 
 [1] snapshot of gold being transferred
@@ -2170,7 +2181,7 @@ How this works,
 6. Calculate the sum value of everything you received, in gold and barter value of items, but cap that sum value at no more than the barter value of what you sold.
 	1. This cap is needed otherwise you can sell an item for 100g, buy 10,000g worth of items, and without this cap end up getting XP for 'selling' 10,000g worth of items
 7. Calculate the ratio of the barter value of your items sold, to the value of what you got from the transaction (using the cap set in step 6)
-8. Calculate the amount of XP you will be awarded, in increments of 0.3xp, based on the amount of barter value you sold. In the version for V0.50 this is 50gp per 0.3xp, or about 166.7gp per XP
+8. Calculate the amount of XP you will be awarded, in increments of 0.3xp, based on the amount of barter value you sold. In the version this is 50gp per 0.3xp, or about 166.7gp per XP
 9. Apply a potential step down multiplier to that XP amount used the ratio calculated in step 7. This means that if you intentionally undersell items to get rid of them, you will get proportionally less XP (as that is not something that a good merchant would do!)
 10. Award XP, using the value calculated in step 9 as the extra factor
 
@@ -2651,6 +2662,7 @@ In the base game
 - Potion weight is the average weight of all ingredients used
 
 **Base game**
+
 Potion weight is the average weight of all ingredients used in the potion
 ```
     for (TIngredientsIterator iter (beginIngredients()); iter!=endIngredients(); ++iter)
@@ -2708,7 +2720,7 @@ This block
     }
 ```
 
-changed to
+was changed to
 ```
     bool CastSpell::cast(const ESM::Potion* potion)
     {
@@ -2723,7 +2735,7 @@ changed to
     }
 ```
 
-The line
+The line...
 ```
 mStack = false;
 ```
@@ -2754,7 +2766,6 @@ This results in very poor success rates for most of the early game, prohibitivel
 ```
     float successChance = 30.0f;
     successChance += ( getAlchemyFactor() / 1.5f);
-    successChance = std::max(successChance, 30.0f);
 
     if (successChance < Misc::Rng::roll0to99())
     {
@@ -2826,7 +2837,7 @@ This is a straight line equation which converts the average gold value of the it
 | 100            | +24        |
 | 200            | +40        |
 
-It's not perfect, but I went with a straight line instead of another polynomial to save time, and to make it more understandable.
+It's not perfect, but I went with a straight line instead of another non-linear to make it more understandable.
 
 This function can be summarised as,
 - Average item value multiplied by 0.158, + 8.4
@@ -2940,7 +2951,7 @@ The overall effect is that
 ### 3.18.5, Reduce the impact of the mortar
 `alchemy.cpp`
 
-Aim: Make mortar quality above or below 1.0 have 50% less of an effect, to stop stacking equipment and ingredients resulting in way too strong potions at the high end
+The aim here was to make mortar quality above or below 1.0 have 50% less of an effect, to limit how much the player can stack multipliers to potion strength, to avoid (or at least delay) making absurdly strong potions at the high end
 
 **Original code**
 ```
@@ -2987,6 +2998,7 @@ Aim: Make mortar quality above or below 1.0 have 50% less of an effect, to stop 
 `alchemy.cpp`
 
 **Part one, converting alchemy factor into a magicka budget**
+
 Magicka budget = alchemy factor / 6
 
 Reasoning: you cannot reasonably have an alchemy factor of less than 12 (skill 5, intelligence 30, luck 40), so you will always start with a minimum potion spell cost equivalent of 2.
@@ -2994,6 +3006,7 @@ Reasoning: you cannot reasonably have an alchemy factor of less than 12 (skill 5
 So at 100 alchemy, luck, and intelligence, you will be making 20 magicka costed potions (assuming you don't have fancy tools by then, which you will)
 
 **Base game behaviour**
+
 Using the value for x calculated so far (which is the alchemy factor modified by the GMST and mortar quality),
 ```
 float magnitude = (magicEffect->mData.mFlags & ESM::MagicEffect::NoMagnitude) ?
@@ -3013,10 +3026,10 @@ float durHolder = sqrtf(vHolderOne);
 float magHolder = (durHolder / 2.0f);
 
 // EncoreMP budget to effect converter end
-
 float magnitude = (magicEffect->mData.mFlags & ESM::MagicEffect::NoMagnitude) ?
             1.0f : magHolder;
-float duration = (magicEf
+float duration = (magicEffect->mData.mFlags & ESM::MagicEffect::NoDuration) ?
+            1.0f : durHolder;
 ```
 - Divides alchemy factor by 6 to get a magicka budget
 - Uses the above equation to 'spend' the magicka budget of the alchemy result equally on duration and magnitude, as if you were casting an equivalent spell made with the spellmaking system
@@ -3057,7 +3070,7 @@ Went back to the original magnitude/duration budgeting code and did this,
 ### 3.18.7, Adjusted behaviour for all other tools
 `alchemy.cpp`
 
-The full original function
+The full original function read:
 ```
 void MWMechanics::Alchemy::applyTools (int flags, float& value) const
 {
@@ -3118,8 +3131,10 @@ void MWMechanics::Alchemy::applyTools (int flags, float& value) const
 }
 ```
 
-**New version and changed**
-The logic has overall been simplified,
+**New version with changes**
+
+The logic has overall been simplified, but is fundamentally different to the base game
+
 - The retort multiplies the duration and magnitude of positive effects by `1+(retortQuality/10)`
 	- So in practise, +5% at 0.5 Quality up to +20% at 2.0 Quality
 - The calcinator boosts positive effects and negative effects, but negative effects more strongly (as a trade-off, hopefully making negative effects matter sometimes)
@@ -3461,6 +3476,7 @@ and the same for all the other sequential groups of magical effect checks.
 This change has not been made here, it was done during the original melee accuracy pass, but I have included it as a reminder of what was done there.
 
 **Hand to hand accuracy**
+
 Tested and confirmed that hand to hand accuracy is also captured in the new weapon accuracy logic, so hand to hand combat accuracy is,
 ```
 Accuracy = (Hand to hand skill*0.7)+(Agility/5)+(Luck/10)
@@ -3481,17 +3497,19 @@ For example, given that a fully drawn attack caps out at a 0.5x multiplier,
 - Skill 10 = 5
 - Skill 20 = 10
 - Skill 30 = 15
-The logic was changed as below to be 10 + (your skill x 0.9),
-which is then modified by the draw strength as in core, resulting in
+
+So the logic was changed to use (10 + (your skill x 0.9)),
+which is then modified by the draw strength as in core, resulting in:
+
 - Skill 5 = 7.25 fatigue damage
 - Skill 10 = 9.5
 - Skill 20 = 14
 - Skill 30 = 18.5
+
 - It then becomes roughly equivalent to core behaviour from skill 40 onwards, scaling a little slower overall and reaching the same final damage value at 100 skill.
 - Beyond 100 skill this does result in a reduction in damage gained from skill, but that is probably desirable due to the linear scaling already resulting in potentially absurd figures with some fortify skill effects
 
-Within `combat.cpp`
-Within the function `void getHandToHandDamage`
+The code change was done in: `combat.cpp`, within the function `void getHandToHandDamage`
 
 The first few lines were changed to
 ```
@@ -3590,10 +3608,11 @@ This results in,
 | 4    | 30                       | 300               | 50                           | 200              | 50            | 200           |
 | 5    | 20                       | 400               | 33                           | 250              | 33            | 250           |
 | 6    | 15                       | 500               | 25                           | 300              | 25            | 300           |
-The numbers are the result of some initial playtesting, and may need refining. Also note for now they are just a duplicate of the magic damage scaling values (which have seemed to be okay from some initial testing).
 
-Within `npc.cpp`,
-Within the else fork (else covers if `isHealth` if false) of `onHit`
+The numbers are the result of some initial playtesting, and may need refining. Also note for now they are just a duplicate of the magic damage scaling values (which have seemed to be okay from the internal tests).
+
+Another change was required within `npc.cpp`,
+within the 'else' fork of that function (this else fork covers if `isHealth` if false) within `onHit`
 ```
         else
         {
@@ -3605,10 +3624,9 @@ Within the else fork (else covers if `isHealth` if false) of `onHit`
                 }
 
 ```
-before my custom player/NPC fork, and regardless of it, the damage is now scaled as per the hand to hand function. The check for damage greater than 0 may be strictly necessary, but there are a few calls in the engine to the `onHit` function from non-attack sources which pass `isHealth = false` and damage = 0. So I added the check for, is damage greater than 0, as guarding against strange behaviour versus those calls. Not strictly needed I think, but good futureproofing.
+The check for damage greater than 0 may not be necessary, but there are a few calls in the engine to the `onHit` function from non-attack sources which pass `isHealth = false` and damage = 0. So I added the check for damage greater than 0 just in case.  
 
-Within `creature.cpp`,
-Within the else fork (else covers if `isHealth` if false) of `onHit`
+Within `creature.cpp`, within the else fork (else covers if `isHealth` if false) of `onHit`
 ```
             else
             {
@@ -3789,8 +3807,8 @@ Changed the item model function to the following:
                 const ItemStack& item = mSourceModel->getItem(i);
                 MWWorld::Ptr itemPtr = item.mBase;
                 if (itemPtr.isEmpty())
-                    continue; // don't know if I needed to do this, but it's a robust guarding, I think technically
-                              // some NPCs can carry light sources as psuedo items
+                    continue; // don't know if I needed to do this but its here just in case, I think 
+                              // NPCs can carry non-item light sources as psuedo items as per base game behaviour, unsure if it would be an issue
 
                 int singleValue = itemPtr.getClass().getValue(itemPtr);
                 int count = item.mCount;
