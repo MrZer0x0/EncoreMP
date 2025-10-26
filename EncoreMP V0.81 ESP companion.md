@@ -1,4 +1,4 @@
-This file details all the changes made in the required ESP file for the V0.80 EncoreMP beta release, `EncoreMPV081.ESP`.
+This file details all the changes made in the required ESP file for the V0.81 EncoreMP beta release, `EncoreMPV081.ESP`.
 
 # GMSTs
 
@@ -10,7 +10,7 @@ This file details all the changes made in the required ESP file for the V0.80 En
 
 **Training costs**
 * `iTrainingModset` to 7 (from 10 in the base game)
-	* This value is multiplied by the training cost in the engine to get the final player facing values. It has been lowered from 10 to 7, meaning training prices are 70% of the values in the first encoreMP release. This was done as a balance change.
+	* This value is multiplied by the training cost in the engine to get the final player facing values. It has been lowered from 10 to 7, meaning training prices are 70% of the values in the first encoreMP release. This was done as a balance change
 
 **Bribery (Speechcraft)**
 - `fBribe10Mod` set to 1 (from 35 in the base game)
