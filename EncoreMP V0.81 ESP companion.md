@@ -1,4 +1,4 @@
-This file details all the changes made in the required ESP file for the V0.80 EncoreMP beta release, `EncoreMPV080.ESP`.
+This file details all the changes made in the required ESP file for the V0.80 EncoreMP beta release, `EncoreMPV081.ESP`.
 
 # GMSTs
 
@@ -8,6 +8,10 @@ This file details all the changes made in the required ESP file for the V0.80 En
 - `fDispositionMod` changed to 0.25 (from 1 in the base game)
 	- This value is a multiplier for how much your disposition with an NPC affects your haggling (but not bartering) success rates. It was dropped to 1/4 of the base game value to pair up with the changes made in the engine to how much disposition affects shop prices (disposition now also now has 1/4 of the original effect on those as well).
 
+**Training costs**
+* `iTrainingModset` to 7 (from 10 in the base game)
+	* This value is multiplied by the training cost in the engine to get the final player facing values. It has been lowered from 10 to 7, meaning training prices are 70% of the values in the first encoreMP release. This was done as a balance change.
+
 **Bribery (Speechcraft)**
 - `fBribe10Mod` set to 1 (from 35 in the base game)
 	- This value is the number of effective skill levels that are added to your bribe attempt when bribing 10 gold (note that bribing any amount switches the player to using their mercantile skill, instead of their speechcraft skill, for the attempt. So in effect you are paying 10 gold to use your mercantile skill instead of your Speechcraft skill with this option.)
@@ -15,8 +19,8 @@ This file details all the changes made in the required ESP file for the V0.80 En
 	- This value is the number of effective skill levels that are added to your bribe attempt when bribing 100 gold
 
 **Security**
-- `fPickLockMult` set to -1.3 (from -1.0 in the base game)
-	- The level of a lock you are trying to pick is multiplied by this value, and then subtracted from your base success chance to get your actual success chance. This change makes lock level matter about 30% more than in the base game.
+- `fPickLockMult` set to -1.2 (from -1.0 in the base game)
+	- The level of a lock you are trying to pick is multiplied by this value, and then subtracted from your base success chance to get your actual success chance. This change makes lock level matter about 20% more than in the base game.
 
 **Player Magicka**
 - `fPCbaseMagickaMult` set to 1.2 (from 1.0 in the base game)
@@ -98,6 +102,9 @@ If a skill or XP value is not mentioned then it has been left at the base game v
 
 **Marksman**
 - Successful attack: 1xp to 2xp
+
+**Mercantile**
+- Successful haggle (now used for XP gain from value sold): 0.3xp to 0.45xp
 
 # Spell effect costs
 

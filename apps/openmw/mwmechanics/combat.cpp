@@ -744,9 +744,9 @@ namespace MWMechanics
                         damage *= fDamageStrengthBase +
                             (((attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Strength).getModified() + releventskill) / 2) * fDamageStrengthMult * 0.1f);
                     
-                        ///add the endurance bonus for axe
+                        ///add the strength bonux for axe V0.81
 
-                        releventattribute = attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Endurance).getModified();
+                        releventattribute = attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Strength).getModified();
 
                         if (releventattribute > 50)
                         {

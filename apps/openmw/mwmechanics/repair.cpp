@@ -138,7 +138,7 @@ void Repair::repair(const MWWorld::Ptr &itemToRepair)
     {
         float qualitymod = (toolQuality - 1.0f);
         qualitymod *= 10.0f;
-        qualitymod *= 1.50f;
+        qualitymod *= 2.0f;
         basepercent += qualitymod;
     }
 
@@ -176,9 +176,9 @@ void Repair::repair(const MWWorld::Ptr &itemToRepair)
         {
             /// the tier 3.5 version, whcih is slightly harder than 3 but still easier than the 4 weapons would otherwise be
             x = ((0.0051f * basepercent * basepercent) + (1.121f * basepercent) - 39.15f);
-            if (x < 14.0f)
+            if (x < 15.0f)
             {
-                x = 14.0f;
+                x = 15.0f;
             }
         }
 
@@ -195,36 +195,36 @@ void Repair::repair(const MWWorld::Ptr &itemToRepair)
     if (tier == 4)
     {
         x = ((0.0035f * basepercent * basepercent) + (1.21f * basepercent) - 36.34f);
-        if (x < 10.0f)
+        if (x < 15.0f)
         {
-            x = 10.0f;
+            x = 15.0f;
         }
     }
 
     if (tier == 5)
     {
         x = ((0.0114f * basepercent * basepercent) + (0.23f * basepercent) - 27.64f);
-        if (x < 7.0f)
+        if (x < 15.0f)
         {
-            x = 7.0f;
+            x = 15.0f;
         }
     }
 
     if (tier == 6)
     {
         x = ((0.0072f * basepercent * basepercent) + (0.51f * basepercent) - 41.4f);
-        if (x < 5.0f)
+        if (x < 15.0f)
         {
-            x = 5.0f;
+            x = 15.0f;
         }
     }
 
     if (tier == 7)
     {
         x = ((0.014f * basepercent * basepercent) - (0.552f * basepercent) - 14.63f);
-        if (x < 5.0f)
+        if (x < 15.0f)
         {
-            x = 5.0f;
+            x = 15.0f;
         }
     }
 

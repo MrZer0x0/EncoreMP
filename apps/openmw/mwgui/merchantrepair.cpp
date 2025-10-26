@@ -77,8 +77,10 @@ void MerchantRepair::setPtr(const MWWorld::Ptr &actor)
             float p = static_cast<float>(std::max(1, basePrice));
             float r = static_cast<float>(maxDurability / p);
 
+            r = std::max(0.1f, r);
+
             int x = static_cast<int>((maxDurability - durability) / r);
-            x = static_cast<int>(fRepairMult * x * 0.5f);
+            x = static_cast<int>(fRepairMult * x * 0.333f);
             x = std::max(1, x);
 
 

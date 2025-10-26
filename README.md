@@ -1,47 +1,56 @@
  
 # :gear: EncoreMP :gear:
 
-EncoreMP is a fork of tes3mp V0.8.1
+Welcome to EncoreMP, an engine level overhaul of many of Morrowind's core mechanics. 
 
-The original tes3mp project can be found here: https://github.com/TES3MP
+EncoreMP is a fork of tes3mp V0.8.1. The original tes3mp project is hosted here: https://github.com/TES3MP
 
-Asides from the mechanical changes listed in this file, and the code changes detailed in the "EncoreMP V0.80 compiling notes" file, all of the code used in this project is unchanged from tes3mp.
+Asides from the mechanical changes listed in this file, and the code changes detailed in the "EncoreMP V0.81 compiling notes" file, all of the code used in this project is unchanged from tes3mp.
 
-Just about all of this needs playtesting, so feedback is greatly appreciated! You can leave comments on the project discussion page on Github.
+All of this needs playtesting, so feedback is greatly appreciated! You can leave comments on the project discussion page on Github.
 
 The tes3mp project information has been copied below from the V0.8.1 tes3mp project readme. If you enjoy this work, please support tes3mp and OpenMW.
 
-**EncoreMP project information**
-This is the first public (beta) release of EncoreMP: V0.80
+  
 
-It requires the ESP file `EncoreMPV080` to function as intended (this is for balance reasons, and due to some changes to how the GMSTs operate). See the ESP companion file for more details on these changes.
+### **EncoreMP project information**  
+
+This is the second public (beta) release of EncoreMP: V0.81
+
+It requires the ESP file `EncoreMPV081` to function as intended (this is for balance reasons, and due to some changes to how the GMSTs operate). See the ESP companion file for more details on these changes.
 
 Hosted at: https://github.com/Tower-Numid/EncoreMP
 
-**Contents**
+Live release (V0.81) download page: [add when setup]
+
+Discussion page: https://github.com/Tower-Numid/EncoreMP/discussions  
+
+### **Contents**
 1. TES3MP project information
 2. Introduction to EncoreMP
 3. Mechanics changelog
-	1. Climbing
-	2. New difficulty system
-	3. Enchanting overhaul
-	4. Experience gain adjustments
-	5. Training costs and skill book adjustments
-	6. Player resist magicka cap
-	7. Melee combat changes
-	8. Hand to hand combat changes
-	9. Ranged combat changes
-	10. Armour rating adjustments
-	11. Armorer overhaul
-	12. Mercantile overhaul
-	13. Alchemy overhaul
-	14. Pickpocketing overhaul
-	15. Athletics and swimming
-	16. Willpower buff
-	17. NPC spellcasting locked to base game effect costs
-	18. Miscellaneous changes
-4. V0.80 known issues & comments
-5. Partner files
+   <ol type="1">
+	 <li>Climbing</li>
+	 <li>New difficulty system</li>
+     <li>Enchanting overhaul</li>
+     <li>Experience gain adjustments</li>
+     <li>Training costs and skill book adjustments</li>
+     <li>Player resist magicka cap</li>
+     <li>Melee combat changes</li>
+     <li>Hand to hand combat changes</li>
+     <li>Ranged combat changes</li>
+     <li>Armour rating adjustments</li>
+     <li>Armorer overhaul</li>
+     <li>Mercantile overhaul</li>
+     <li>Alchemy overhaul</li>
+     <li>Pickpocketing overhaul</li>
+     <li>Athletics and swimming</li>
+     <li>Willpower buff</li>
+     <li>NPC spellcasting locked to base game effect costs</li>
+     <li>Miscellaneous changes</li>
+	</ol>
+5. V0.81 known issues & comments
+6. Partner files
 
 
 
@@ -93,7 +102,7 @@ Feel free to contact the [team members](https://github.com/TES3MP/TES3MP/blob/ma
 
 # [2] Introduction to EncoreMP
 
-**What is EncoreMP?**
+### **What is EncoreMP?**
 
 EncoreMP is a mechanical overhaul of many of the core features of Morrowind, with the changes made in the game engine. It has been forked from tes3mp and as a branch of tes3mp it is multiplayer compatible. 
 
@@ -101,35 +110,49 @@ EncoreMP has been designed with maximum mod compatibility in mind, and most espe
 
 It does this by changing as little as possible in the ESP file, and by making all the engine level changes as content agnostic as possible.
 
-**How is this different to other gameplay overhauls?**
+### **How is this different to other gameplay overhauls?**
 
-This project hosts almost all of its changes in the games engine, not in an ESP file. So this should be compatible with almost all mods that add new content. EncoreMP itself adds no new content, and makes no graphical changes.
+This project hosts almost all of its changes in the games engine, not in an ESP file. So it will be compatible with almost all mods that add new content. 
 
-**What is the tone of this overhaul?**
+EncoreMP itself adds no new content, and makes no graphical changes.
 
-This tries as much as possible not to break from the spirit of the original game, whilst balancing and updating some of the older and neglected mechanics. 
+### **What is the tone of this overhaul?**
 
-There are some new mechanical additions, and a lot of balancing changes, but overall the aim is for this to feel like playing Morrowind did twenty something years ago when it came out.
+EncoreMP tries as much as possible not to break from the spirit of the original game.
+
+There are mechanical additions and revisions to many of the core game systems, as well as a lot of balancing changes, but overall the aim is for this to feel like playing Morrowind did twenty something years ago when it came out.
 
 EncoreMP is recommended for someone who has played the base game, and is already familiar with the core mechanics.
 
-This is a beta version and is in need of playtesting and feedback. Currently the changes to the economy are likely the most punishing change - but they are not meant to be harder just for the sake of it.
+This is a beta version and is in need of playtesting and feedback. Currently the changes to the economy are likely the most punishing - but nothing is meant to be harder just for the sake of it. 
 
-**How do I play?**  
+The hope is that the changes collectively make under-utilised features of the original game more exciting and rewarding.
 
-If you already have a working copy of tes3mp anywhere on your computer, you are able to play EncoreMP without any further setup required. If not, see the installation instructions from the tes3mp quickstart guide on Github: https://github.com/TES3MP/TES3MP/wiki/Quickstart-guide
+### **How do I play?**  
 
-To play, download the release version of the project from Github (V0.80) and unzip the rar file as you would do with tes3mp. This file can be unzipped and played from anywhere on your computer. EncoreMP can then be played from within the folder you have just unzipped.
+If you already have a working copy of tes3mp on your computer then you are able to play EncoreMP without any further setup required (asides from copying the ESP file into your data files as below). 
 
-**What does it change?**
+If not, see the installation instructions from the tes3mp quickstart guide on Github: https://github.com/TES3MP/TES3MP/wiki/Quickstart-guide
+
+Once you have installed a working version of tes3mp somewhere on your computer, all you need to do is:
+
+1. Download the release version of the project from Github (V0.81)    
+2. Move the ESP file `EncoreMPV081` from the release into Morrowind's 'data files' folder, as is done with other ESP mod files     
+3. Unzip the rar file `EncoreMP.V0.81.beta.rar`   
+4. Within that folder, set your modlist via the openmw-launcher to match that required by the server  
+   - 	By default the server `requiredDataFiles` lists Morrowind, Tribunal, Bloodmoon, and EncoreMPV081.ESP. However as with tes3mp any mods can be added to the server  
+5. EncoreMP can then be played within the unzipped folder from anywhere on your computer  
+
+
+### **What does it change?**
 
 This is a brief summary of the changes made, for more details see the mechanical changelog below, not everything is listed here:
 
 (Unless stated, all mechanical changes affect the player only)
 
 **Skills:**
-- Enchanting has been overhauled and re-balanced, making enchanted scrolls is now viable
-- Alchemy has been overhauled and re-balanced
+- Enchanting has been overhauled - making scrolls is now viable, any item can hold a reasonable enchantment, the skill is more viable at low levels
+- Alchemy has been overhauled - you will make more sensible potions at all skill levels, and be rewarded for using rarer ingredients
 - Acrobatics now lets you climb! Past a certain point your acrobatics skill lets you climb steeper and steeper slopes, up to an 89° angle at high skill
 - Your weapon skills now contribute to your damage dealt, not just your hit chance, and weapon accuracy has been revised
 - Ranged weapons are more accurate, and higher ranged weapon skill helps you recover arrows more often
@@ -178,8 +201,8 @@ This is a brief summary of the changes made, for more details see the mechanical
 
 ## 1, Climbing
 
-**Acrobatics skill now lets you climb**
-- The players acrobatics skill now lets them climb increasingly steep surfaces by attempting to walk up them
+**The acrobatics skill now lets you climb**
+- The player's acrobatics skill now lets them climb increasingly steep surfaces by attempting to walk up them
 - This is not true Daggerfall style wall climbing, but everything that is not a vertical surface is now climbable with enough skill
 - This feature is tied to the players **unmodified** acrobatics skill, so that even if your acrobatics skill is drained or buffed, you do not change your ability to climb. This was done intentionally to avoid unintended physics behavior when the players acrobatics skill changes mid-climb
 
@@ -188,7 +211,8 @@ This is a brief summary of the changes made, for more details see the mechanical
 - If your skill is between 30-60 then you add `(skill-30)/3` degrees, so that you scale from being able to climb a 47° angle at 30 skill to a 57° angle at 60 skill
 - Above 60 skill you gain 1° of additional climbing angle per skill level with a cap hard limit of 89° reached at 92 skill
 
-**What that means in practice**
+**What that means in practice**  
+
 Below are some examples of how these changes affect game play:
 -  47° - Reached at skill 30, base game behavior
 -  57° - Reached at skill 60. This is a noticeable improvement, many base game hills can now be climbed if you search around for a shallow enough incline. This angle increase has more of an effect than the small increase in number might suggest
@@ -202,9 +226,9 @@ The difficulty system has been completely reworked and re-balanced.
 
 For ease of balancing during development, the game was also moved from a 'sliding bar' type difficulty, where any integer value can be used as a difficulty setting, to a a 'tiered' difficulty system like in later games. The difficulty setting is adjusted as with core tes3mp in the server config file. See below for a table of difficulty tiers.
 
-Difficulty now scales ALL player damage dealt and taken, (including magic damage, fatigue from hand to hand, reflected damage, etc) with the exception of player summons and allies as of V0.80. Summons and allies will be added to the difficulty scaling system in a future version.
+Difficulty now scales ALL player damage dealt and taken, (including magic damage, fatigue from hand to hand, reflected damage, etc) with the exception of player summons and allies as of V0.81. Summons and allies will be added to the difficulty scaling system in a future version.
 
-This version (V0.80) has been tuned for co-op multiplayer, so damage done is more heavily penalised than damage taken.
+This version (V0.81) has been tuned for co-op multiplayer, so damage done is more heavily penalised than damage taken.
 
 **The tier system**
 
@@ -227,6 +251,7 @@ This version (V0.80) has been tuned for co-op multiplayer, so damage done is mor
 
 
 **Changing difficulty settings**
+
 The new difficulty tiers are controlled by the global difficulty score in the server config file as follows,
 
 | Server config value | Tier           |
@@ -244,9 +269,12 @@ The new difficulty tiers are controlled by the global difficulty score in the se
 ## 3, Enchanting overhaul
 
 **Every item now has a usable enchanting capacity**
-- All items in the game that can be enchanted have increased enchanting capacities, with a capacity of 30 (approximately) being the new minimum. Very high capacity items in the base game are either unchanged or have been reduced in capacity slightly by the new logic.
+- All items in the game that can be enchanted have increased enchanting capacities, with a capacity of 30 (approximately) being the new minimum. Very high capacity items in the base game are either unchanged or have been reduced in capacity slightly by the new logic
 	- This means that making enchanted scrolls is now viable, as all paper items have gone from an enchanting capacity of 1-3 to approximately 30
-- This was achieved in the engine by taking the base game enchantment capacities from the game's ESM/ESP file and running them through an exponential function that converts them non-linearly to the new values.
+- This was achieved in the engine by taking the base game enchantment capacities from the game's ESM/ESP file and running them through an exponential function that converts them non-linearly to the new values
+
+**Multiple different enchantments on an item no longer compound the cost**
+- In the base game enchanting an item with multiple magic effects caused the cost to compound, so that the final enchantment cost was greater than the sum cost of the enchantments. This is no longer the case
 
 **Your enchanting skill lowers the on-use costs less than it does in the base game**
 - Enchanting 'on-use' costs are still reduced by skill, but the cost reduction now uses a non-linear equation. There are some additional rules for very cheap to cast items which stops them ever costing less than 1 to cast
@@ -291,30 +319,25 @@ The new difficulty tiers are controlled by the global difficulty score in the se
 - The value of the OpenMW setting in the config file should not matter, but just in case leave the setting value at 0.5 if it is enabled, as this was what was confirmed to work during testing and development
 
 **Cost of enchanting services**
-- Enchanting service prices now scale non-linearly with the point cost of the enchantment. It is overall much more expensive to buy high cost effects, and some special rules were added to handle edge cases for the beta release. The balance of V0.80 may be too punishing due to high costs,
-	- Making a 20 point capacity enchanted scroll costs around 4000 gold
-	- Making a 20 point capacity on-strike enchantment costs around 100,000 gold (this capacity is roughly the strength of most artefact on-strike effects)
-	- Making a 20 point capacity on-use effect costs around 75,000 gold
-- Enchantments with capacities of 20 points or more begin to significantly increase in price, and beyond capacities of between 25 to 30 points (depending on the enchantment type, on-hit, on-use, etc) become effectively impossible to afford
+- On-use enchantments cost 1x GMST per point as in the base game (1000g per point) but with a hard cap of 25 enchantment points, after which the 'impossible cost' is applied
 	- The "impossible to afford" cost was crudely implemented by adding a flat 5 million gold cost to the enchantment for values that exceed these amounts. In theory if you enough gold you can make such a mega enchantment. But this will never be a problem during normal play
-- Constant effect service costs behave differently,
-	- Any constant effect enchantment has a baseline starting cost of 70,000 gold
-	- A 30 point CE enchantment costs around 100,000 gold
-	- Above 30 points the cost increases non-linearly
-	- A 100 point CE enchantment costs around 400,000 gold (due to the revision to item enchanting capacity, very few items now have capacities above 100)
-	- Beyond 100 points it becomes  "impossible" with the flat 5 million cost increase being applied
+- Cast once enchantments (scrolls) cost 0.05x GMST per point (50g per point by default), and have a hard cap of 29 enchantment points, after which the impossible cost is applied
+- On strike enchantments (scrolls) cost start at 1x GMST and increase in cost per point non-linearly, and at 25 points have the "impossible cost" applied
+	- For reference, the most damaging on-strike enchantments, found on artefacts, are around the 20-25 point cost range
+- Ammunition will enchant in batches of 20, if the default server settings are left as is, and the price for a set of 20 ammunition. Ammunition follows the same cost logic as on-strike but at 1/10th the price
+- Constant effect enchantments cost 2x GMST per point (2000g per point). As of V0.81 this a linear cost per point, it may be revised in future to be more expensive at the high end
 
 
 ## 4, Experience gain adjustments
 
 The rate of experience gain for all skills has been adjusted. Note that many of the experience gain values were also adjusted in the ESP file to complement these changes, see the ESP companion file for more information.
 
-Overall experience gain has been reduced at high skill levels. This was done to delay the point at which many characters reach the 'power threshold' and begin to find most of the game's content too easy.
+Overall experience gain has been reduced at high skill levels. This was done to delay the point at which many character's reach the 'power threshold' and begin to find most of the game's content too easy.
 
 **General changes**
 - Experience gain values have been adjusted for most skills as per the ESP companion file
 - In the base game a skill required experience equal to its level to advance. This logic has been kept as a baseline, but there are now some additional rules that apply:
-	- A skill can never require less than 30 experience to advance
+	- A skill can never require less than 20 experience to advance
 		- This was done to make early skill choices more meaningful
 	- Experience gain is reduced for all skills once they are above level 50:
 		- Below skill level 50 there is no reduction to experience gain
@@ -343,22 +366,22 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 
 - Skill books no longer grant skill increases when the relevant skill is at level 95 or above
 - Paying to train skills has been made more expensive, and the cost of training now increases non-linearly with skill level
-- The change to training costs respects the GMST (`iTrainingMod`), which has been left at the default value of 10
-- If you want to adjust the training costs shown below you can do so by altering the GMST. For example if you set the GMST to 5 the system will still scale the costs non-linearly by level but the result will be exactly half of the values shown in the table below
+- The change to training costs respects the GMST (`iTrainingMod`), which has been set to 7 in V0.8.1
+- If you want to adjust the training costs shown below you can do so by adjusting the GMST value.
 	- Note that these are the base costs to train a skill at the example levels, and that your mercantile skill will reduce the cost of training as in the base game
 
 | Skill  level | EncoreMP gold cost for training | Base game gold cost for training |
 | ------------ | ------------------------------------------ | -------------- |
-| 10           | 190                                        | 70             |
-| 20           | 290                                        | 140            |
-| 30           | 540                                        | 210            |
-| 40           | 1000                                       | 280            |
-| 50           | 1500                                       | 350            |
-| 60           | 3000                                       | 420            |
-| 70           | 4500                                       | 490            |
-| 80           | 6500                                       | 560            |
-| 90           | 9000                                       | 630            |
-| 99           | 14500                                      | 697            |
+| 10           | 133                                        | 70             |
+| 20           | 203                                        | 140            |
+| 30           | 378                                        | 210            |
+| 40           | 700                                        | 280            |
+| 50           | 1050                                       | 350            |
+| 60           | 2100                                       | 420            |
+| 70           | 3150                                       | 490            |
+| 80           | 4550                                       | 560            |
+| 90           | 6300                                       | 630            |
+| 99           | 10150                                      | 697            |
 
 ## 6, Player resist magicka cap
 
@@ -409,12 +432,10 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 		- There is no penalty to damage for being below 50 agility
 		- For example if a character had 100 skill, strength and agility they would do 175% damage with long blades
 		- If they had 30 agility, 50 strength and 50 skill they would do 100% weapon damage
-	- **Axes** gain additional bonus damage from the characters endurance score when it is above 50, as well as from their strength and skill
+	- **Maces and Axes** gain additional bonus damage from the characters strength score when it is above 50, in addition to the normal bonuses the character receives from their strength and from their skill
 		- This follows all of the same rules as described above for long blades
-	- **Maces** gain additional bonus damage from the characters strength score when it is above 50, in addition to the normal bonuses the character receives from their strength and from their skill
-		- This follows all of the same rules as described above for long blades
-		- For example if a character had 50 skill and 100 strength, they gain a +50% damage bonus when using maces. This is because they first receive the baseline +25% damage boost that all weapons would get from 100 strength, and then the additional +25% boost from strength that maces receive using the same logic as described for long blades
-		- In effect maces scale twice with strength
+		- For example if a character had 50 skill and 100 strength, they gain a +50% damage bonus when using maces or axes. This is because they first receive the baseline +25% damage boost that all weapons would get from 100 strength, and then the additional +25% boost from strength that maces/axes receive using the same logic as described for long blades
+		- In effect maces/axes scale twice with strength
 	- **Staves** (a sub-set of blunt weapons) receive a flat +20% to hit chance, and do not take the -15% to hit that other 2h weapons do
 		- In the base game staves are classed as belonging to a different weapon group than all other blunt weapons. Staves are classified as `BluntTwoWide` weapons in the core game ESM files, and all staff like weapons added by the original developers have very low damage comapred to all other weapon types
 		-  The +20% bonus to hit was given to everything in the `BluntTwoWide` weapon category. As a result if modded content adds powerful two handed blunt weapons to this category, they will wrongly recieve the accuracy bonus and may be overpowered
@@ -473,6 +494,7 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 ## 10, Armour rating adjustments (player and creatures)
 
 **Player: equipment derived armour ratings**
+
 For the three armour skills (heavy, light, and medium) the equation used to determine player armour values below skill level 30 has been adjusted to be less punishing
 
 * In the base game your armour rating from equipment is equal to the base armour rating of the item multiplied by (your armour skill / 30)
@@ -517,7 +539,7 @@ This was done to make creatures a little more durable against physical attacks, 
 
 ## 11, Armorer overhaul
 
-In the base game once you were able to reliably repair an iron sword, you could reliably repair anything, so ther was not much benefit to levelling the skill.  
+In the base game once you were able to reliably repair an iron sword, you could reliably repair anything, so there was not much benefit to levelling the skill.  
 
 The following changes have been made,
 - More expensive items are now harder to repair
@@ -543,25 +565,25 @@ The following changes have been made,
 | 0-100g         | 0-499g         | 20%                  | ~30                   | ~40                   |
 | 101-499g       | 500-1999g      | 17%                  | ~35                   | ~45                   |
 | 500-1999g      | 2000-4999g     | 15%                  | ~37                   | ~50                   |
-| 2000-4999g     | Skipped        | 10%                  | ~45                   | ~55                   |
-| 5000-19,999g   | 5000-19,999g   | 7%                   | ~60                   | ~70                   |
-| 20,000-49,999g | 20,000-49,999g | 5%                   | ~70                   | ~80                   |
-| 50,000g +      | 50,000g +      | 5%                   | ~80                   | ~90                   |
+| 2000-4999g     | Skipped        | 15%                  | ~45                   | ~55                   |
+| 5000-19,999g   | 5000-19,999g   | 15%                  | ~60                   | ~70                   |
+| 20,000-49,999g | 20,000-49,999g | 15%                  | ~70                   | ~80                   |
+| 50,000g +      | 50,000g +      | 15%                  | ~80                   | ~90                   |
 
   
 **The quality of the armorer's tools you use now modifies your success rate when repairing**
 - In addition to boosting the amount repaired per swing (as in the base game), the quality of an tool can also potentially raise or lower your effective skill when calculating your success rate
-- The rule is: for every 0.1 quality above or below 1.0, add or subtract 1.5 skill levels to the attempt
-- For example a grandmaster's armorer hammer (quality 1.7), adds an effective 10.5 skill levels to all repair attempts, and repair prongs (quality 0.5) remove an effective 7.5 levels (but you can never fall below the minimum success rates above)
+- The rule is: for every 0.1 quality above or below 1.0, add or subtract 2.0 skill levels to the attempt
+- For example a grandmaster's armorer hammer (quality 1.7), adds an effective 14.0 skill levels to all repair attempts, and repair prongs (quality 0.5) remove an effective 10.0 levels (but you can never fall below the minimum success rates above)
 - This should reward you for finding the best tools, and let you maintain things above your level
 
 **Repair costs are increased for more expensive items**
 - This was technically already the case in the base game, but you would never be charged more than 1gp for point of item health, regardless of the items value
 - Now that limit has been removed, and the new rule is (before mercantile discounts apply):
-	- The cost to repair an item fully from 0% to 100% durability is 50% of the base value of the item
-	- So, each 1% of the item's durability you are repairing costs 0.5% of the item's full value
+	- The cost to repair an item fully from 0% to 100% durability is 33% of the base value of the item
+	- So, each 1% of the item's durability you are repairing costs 0.33% of the item's full value
 - The repair cost is then multiplied by the GMST `fRepairMult` (which is 1.0) to determine the final price
-- The repair costs may be set too high overall for the beta version (V0.80), if you find this to be the case try lowering the GMST to see how it feels
+- An extra rule has been added so that you can never be asked to pay more than 3.33gp per point of item health, to account for very expensive and low durability items. e.g. a 50 health item worth 5000gp, some enchanted helms in the base game, will only cost 166gp to repair instead of the full 5000 x 0.33 = 1650gp
  
 
 ## 12, Mercantile overhaul
@@ -570,14 +592,13 @@ The following changes have been made,
 - The player now earns mercantile experience not by haggling, but based on the value of items they sell (and how much they sell them for)
 	- Earning experience through haggling was completely removed during development for ease of testing and balance, though it could be re-enabled in a future version
 - You do not earn any experience from buying items, this was an intentional design choice as it opened up many ways to exploit the new system
-- The player earns 1 experience for every 166gp they make in sales as of V0.80. So for example at skill 30 you need 30 experience to level, so you would have to sell a total of around 5000g worth of item to level
-- If this rate seems too low, or high, you can adjust it by changing the experience value for a successful bargain in the ESP file. This is set to 0.3xp by default, as in the base game, and that figure results in the gold to XP ratio described above
-	- For example setting the experience value to 0.9xp in the ESP file will triple the rate of experience gain and result in you only needing to sell around 1660g worth of items to level up from 30 to 31
+- The player earns 1 experience for every 111gp they make in sales as of V0.81. So for example at skill 30 you need 30 experience to level, so you would have to sell a total of around 3300g worth of item to level
+- If this rate seems too low, or high, you can adjust it by changing the experience value for a successful bargain in the ESP file. This is set to 0.45xp in V0.81, and that figure results in the gold to XP ratio described above
 - If you sell an item for less than the offer made by the NPC you will receive less experience proportional to how much you discounted the sale (as giving things away cheaply is not good merchant behaviour)
 - The value of any items you receive in exchange for a sale you make is also counted towards the 'sale value' for the purpose of awarding experience. For example,
-	- If you have 1000g worth of gems, and the merchant makes an initial offer of 500gp - you stand to earn 3xp from the transaction (the system uses the sale value of the items, not their base value)
-	- If you decide to sell them cheaply, say if the merchant is nearly out of gold and you just want to get rid of them, for only 250gp, then you will still earn experience but only 50% of what you would have earned for selling them at full price (1.5xp)
-	- However you could ask the merchant for 250gp, and 250gp worth of items in exchange for the gems. The engine will correctly add up the barter value (not base value) of everything you receive in return, and in this case award you full XP for the sale again (3xp)
+	- If you have 1000g worth of gems, and the merchant makes an initial offer of 500gp - you stand to earn 4.5xp from the transaction (the system uses the sale value of the items, not their base value)
+	- If you decide to sell them cheaply, say if the merchant is nearly out of gold and you just want to get rid of them, for only 250gp, then you will still earn experience but only 50% of what you would have earned for selling them at full price
+	- However you could ask the merchant for 250gp, and 250gp worth of items in exchange for the gems. The engine will correctly add up the barter value (not base value) of everything you receive in return, and in this case award you full XP for the sale again
 
 **Disposition has less of an effect on mercantile interactions**
 - The engine was changed so that an NPC's disposition being above or below 50 now only has one quarter of the effect on mercantile bartering rates compared to the base game
@@ -597,6 +618,7 @@ The following changes have been made,
 This is a complete overhaul of the skill, changing nearly everything about it, but the end result is it still behaves in practise a lot like core alchemy.
 
 **Potion strength overhaul**
+
 This logic that determines potion strength was significantly changed from the base game to bring it in line with spellmaking costs. This helps balance potion making against other sources of magic, and prevents some unusual behaviour when spell effect costs are set very low or high in the ESP file.
 
 - Your alchemy factor is divided by 6 to determine an effect's 'magicka budget'
@@ -605,6 +627,7 @@ This logic that determines potion strength was significantly changed from the ba
 - The full magicka budget is given to each distinct effect in a potion, it is not spread out or shared between multiple effects. It is always an upside to have multiple positive effects in a single potion
 
 **Ingredient value now affects potion strength**
+
 The average value of the ingredients used to make a potion now affects the strength of the potion (by modifying your alchemy factor) as follows:
 - If the average value of the ingredients is below 5g, then your alchemy factor is reduced by 30%
 - From average ingredient values of 5g to 200g you receive a non-linear bonus to your alchemy factor:
@@ -638,7 +661,8 @@ Comments:
 - Note that the modifiers from other tools are applied directly to both effect duration and magnitude, not your alchemy factor, so they have a larger impact than the numbers would otherwise suggest
 - All of these modifiers from other tools stack with each other multiplicatively, not additively
 
-**Order of operations for determining potion strength**
+**Order of operations for determining potion strength**  
+
 The order of operations in EncoreMP is:
 1. Get the player's alchemy factor as in the base game
 2. Add or subtract from it depending on the quality (average gold value) of the ingredients being used
@@ -702,7 +726,7 @@ The order of operations in EncoreMP is:
 
 ## 14, Pickpocketing overhaul
 
-Pickpocketing has been reworked extensively, but sneaking and remainig undetected has not yet been addressed - so you will likely still have difficulty with not being noticed at low skill levels. However, if you can hide successfully, the value of what you can steal is more reasonable now
+Pickpocketing has been reworked extensively, but sneaking and remaining undetected have not yet been addressed - so you will likely still have difficulty with not being noticed at low skill levels. However, if you can hide successfully, the value of what you can steal is more reasonable now
 
 **Pickpocketing difficulty overhaul**
 - In the core game your chance of pickpocketing anything more than 100-200g was essentially zero, even at maximum skill, due to how heavily weighted item value was in the equations
@@ -783,37 +807,30 @@ A consequence of this is that the game now expects NPCs to only use handcrafted 
 - The server and client have been recompiled (a big thanks to Skooma-Breath for their help with the server) so that they have different checksums. This prevents EncoreMP clients and servers from connecting to other versions of tes3mp
 
 
-# [4] V0.80 known issues & comments
+# [4] V0.81 known issues & comments
 
 **Base game pre-made spells retain their original magicka costs**
 - [ ] Pre-made spells sold by merchants do not reflect the updated ESP spell effect costs - Instead of responding to the changes made in the ESP file, these spells retain their original magicka costs as if the magic effects were still at their base game values 
 - This appears to be a core feature of OpenMW and tes3mp - and forcibly updating the magicka costs of all spells would result in changes to AI combat behaviour and changes to AI auto-generated spell lists
-- For these reasons the base game spells were left at their original values for V0.80
+- For these reasons the base game spells were left at their original values for V0.81
 - There is the potential to address this in a future version in a way that should preserve the original costs for NPCs and creatures, whilst giving the player the updated costed versions when buying pre-made spells (but this will not be a simple fix so it has been put on hold)
-- The workaround during play in V0.80 is to buy a spell with the effects you want, and then to re-make it via spellmaking as a custom spell - anything made via the spellmaking menu will use the updated ESP effect costs
+- The workaround during play in V0.81 is to buy a spell with the effects you want, and then to re-make it via spellmaking as a custom spell - anything made via the spellmaking menu will use the updated ESP effect costs
 - Since some spell effects have been made more expensive in EncoreMP, pre-made spells which use those effects (levitate, open, fortify skill, etc) are now cheaper to cast than what the player would otherwise have access to via spellmaking or enchanting. For the time being, you will have to either manually edit these spells or simply house-rule not to use them
 
 **Enchanting**
-- [ ] Paying to enchant arrows via an enchanting service is currently too expensive due to a bug in the code
-- [ ] The V0.80 changes to the enchanting code are a little 'fragile' - Some of the balance depends on the spell effect costs being set to the values in the V0.80 ESP. This will be addressed when enchanting is reviewed in the future
+- [ ] The V0.81 changes to the enchanting code are a little 'fragile' - Some of the balance depends on the spell effect costs being set to the values in the V0.81 ESP. This will be addressed when enchanting is reviewed in the future
 	- For the time being you can change the spell effect costs in the ESP file but be wary of the effect on balance, particualrly when lowering the costs of destruction or restoration effects
 
 **Difficulty scaling**
-- [ ] As of V0.80, player summons and player allies do not have their damage dealt scaled by difficulty. If you want a challenge avoid using them on high difficulties for now
+- [ ] As of V0.81, player summons and player allies do not have their damage dealt scaled by difficulty. If you want a challenge avoid using them on high difficulties for now
 
 **Resist magicka**
 - [ ] If the player has more than 60% resist magicka, NPC/creature AI will still act as if they the player had values above 60% when making decisions about what to do in combat
 	- This was intentionally left like this to avoid re-working the AI, as it would have an impact on AI on AI combat as well. It might be possible to update the AI to treat only the player differently, but this a very minor issue
 - [ ] The UI still shows resist magicka values above 60%, but this is a UI issue only - the engine is working properly in regards to the mechanics
 
-**Economy**
-- [ ] Overall the changes to service costs and mercantile may prove to be too punishing. Some of this can be addressed by adjusting the GMSTs as described in the relevent sections
-
 **Melee combat**
-- [ ] An accuracy boost was given to all staff weapons as part of the melee overhaul. But this was actually done to all weapons in the class `BluntTwoWide`. In the base game this class is only used for staffs, and all other 2h blunt weapons are in a separate category. Modded content may class some powerful 2h blunt weapons as staffs, in which case they will be more accurate than intended in V0.80 (as of writing this however, this is not an issue for any tamriel rebuilt content)
-
-**Experimental features**
-- [ ] The acrobatics climbing feature is currently considered an experimental feature due to the risk of physics issues such as collision detection failures or clipping, however no issues have been found during playtesting
+- [ ] An accuracy boost was given to all staff weapons as part of the melee overhaul. But this was actually done to all weapons in the class `BluntTwoWide`. In the base game this class is only used for staffs, and all other 2h blunt weapons are in a separate category. Modded content may class some powerful 2h blunt weapons as staffs, in which case they will be more accurate than intended in V0.81 (as of writing this however, this is not an issue for any tamriel rebuilt content)
 
 **NPC spellcasting**
 - [ ] Several behind the scenes changes were made to the engine to clean up some core game (or at least inherent to OpenMW) issues which affect NPC spellcasting when spell effect costs are changed from their base game values. A consequence of these engine changes is that the engine now expects NPCs to be using spells that were made with the base game spell effect costs  
@@ -830,12 +847,15 @@ A consequence of this is that the game now expects NPCs to only use handcrafted 
 # [5] Partner files
 
 **ESP companion**
-- This overhaul requires the ESP file `EncoreMPV080` to function as intended. This ESP adds no new content, it only changes magic effect costs, experience gain values, and some GMSTs
-- See the partner file "EncoreMP V0.80 ESP companion" for a full list of changes
+- This overhaul requires the ESP file `EncoreMPV081` to function as intended. This ESP adds no new content, it only changes magic effect costs, experience gain values, and some GMSTs
+- See the partner file "EncoreMP V0.81 ESP companion" for a full list of changes
 
+**ESP optional new content companion**
+- There is an optional ESP file which overhauls some content in the original game. This is not required, and EncoreMP is not balanced around it. As of V0.81 it includes racial ability changes, birth sign changes, and a change to the (tribunal) assassin spawn script that stops them appearing before level 10
+- See the partner file "EncoreMP V0.81 new content ESP companion" for a full list of changes
 
 **Compiling companion**
-- If you are curious about how the changes were made, or the finer details of the mechanics, have a look at the partner file "V0.80 Beta release compiling changes"
+- If you are curious about how the changes were made, or the finer details of the mechanics, have a look at the partner file "V0.81 Beta release compiling changes"
 - This file contains a complete list of all of the changes made to the base tes3mp code, and some coments on why many of the changes were made
 
 

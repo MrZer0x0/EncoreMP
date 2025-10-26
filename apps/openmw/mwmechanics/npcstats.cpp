@@ -157,7 +157,7 @@ void MWMechanics::NpcStats::setFactionReputation (const std::string& faction, in
 float MWMechanics::NpcStats::getSkillProgressRequirement (int skillIndex, const ESM::Class& class_) const
 {
     // EncoreMP xp change floor begin
-    float progressRequirement = std::max(30.0f, static_cast<float>(1 + getSkill(skillIndex).getBase()));
+    float progressRequirement = std::max(20.0f, static_cast<float>(1 + getSkill(skillIndex).getBase()));
     // EncoreMP xp change floor end
 
     const MWWorld::Store<ESM::GameSetting> &gmst =

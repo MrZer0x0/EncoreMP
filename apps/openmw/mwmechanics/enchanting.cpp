@@ -204,20 +204,6 @@ namespace MWMechanics
         mCastStyle = ESM::Enchantment::CastOnce;
     }
 
-    /*
-     * Vanilla enchant cost formula:
-     *
-     *  Touch/Self:          (min + max) * baseCost * 0.025 * duration + area * baseCost * 0.025
-     *  Target:       1.5 * ((min + max) * baseCost * 0.025 * duration + area * baseCost * 0.025)
-     *  Constant eff:        (min + max) * baseCost * 2.5              + area * baseCost * 0.025
-     *
-     *  For multiple effects - cost of each effect is multiplied by number of effects that follows +1.
-     *
-     *  Note: Minimal value inside formula for 'min' and 'max' is 1. So in vanilla:
-     *        (0 + 0) == (1 + 0) == (1 + 1) => 2 or (2 + 0) == (1 + 2) => 3
-     *
-     *  Formula on UESPWiki is not entirely correct.
-     */
     float Enchanting::getEnchantPoints(bool precise) const
     {
         if (mEffectList.mList.empty())
@@ -229,7 +215,7 @@ namespace MWMechanics
         const float fEnchantmentConstantDurationMult = store.get<ESM::GameSetting>().find("fEnchantmentConstantDurationMult")->mValue.getFloat();
 
         float enchantmentCost = 0.f;
-        float cost = 0.f;
+
         for (const ESM::ENAMstruct& effect : mEffectList.mList)
         {
             float baseCost = (store.get<ESM::MagicEffect>().find(effect.mEffectID))->mData.mBaseCost;
@@ -244,46 +230,53 @@ namespace MWMechanics
             if (mCastStyle == ESM::Enchantment::ConstantEffect)
                 duration = fEnchantmentConstantDurationMult;
 
-            cost += ((magMin + magMax) * duration + area) * baseCost * fEffectCostMult * 0.05f;
+            float rawcost = ((magMin + magMax) * duration + area) * baseCost * fEffectCostMult * 0.05f;
 
-            cost = std::max(1.f, cost);
+            float multpool = 1.0f;
+
+            // cost += ((magMin + magMax) * duration + area) * baseCost * fEffectCostMult * 0.05f;
+
+            //cost = std::max(1.f, cost);
 
             if (effect.mRange == ESM::RT_Target)
-                cost *= 1.5f;
+                multpool *= 1.5f;
 
             if (mCastStyle == ESM::Enchantment::WhenStrikes)
-                cost *= 2;
+                multpool *= 2.0f;
 
 			if (magicEffect)
 			{
 				int school = magicEffect->mData.mSchool;
 				if (school == 2 || school == 5)
 				{
-					cost *= 2;
+                    multpool *= 2.0f;
 				}
                 if (effenumid == 57 || effenumid == 74 || effenumid == 86 || effenumid == 88 || effenumid == 99)
                 {
-                    cost *= 2;
+                    multpool *= 2.0f;
                 }
                 if (effenumid == 79)
                 {
-                    cost *= 0.5;
+                    multpool *= 0.5f;
                 }
                 if (mCastStyle == ESM::Enchantment::ConstantEffect)
                 {
                     if (effenumid == 3 || effenumid == 40 || effenumid == 42 || effenumid == 77 || effenumid == 79 || effenumid == 99)
                     {
-                        cost *= 1.5;
+                        multpool *= 1.5f;
                     }
                 }
                 if (mCastStyle == ESM::Enchantment::CastOnce)
                 {
                     if (school == 0 || school == 1)
                     {
-                        cost *= 0.5;
+                        multpool *= 0.5f;
                     }
                 }
 			}
+
+            float extra = std::max(0.0f, rawcost - 1.0f);
+            float cost = 1.0f + extra * multpool;
 
             enchantmentCost += precise ? cost : std::floor(cost);
         }
@@ -365,32 +358,16 @@ namespace MWMechanics
         float priceMultipler = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>().find ("fEnchantmentValueMult")->mValue.getFloat();
         int price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mEnchanter, static_cast<int>(getEnchantPoints() * priceMultipler), true);
         const float enchantpointforcost = getEnchantPoints();
+
         price *= getEnchantItemsCount() * getTypeMultiplier();
 
         if (mCastStyle == ESM::Enchantment::ConstantEffect)
         {
-            price += 70000;
-            if (enchantpointforcost > 30)
-            {
-                float CEexceeds30 = (enchantpointforcost - 30);
-                int CEexceeds30cost = static_cast<int>(CEexceeds30 * priceMultipler * 3);
-                price += CEexceeds30cost;
-                if (enchantpointforcost > 90)
-                {
-                    float CEexceeds90 = (enchantpointforcost - 90);
-                    int CEexceeds90cost = static_cast<int>(CEexceeds90 * priceMultipler * 7);
-                    price += CEexceeds90cost;
-                    if (enchantpointforcost > 100)
-                    {
-                        price += 5000000;
-                    }
-                }
-            }
+            price *= 2;
         }
 
         if (mCastStyle == ESM::Enchantment::WhenStrikes)
         {
-            price += 5000;
             if (enchantpointforcost > 5)
             {
                 float exceeds5 = (enchantpointforcost - 5);
@@ -419,62 +396,29 @@ namespace MWMechanics
                     }
                 }
             }
+            if (getTypeMultiplier() == 0.05f)
+            {
+                price *= getEnchantItemsCount() * getTypeMultiplier() * 0.1f;
+            }
         }
 
         if (mCastStyle == ESM::Enchantment::WhenUsed)
         {
-            price += 5000;
-            if (enchantpointforcost > 5)
+            if (enchantpointforcost > 25)
             {
-                float exceeds5 = (enchantpointforcost - 5);
-                int exceeds5cost = static_cast<int>(exceeds5 * priceMultipler);
-                price += exceeds5cost;
-                if (enchantpointforcost > 10)
-                {
-                    float exceeds10 = (enchantpointforcost - 10);
-                    int exceeds10cost = static_cast<int>(exceeds10 * priceMultipler);
-                    price += exceeds10cost;
-                    if (enchantpointforcost > 15)
-                    {
-                        float exceeds15 = (enchantpointforcost - 15);
-                        int exceeds15cost = static_cast<int>(exceeds15 * priceMultipler * 2.5);
-                        price += exceeds15cost;
-                        if (enchantpointforcost > 20)
-                        {
-                            float exceeds20 = (enchantpointforcost - 20);
-                            int exceeds20cost = static_cast<int>(exceeds20 * priceMultipler * 15);
-                            price += exceeds20cost;
-                            if (enchantpointforcost > 25)
-                            {
-                                price += 5000000;
-                            }
-                        }
-                    }
-                }
+                price += 5000000;
             }
         }
 
         if (mCastStyle == ESM::Enchantment::CastOnce)
         {
-            price = static_cast<int>(price * 0.2);
-            if (enchantpointforcost > 20)
+            price = static_cast<int>(price * 0.05);
+            if (enchantpointforcost > 30)
             {
-                float exceeds20 = (enchantpointforcost - 20);
-                int exceeds20cost = static_cast<int>(exceeds20 * priceMultipler * 1.2);
-                price += exceeds20cost;
-                if (enchantpointforcost > 25)
-                {
-                    float exceeds25 = (enchantpointforcost - 25);
-                    int exceeds25cost = static_cast<int>(exceeds25 * priceMultipler * 10);
-                    price += exceeds25cost;
-                    if (enchantpointforcost > 30)
-                    {
-                        price += 5000000;
-                    }
-                }
+                price += 5000000;
             }
         }
-            
+        
 
         return std::max(1, price);
     }
