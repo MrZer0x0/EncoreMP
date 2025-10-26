@@ -3946,7 +3946,7 @@ Changes `Version.hpp` to,
 
 ```
 
-Working, this now produces a server and client that both have the internal checksum version of 801, instead of 10 for the core tes3mp release.
+Working, this now produces a server and client that both have the internal checksum version of 802, instead of 10 for the core tes3mp release.
 
 I have tested and it properly prevents you from connecting with the wrong version to the server, and from using the wrong client on a normal server.
 
