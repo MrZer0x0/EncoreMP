@@ -23,6 +23,10 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 
+// EncoreMP additions
+
+#include <components/misc/rng.hpp>
+
 namespace MWMechanics
 {
     int CreatureStats::sActorId = 0;
@@ -769,6 +773,30 @@ namespace MWMechanics
     /*
         End of tes3mp addition
     */
+
+    // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+    void CreatureStats::updateAwareness(float duration)
+    {
+        mAwarenessTimer += duration;
+        // Only reroll for awareness every 5 seconds
+        if (mAwarenessTimer >= 5.f)
+        {
+            mAwarenessTimer = 0.f;
+            mAwarenessRoll = -1;
+        }
+    }
+
+    // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+    int CreatureStats::getAwarenessRoll()
+    {
+        if (mAwarenessRoll >= 0)
+            return mAwarenessRoll;
+
+        mAwarenessRoll = Misc::Rng::roll0to99();
+
+        return mAwarenessRoll;
+    }
+
 
     std::map<std::string, CorprusStats> &CreatureStats::getCorprusSpells()
     {

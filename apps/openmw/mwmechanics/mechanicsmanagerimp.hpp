@@ -107,7 +107,8 @@ namespace MWMechanics
             ///< Perform a persuasion action on NPC
 
             /// Check if \a observer is potentially aware of \a ptr. Does not do a line of sight check!
-            bool awarenessCheck (const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer) override;
+            // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+            bool awarenessCheck(const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer, bool useCache = true) override;
 
             /// Makes \a ptr fight \a target. Also shouts a combat taunt.
             void startCombat (const MWWorld::Ptr& ptr, const MWWorld::Ptr& target) override;

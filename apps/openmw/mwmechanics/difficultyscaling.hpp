@@ -25,4 +25,6 @@ float armourdamagetaken();
 
 float weapondamagetaken();
 
+float allyDamageDealt();
+
 #endif

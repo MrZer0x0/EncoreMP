@@ -91,6 +91,9 @@ namespace MWMechanics
         // This may be necessary when the creature is in an inactive cell.
         std::vector<int> mSummonGraveyard;
 
+        float mAwarenessTimer = 0.f;
+        int mAwarenessRoll = -1;
+
         std::map<std::string, CorprusStats> mCorprusSpells;
 
     protected:
@@ -324,6 +327,10 @@ namespace MWMechanics
 
         float getSideMovementAngle() const { return mSideMovementAngle; }
         void setSideMovementAngle(float angle) { mSideMovementAngle = angle; }
+
+        void updateAwareness(float duration);
+        int getAwarenessRoll();
+
     };
 }
 

@@ -117,7 +117,9 @@ namespace MWBase
             */
 
             /// Check if \a observer is potentially aware of \a ptr. Does not do a line of sight check!
-            virtual bool awarenessCheck (const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer) = 0;
+            // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+
+            virtual bool awarenessCheck(const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer, bool useCache = true) = 0;
 
             /// Makes \a ptr fight \a target. Also shouts a combat taunt.
             virtual void startCombat (const MWWorld::Ptr& ptr, const MWWorld::Ptr& target) = 0;

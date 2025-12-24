@@ -1,5 +1,5 @@
 
-Note the section headings and version references are out of date in places - but the code changes shown are current (V0.8.1), as is the reasoning behind them
+Note the section headings and version references are out of date in places - but the code changes shown are current (V0.90), as is the reasoning behind them
 
 # 3, Compiling Changelog
 
@@ -3936,7 +3936,7 @@ Changes `Version.hpp` to,
 #define OPENMW_VERSION_HPP
 
 #define TES3MP_VERSION "0.8.1"
-#define TES3MP_PROTO_VERSION 802
+#define TES3MP_PROTO_VERSION 803
 
 #define TES3MP_DEFAULT_PASSW "blankpassword"
 #define TES3MP_MASTERSERVER_PASSW "12345"
@@ -3946,8 +3946,499 @@ Changes `Version.hpp` to,
 
 ```
 
-Working, this now produces a server and client that both have the internal checksum version of 802, instead of 10 for the core tes3mp release.
+Working, this now produces a server and client that both have the internal checksum version of 803, instead of 10 for the core tes3mp release.
 
 I have tested and it properly prevents you from connecting with the wrong version to the server, and from using the wrong client on a normal server.
 
 For some reason I decided not to get into, any change at all to the TESMP_VERSION (which is the user facing string) causes the build to fail with fatal errors. So I have left that as is, and as a consequence right now despite the checksum actually being different it still displays the same previous version on the server browser
+
+## 3.28, Caching stealth checks
+
+To implement the V0.50 OpenMW changes,
+
+**Updating the base function to carry a Boolean**
+The `awarenessCheck` function was updated to include a Boolean which is true by default,
+
+In `mechanicsmanagerimp.hpp`
+The function declaration was updated to include the Boolean as true by default
+```
+bool awarenessCheck(const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer, bool useCache = true) override;
+```
+
+In `mechanicsmanager.hpp`
+The function declaration was updated to include the Boolean as true by default
+```
+virtual bool awarenessCheck(const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer, bool useCache = true) = 0;
+```
+
+Note that both have to updated, `mechanicsmanagerimp` is the implementation of the mechanic, but relies on `mechanicsmanager.hpp`
+
+Within `mechanicsmanager.cpp` the function itself was updated to declare the Boolean
+
+```
+    bool MechanicsManager::awarenessCheck(const MWWorld::Ptr& ptr, const MWWorld::Ptr& observer, bool useCache)
+    {
+```
+
+**Adding a logic fork within awarenessCheck to respond to the Boolean state**
+Within the `awarenessCheck` function in `mechanicsmanager.cpp` this clause was added further down. 
+```
+        float target = x - y;
+
+        if (useCache)
+            return observerStats.getAwarenessRoll() >= target;
+        return (Misc::Rng::roll0to99() >= target);
+    }
+```
+
+**Adding the update awareness check to the generic update actor function**
+Within `actors.cpp`
+the `updateActor` function was updated to include an `updateAwareness` check
+
+```
+    void Actors::updateActor (const MWWorld::Ptr& ptr, float duration)
+    {
+        // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+        ptr.getClass().getCreatureStats(ptr).updateAwareness(duration);
+
+        // magic effects
+        adjustMagicEffects (ptr);
+        if (ptr.getClass().getCreatureStats(ptr).needToRecalcDynamicStats())
+            calculateDynamicStats (ptr);
+
+        calculateCreatureStatModifiers (ptr, duration);
+        // fatigue restoration
+        calculateRestoration(ptr, duration);
+    }
+```
+
+
+**Updating creature stats to add new awareness check functions**
+In `creaturestats.cpp` 
+Added this to the files included:
+`#include <components/misc/rng.hpp>`
+So that the dice roll (rng) function could be called within the file,
+
+and the two new functions were added
+```
+    // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+    void CreatureStats::updateAwareness(float duration)
+    {
+        mAwarenessTimer += duration;
+        // Only reroll for awareness every 5 seconds
+        if (mAwarenessTimer >= 5.f)
+        {
+            mAwarenessTimer = 0.f;
+            mAwarenessRoll = -1;
+        }
+    }
+
+    // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+    int CreatureStats::getAwarenessRoll()
+    {
+        if (mAwarenessRoll >= 0)
+            return mAwarenessRoll;
+
+        mAwarenessRoll = Misc::Rng::roll0to99();
+
+        return mAwarenessRoll;
+    }
+```
+
+Then in `creaturestats.hpp`
+in the private declarations these were added,
+```
+float mAwarenessTimer = 0.f;
+int mAwarenessRoll = -1;
+```
+and at the end of the file
+```
+void updateAwareness(float duration);
+int getAwarenessRoll();
+```
+
+**Updating the combat stealth functions to pass the boolean flag as false**
+
+In `aipursue.cpp` updated
+```
+    if (isTargetMagicallyHidden(target) && !MWBase::Environment::get().getMechanicsManager()->awarenessCheck(target, actor, false))
+        return false;
+```
+to pass the flag as false
+
+In `aicombataction.cpp` updated
+```
+        if (isTargetMagicallyHidden(enemy) && !MWBase::Environment::get().getMechanicsManager()->awarenessCheck(enemy, actor, false))
+        {
+            return false;
+        }
+```
+to pass the flag as false
+
+
+## 3.29, Ally difficulty scaling
+
+This is documented in sections, as like player difficulty scaling each part of allied damage is handled in a separate location in the code.
+
+### 3.29.1, New difficulty scaling function
+
+In `difficultyscaling.hpp` a new function was declared,
+`float allyDamageDealt();`
+
+In `difficultyscaling.cpp` the new function was added,
+
+```
+float allyDamageDealt()
+{
+    int tier = difficultyTier();
+    switch (tier)
+    {
+    case 1: return 1.00f;
+    case 2: return 0.85f;
+    case 3: return 0.70f;
+    case 4: return 0.50f;
+    case 5: return 0.33f;
+    case 6: return 0.25f;
+    default: return 1.0f;
+    }
+}
+```
+
+This is what is called for all ally damage scaling
+
+### 3.29.2, Creature allies physical damage
+
+**Creature allies, melee attacks**
+Within `creature.cpp`,
+This include was added, needed below for the logic behind the new Boolean,
+`#include "../mwmechanics/aipackage.hpp"`
+
+Within `onHit()` this clause was added to define and toggle the new Boolean,
+
+```
+        // determine if the attacker is a creature allied with the player, and set Boolean to true if so
+
+        bool attackerIsPlayerAlly = false;
+
+        if (!attacker.isEmpty() && attacker.getClass().isActor())
+        {
+            MWMechanics::CreatureStats& statsAttacker = attacker.getClass().getCreatureStats(attacker);
+            for (const auto& package : statsAttacker.getAiSequence())
+            {
+                if (!package) continue;
+                if (package && package->followTargetThroughDoors())
+                {
+                    const MWWorld::Ptr& master = package->getTarget();
+                    if (master.isEmpty()) continue;
+                    bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                    if (!masterIsPlayer) continue;
+                    attackerIsPlayerAlly = true;
+                }
+            }
+        }
+```
+
+Anything that,
+- Is following a target through doors
+- and for whom that target is a player
+Is considered a player ally
+
+Then later on within the `onHit()` function, two new forks in the logic were added to make use of the new Boolean,
+
+```
+            if(ishealth)
+            {
+                damage *= damage / (damage + getArmorRating(ptr));
+                damage = std::max(1.f, damage);
+                if (!attacker.isEmpty())
+                {
+                    // neccessary here to introduce a fork in behaviour, otherwise attacks on the player
+                    // would double dip in damage scaling by calling both difficulty scaling functions
+                    // no need to guard here against attacker is player, since this is creature specific combat
+                    MWWorld::Ptr player = MWMechanics::getPlayer();
+                    if (ptr == player)
+                    {
+                        damage = scaleDamage(damage, attacker, ptr);
+                    }
+                    else
+                    {
+                        if (attackerIsPlayerAlly)
+                        {
+                            float allyDamageMult = allyDamageDealt();
+                            damage *= allyDamageMult;
+                        }
+                    }
+                    MWBase::Environment::get().getWorld()->spawnBloodEffect(ptr, hitPosition);
+                }
+
+                MWBase::Environment::get().getSoundManager()->playSound3D(ptr, "Health Damage", 1.0f, 1.0f);
+
+                MWMechanics::DynamicStat<float> health(stats.getHealth());
+                health.setCurrent(health.getCurrent() - damage);
+                stats.setHealth(health);
+            }
+```
+
+and
+
+```
+            else
+            {
+                if (!attacker.isEmpty())
+                {
+                    MWWorld::Ptr player = MWMechanics::getPlayer();
+                    if (damage > 0)
+                    {
+                        if (ptr == player)
+                        {
+                            damage = scaleHandDamage(damage, attacker, ptr);
+                        }
+                        else
+                        {
+                            if (attackerIsPlayerAlly)
+                            {
+                                float allyDamageMult = allyDamageDealt();
+                                damage *= allyDamageMult;
+                            }
+                        }
+                        
+                    }
+                }
+                MWMechanics::DynamicStat<float> fatigue(stats.getFatigue());
+                fatigue.setCurrent(fatigue.getCurrent() - damage, true);
+                stats.setFatigue(fatigue);
+            }
+```
+
+- As per the code comments, I had to fork the logic so that only one type of damage scaling was called, otherwise a creature attacking the player on high difficulty would have called both the increased and decreased damage done functions
+
+
+### 3.29.3, NPC allies physical damage
+
+This was the same as the creature physical damage scaling logic, but it had to be implemented separately as NPCs handle their combat in their own file.
+
+Within `npc.cpp`
+
+Updated the headers to include `#include "../mwmechanics/aipackage.hpp"` for the ally detection boolean logic
+
+Added the ally detection function used elsewhere, slightly modified for this file
+
+```
+        bool attackerIsPlayerAlly = false;
+
+        if (!attacker.isEmpty() && attacker.getClass().isActor())
+        {
+            MWMechanics::CreatureStats& statsAttacker = attacker.getClass().getCreatureStats(attacker);
+            for (const auto& package : statsAttacker.getAiSequence())
+            {
+                if (!package) continue;
+                if (package && package->followTargetThroughDoors())
+                {
+                    const MWWorld::Ptr& master = package->getTarget();
+                    if (master.isEmpty()) continue;
+                    bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                    if (!masterIsPlayer) continue;
+                    attackerIsPlayerAlly = true;
+                }
+            }
+        }
+```
+
+Then called that boolean in two places to modify damage done if they are a player ally,
+
+For health damage,
+
+```
+        if (ishealth)
+        {
+            if (!attacker.isEmpty() && !godmode)
+            {
+                if ((attacker == MWMechanics::getPlayer()) || (ptr == MWMechanics::getPlayer()))
+                {
+                    damage = scaleDamage(damage, attacker, ptr);
+                }
+                else
+                {
+                    if (attackerIsPlayerAlly)
+                    {
+                        float allyDamageMult = allyDamageDealt();
+                        damage *= allyDamageMult;
+                    }
+                }
+            }
+```
+
+For non-health damage (H2H fatigue),
+
+```
+            // add difficulty based scaling for H2H fatigue damage taken and dealt
+            if (!attacker.isEmpty() && !godmode)
+                if (damage > 0)
+                {
+                    if ((attacker == MWMechanics::getPlayer()) || (ptr == MWMechanics::getPlayer()))
+                    {
+                        damage = scaleDamage(damage, attacker, ptr);
+                    }
+                    else
+                    {
+                        if (attackerIsPlayerAlly)
+                        {
+                            float allyDamageMult = allyDamageDealt();
+                            damage *= allyDamageMult;
+                        }
+                    }
+                }
+```
+
+As with the other ally changes, I had to fork the logic to make sure the difficulty scaling didn't double dip with player difficulty scaling.
+
+Also unlike the creature changes, I had to also check here that the neither the attacker nor the victim was the player - as the player character routes it's combat behaviour through the NPC file, so the player can potentially be an attacker here unlike in the creature file.
+
+
+### 3.29.4, Allied elemental shield damage
+- This captures both NPC and creature allies
+
+Within `combat.cpp` the `applyElementalShields()` function was modified,
+
+First added the ally detection logic
+
+```
+            // determine if the source of the Elemental shield is a creature allied with the player, and set Boolean to true if so
+            bool sourceIsPlayerAlly = false;
+
+            if (!victim.isEmpty() && victim.getClass().isActor())
+            {
+                MWMechanics::CreatureStats& statsSource = victim.getClass().getCreatureStats(victim);
+                for (const auto& package : statsSource.getAiSequence())
+                {
+                    if (!package) continue;
+                    if (package && package->followTargetThroughDoors())
+                    {
+                        const MWWorld::Ptr& master = package->getTarget();
+                        if (master.isEmpty()) continue;
+                        bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                        if (!masterIsPlayer) continue;
+                        sourceIsPlayerAlly = true;
+                    }
+                }
+            }
+```
+
+Then forked elemental shield behaviour based on the result of the Boolean,
+
+```
+            MWWorld::Ptr player = MWMechanics::getPlayer();
+
+            if (attacker == player)
+            {
+                x *= magicdamagetaken();
+            }
+            else if ((victim == player) || (sourceIsPlayerAlly == true))
+            {
+                x *= castenchantedDamagescale();
+            }
+
+
+            MWMechanics::DynamicStat<float> health = attackerStats.getHealth();
+            health.setCurrent(health.getCurrent() - x);
+            attackerStats.setHealth(health);
+
+            MWBase::Environment::get().getSoundManager()->playSound3D(attacker, "Health Damage", 1.0f, 1.0f);
+```
+
+### 3.29.5, Allied spellcasting
+- This captures both NPC and creature allies
+
+Within `spellcasting.cpp`, within the `inflict` function
+
+The same boolean logic was added to flag if the caster of a spell effect is allied to the player - this has been done within the `inflict` function
+
+```
+                // EncoreMP determine if spellcaster is allied to the player
+
+                bool casterIsPlayerAlly = false;
+
+                if (!caster.isEmpty() && caster.getClass().isActor())
+                {
+                    MWMechanics::CreatureStats& statsCaster = caster.getClass().getCreatureStats(caster);
+                    for (const auto& lpackage : statsCaster.getAiSequence())
+                    {
+                        if (!lpackage) continue;
+                        if (lpackage && lpackage->followTargetThroughDoors())
+                        {
+                            const MWWorld::Ptr& master = lpackage->getTarget();
+                            if (master.isEmpty()) continue;
+                            bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                            if (!masterIsPlayer) continue;
+                            casterIsPlayerAlly = true;
+                        }
+                    }
+                }
+
+                // end of ally determination
+```
+
+Some variable names were changed to avoid conflicting with similar variables used elsewhere in the function
+
+The Boolean was then used to fork the damage logic for spellcasting,
+
+```
+                if (mSourceType == SourceType::Spell && target != player && target != caster && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
+                {
+                    if (caster == player)
+                    {
+                        magnitude *= castenchantedDamagescale();
+                    }
+                    else if (casterIsPlayerAlly)
+                    {
+                        magnitude *= allyDamageDealt();
+                    }
+                }
+```
+
+
+### 3.29.6, Allied enchantments
+- This captures both NPC and creature allies
+
+Within `spellcasting.cpp`, within the `inflict` function
+
+The boolean defined above was used to toggle damage scaling for on-strike via
+
+```
+                if (mEnchantmentType == ESM::Enchantment::WhenStrikes && target != player && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
+                {
+                    if (caster == player)
+                    {
+                        magnitude *= onstrikeDamageScale();
+                    }
+                    else if (casterIsPlayerAlly)
+                    {
+                        magnitude *= allyDamageDealt();
+                    }
+
+                }
+```
+
+and also toggle damage scaling for on-use and cast-once (scroll) damage scaling
+
+```
+                if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::Enchantment::WhenUsed) && target != player && target != caster && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
+                {
+                    if (caster == player)
+                    {
+                        magnitude *= castenchantedDamagescale();
+                    }
+                    else if (casterIsPlayerAlly)
+                    {
+                        magnitude *= allyDamageDealt();
+                    }
+                }
+```
+
+### 3.29.7, Note on reflected spells
+
+The existing code already accounts for reflected damage, and treats it as normal spell damage for the purposes of difficulty scaling.
+
+In other words, damage reflected by a player or their ally is stepped down by difficulty, all other reflection damage is handled normally (at 1x).
+
+This is because the code stores (in the case of reflected damage) the original caster as `mCaster`, and the current source of the effect (so the actor who is reflecting) as `caster`. All of the ally damage scaling only reduces damage done if the `caster` is the player or their ally the damage of the effect is reduced, so the existing damage reduction code captures both direct and reflected damage coming from the player or their allies.

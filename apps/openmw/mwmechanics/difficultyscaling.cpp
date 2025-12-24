@@ -124,6 +124,21 @@ float weapondamagetaken()
     }
 }
 
+float allyDamageDealt()
+{
+    int tier = difficultyTier();
+    switch (tier)
+    {
+    case 1: return 1.00f;
+    case 2: return 0.85f;
+    case 3: return 0.70f;
+    case 4: return 0.50f;
+    case 5: return 0.33f;
+    case 6: return 0.25f;
+    default: return 1.0f;
+    }
+}
+
 
 float scaleDamage(float damage, const MWWorld::Ptr& attacker, const MWWorld::Ptr& victim)
 {

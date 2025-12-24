@@ -307,6 +307,29 @@ namespace MWMechanics
                 float magnitude = effectIt->mMagnMin + Misc::Rng::rollDice(effectIt->mMagnMax - effectIt->mMagnMin + 1);
                 magnitude *= magnitudeMult;
 
+                // EncoreMP determine if spellcaster is allied to the player
+
+                bool casterIsPlayerAlly = false;
+
+                if (!caster.isEmpty() && caster.getClass().isActor())
+                {
+                    MWMechanics::CreatureStats& statsCaster = caster.getClass().getCreatureStats(caster);
+                    for (const auto& lpackage : statsCaster.getAiSequence())
+                    {
+                        if (!lpackage) continue;
+                        if (lpackage && lpackage->followTargetThroughDoors())
+                        {
+                            const MWWorld::Ptr& master = lpackage->getTarget();
+                            if (master.isEmpty()) continue;
+                            bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                            if (!masterIsPlayer) continue;
+                            casterIsPlayerAlly = true;
+                        }
+                    }
+                }
+
+                // end of ally determination
+
                 // EncoreMP enchantment on strike scaling begin
 
                 const MWWorld::Ptr player = MWMechanics::getPlayer();
@@ -314,30 +337,55 @@ namespace MWMechanics
                 int effectholder = effectIt->mEffectID;
 
                 // spell effects are 14, 15, 16 elements, 18 drain health, 23 damage health, 27 poison and 86 absorb health
-                if (mEnchantmentType == ESM::Enchantment::WhenStrikes && target != player && caster == player && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
+                if (mEnchantmentType == ESM::Enchantment::WhenStrikes && target != player && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
                 {
-                    magnitude *= onstrikeDamageScale();
+                    if (caster == player)
+                    {
+                        magnitude *= onstrikeDamageScale();
+                    }
+                    else if (casterIsPlayerAlly)
+                    {
+                        magnitude *= allyDamageDealt();
+                    }
+
                 }
 
                 // EncoreMP enchantment on strike scaling end
 
+
                 // EncoreMP castonce and whenused scaling begin
 
-                if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::Enchantment::WhenUsed) && target != player && caster == player && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
+                if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::Enchantment::WhenUsed) && target != player && target != caster && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
                 {
-                    magnitude *= castenchantedDamagescale();
+                    if (caster == player)
+                    {
+                        magnitude *= castenchantedDamagescale();
+                    }
+                    else if (casterIsPlayerAlly)
+                    {
+                        magnitude *= allyDamageDealt();
+                    }
                 }
 
                 // EncoreMP castonce and whenused scaling end
 
+
                 // EncoreMP general spellcasting start, for now it is using the same damage scale as enchanted items
 
-                if (mSourceType == SourceType::Spell && target != player && caster == player && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
+                if (mSourceType == SourceType::Spell && target != player && target != caster && (effectholder == 14 || effectholder == 15 || effectholder == 16 || effectholder == 18 || effectholder == 23 || effectholder == 27 || effectholder == 86))
                 {
-                    magnitude *= castenchantedDamagescale();
+                    if (caster == player)
+                    {
+                        magnitude *= castenchantedDamagescale();
+                    }
+                    else if (casterIsPlayerAlly)
+                    {
+                        magnitude *= allyDamageDealt();
+                    }
                 }
 
                 // EncoreMP general spellcasting end
+
 
 
                 // EncoreMP magic damage taken begin
@@ -348,6 +396,8 @@ namespace MWMechanics
                 }
 
                 // EncoreMP magic damage taken end
+
+
 
                 if (!target.getClass().isActor())
                 {

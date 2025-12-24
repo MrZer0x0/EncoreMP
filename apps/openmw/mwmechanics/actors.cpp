@@ -464,6 +464,9 @@ namespace MWMechanics
 
     void Actors::updateActor (const MWWorld::Ptr& ptr, float duration)
     {
+        // Trial implementation of openMW 0.50 useCache change to stealth behaviour
+        ptr.getClass().getCreatureStats(ptr).updateAwareness(duration);
+
         // magic effects
         adjustMagicEffects (ptr);
         if (ptr.getClass().getCreatureStats(ptr).needToRecalcDynamicStats())

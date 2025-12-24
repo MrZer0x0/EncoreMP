@@ -1,34 +1,32 @@
  
 # :gear: EncoreMP :gear:
 
-Welcome to EncoreMP, an engine level overhaul of many of Morrowind's core mechanics. 
+Welcome to EncoreMP, an engine level overhaul of many of Morrowind's core gameplay mechanics. 
 
 EncoreMP is a fork of tes3mp V0.8.1. The original tes3mp project is hosted here: https://github.com/TES3MP
 
-Asides from the mechanical changes listed in this file, and the code changes detailed in the "EncoreMP V0.81 compiling notes" file, all of the code used in this project is unchanged from tes3mp.
+Asides from the mechanical changes listed in this file, and the code changes detailed in the "EncoreMP compiling notes" file, all of the code used in this project is unchanged from tes3mp.
 
-All of this needs playtesting, so feedback is greatly appreciated! You can leave comments on the project discussion page on Github.
+This project is in Beta. It's playable, bug-free (except for a few issues noted at the bottom of this file), but what it really needs is playtesting and feedback. You can leave comments on the project discussion page on Github or get in touch with me via my reddit account,  "u/QuestionSure3480".
 
-The tes3mp project information has been copied below from the V0.8.1 tes3mp project readme. If you enjoy this work, please support tes3mp and OpenMW.
+If you enjoy this work please support tes3mp and OpenMW, without which this would not be possible!
 
-  
 
-### **EncoreMP project information**  
+### **EncoreMP project status**  
 
-This is the second public (beta) release of EncoreMP: V0.81
+This is the third public beta release of EncoreMP: V0.90
 
-It requires the ESP file `EncoreMPV081` to function as intended (this is for balance reasons, and due to some changes to how the GMSTs operate). See the ESP companion file for more details on these changes.
+It requires the ESP file `EncoreMPV090` to function as intended (this is for balance reasons, and due to some changes to how the GMSTs operate). See the ESP companion file for more details on these changes. There is also an optional content ESP in the repository that balances birth-signs and racial abilities, but it is not required to play EncoreMP.
 
 Hosted at: https://github.com/Tower-Numid/EncoreMP
 
-Live release (V0.81) download page: [add when setup]
+Live release (V0.90) download page: [add when setup]
 
 Discussion page: https://github.com/Tower-Numid/EncoreMP/discussions  
 
 ### **Contents**
-1. TES3MP project information
-2. Introduction to EncoreMP
-3. Mechanics changelog
+1. An introduction to EncoreMP
+2. Mechanical changes made by EncoreMP
    <ol type="1">
 	 <li>Climbing</li>
 	 <li>New difficulty system</li>
@@ -48,85 +46,40 @@ Discussion page: https://github.com/Tower-Numid/EncoreMP/discussions
      <li>Willpower buff</li>
      <li>NPC spellcasting locked to base game effect costs</li>
      <li>Miscellaneous changes</li>
+     <li>Sneak openMW fix</li>
 	</ol>
-5. V0.81 known issues & comments
-6. Partner files
+3. TES3MP project information
+4. Known issues & comments
+5. Partner files
 
-
-
-# [1] TES3MP project information
-
-Copyright (c) 2008-2015, OpenMW Team  
-Copyright (c) 2016-2022, David Cernat & Stanislav Zhukov
-
-TES3MP is a project adding multiplayer functionality to [OpenMW](https://github.com/OpenMW/openmw), an open-source game engine that supports playing "The Elder Scrolls III: Morrowind" by Bethesda Softworks.
-
-* TES3MP version: 0.8.1
-* OpenMW version: 0.47.0
-* License: GPLv3 with additional allowed terms (see [LICENSE](https://github.com/TES3MP/TES3MP/blob/master/LICENSE) for more information)
-
-Font Licenses:
-* DejaVuLGCSansMono.ttf: custom (see [files/mygui/DejaVuFontLicense.txt](https://github.com/TES3MP/TES3MP/blob/master/files/mygui/DejaVuFontLicense.txt) for more information)
-
-### Project status
-
-[Version changelog](https://github.com/TES3MP/TES3MP/blob/master/tes3mp-changelog.md)
-
-As of version 0.8.1, TES3MP is fully playable, providing very extensive player, NPC, world and quest synchronization, as well as state saving and loading, all of which are highly customizable via [serverside Lua scripts](https://github.com/TES3MP/CoreScripts).
-
-Remaining gameplay problems mostly relate to AI and the fact that clientside script variables need to be placed on a synchronization whitelist to avoid packet spam.
-
-TES3MP now also has a [VR branch](https://github.com/TES3MP/TES3MP/tree/0.8.1-vr) that combines its code with that of Mads Buvik Sandvei's [OpenMW VR](https://gitlab.com/madsbuvi/openmw).
-
-### Donations
-
-You can benefit the project by donating on Patreon to our two developers, [David Cernat](https://www.patreon.com/davidcernat) and [Koncord](https://www.patreon.com/Koncord), as well as by supporting [OpenMW](https://openmw.org).
-
-### Contributing
-
-Helping us with documentation, bug hunting and video showcases is always greatly appreciated.
-
-For code contributions, it's best to start out with modestly sized fixes and features and work your way up. There are so many different possible implementations of more major features – many of which would cause undesirable code or vision conflicts with OpenMW – that those should be talked over in advance with the existing developers before effort is spent on them.
-
-Feel free to contact the [team members](https://github.com/TES3MP/TES3MP/blob/master/tes3mp-credits.md) for any questions you might have.
-
-### Getting started
-
-* [Quickstart guide](https://github.com/TES3MP/TES3MP/wiki/Quickstart-guide)
-* [Steam group](https://steamcommunity.com/groups/mwmulti) and its [detailed FAQ](https://steamcommunity.com/groups/mwmulti/discussions/1/353916184342480541/)
-* [TES3MP section on OpenMW forums](https://forum.openmw.org/viewforum.php?f=45)
-* [Discord server](https://discord.gg/ECJk293)
-* [Subreddit](https://www.reddit.com/r/tes3mp)
-* [Known issues and bug reports](https://github.com/TES3MP/TES3MP/issues)
-
-
-# [2] Introduction to EncoreMP
+# [1] An introduction to EncoreMP
 
 ### **What is EncoreMP?**
 
-EncoreMP is a mechanical overhaul of many of the core features of Morrowind, with the changes made in the game engine. It has been forked from tes3mp and as a branch of tes3mp it is multiplayer compatible. 
+This is a mechanical overhaul of many of the core features of Morrowind, with the changes made in the game's engine. It has been forked from tes3mp and so like tes3mp it is multiplayer compatible. 
 
-EncoreMP has been designed with maximum mod compatibility in mind, and most especially for full compatibility with the Tamriel Rebuilt project. 
+EncoreMP has been designed with maximum mod compatibility in mind, and most especially for full compatibility with the Tamriel Rebuilt project. Every effort will be made in the future to keep this the case!
 
-It does this by changing as little as possible in the ESP file, and by making all the engine level changes as content agnostic as possible.
+It achieves this by changing as little as possible in the ESP file, and by making all the engine level changes as 'content agnostic' as possible.
 
 ### **How is this different to other gameplay overhauls?**
 
-This project hosts almost all of its changes in the games engine, not in an ESP file. So it will be compatible with almost all mods that add new content. 
+EncoreMP hosts almost all of its changes in the games engine, not in an ESP file, and isn't hard-coded to work only with base game content. So it should be compatible with almost all ESP mods that add new features such as items, locations, followers, quests, graphics, etc
 
-EncoreMP itself adds no new content, and makes no graphical changes.
+EncoreMP itself adds no new content, and makes no graphical changes. The ESP file is limited to GMST setting changes only, and as few as possible.
 
 ### **What is the tone of this overhaul?**
 
 EncoreMP tries as much as possible not to break from the spirit of the original game.
 
-There are mechanical additions and revisions to many of the core game systems, as well as a lot of balancing changes, but overall the aim is for this to feel like playing Morrowind did twenty something years ago when it came out.
+There are mechanical additions and revisions to many of the core gameplay systems, as well as a lot of balancing, but overall the aim is for this to feel like playing the original Morrowind did twenty something years ago when it came out.
 
-EncoreMP is recommended for someone who has played the base game, and is already familiar with the core mechanics.
+The aim is to breathe life into under-utilised systems from the original game, and to round out some of the rough edges of balancing, without making anything feel gamified.
 
-This is a beta version and is in need of playtesting and feedback. Currently the changes to the economy are likely the most punishing - but nothing is meant to be harder just for the sake of it. 
+EncoreMP is recommended for someone who has already played the base game and is familiar with the core mechanics, but this is not a requirement. A new player could easily start with EncoreMP, but I think everyone should try the base game first so that they can see why so many of us still love Morrowind after 20+ years.
 
-The hope is that the changes collectively make under-utilised features of the original game more exciting and rewarding.
+This is a beta release and it is in need of playtesting and feedback. Overall the game may feel a little harder at low levels, and currently the changes to the economy are the most punishing to the player, but nothing is meant to be harder just for the sake of it. 
+
 
 ### **How do I play?**  
 
@@ -136,36 +89,34 @@ If not, see the installation instructions from the tes3mp quickstart guide on Gi
 
 Once you have installed a working version of tes3mp somewhere on your computer, all you need to do is:
 
-1. Download the release version of the project from Github (V0.81)    
-2. Move the ESP file `EncoreMPV081` from the release into Morrowind's 'data files' folder, as is done with other ESP mod files     
-3. Unzip the rar file `EncoreMP.V0.81.beta.rar`   
+1. Download the release version of this project from Github (V0.90)    
+2. Move the ESP file `EncoreMPV090` into Morrowind's 'data files' folder, as is done with other ESP mods     
+3. Unzip the rar file `EncoreMP.V0.90.beta.rar` anywhere on your computer
 4. Within that folder, set your modlist via the openmw-launcher to match that required by the server  
-   - 	By default the server `requiredDataFiles` lists Morrowind, Tribunal, Bloodmoon, and EncoreMPV081.ESP. However as with tes3mp any mods can be added to the server  
+   - 	By default the server `requiredDataFiles` lists Morrowind, Tribunal, Bloodmoon, and EncoreMPV090.ESP. However as with tes3mp any mods can be added to the server  
 5. EncoreMP can then be played within the unzipped folder from anywhere on your computer  
 
 
 ### **What does it change?**
 
-This is a brief summary of the changes made, for more details see the mechanical changelog below, not everything is listed here:
-
-(Unless stated, all mechanical changes affect the player only)
+Here is a brief summary of the changes made. For more details see the mechanical changes section below, not everything is listed here (unless stated all changes only affect the player character):
 
 **Skills:**
 - Enchanting has been overhauled - making scrolls is now viable, any item can hold a reasonable enchantment, the skill is more viable at low levels
-- Alchemy has been overhauled - you will make more sensible potions at all skill levels, and be rewarded for using rarer ingredients
-- Acrobatics now lets you climb! Past a certain point your acrobatics skill lets you climb steeper and steeper slopes, up to an 89° angle at high skill
-- Your weapon skills now contribute to your damage dealt, not just your hit chance, and weapon accuracy has been revised
+- Alchemy has been re-balanced - you can now make sensible strength potions at all skill levels, and be rewarded for using rarer ingredients
+- Acrobatics now lets you climb! Past a certain level your acrobatics skill now lets you climb steeper and steeper slopes, up to an 89° angle at very high skill
+- Your weapon skills now contribute to damage dealt as well at to hit chance, and weapon accuracy has been revised
 - Ranged weapons are more accurate, and higher ranged weapon skill helps you recover arrows more often
-- Unarmoured is overall stronger, and scales with speed and agility
-- Armorer has been overhauled to be a more important skill, expensive equipment is now more difficult to repair and equipment degrades slower as your armorer skill increases
-- Athletics increases your swim speed more than it does in the base game, you can swim at up to 80% of your run speed at high skill
-- Mercantile now gains experience from the value of items sold, rather than from haggling
-- Spells now reward you with more experience proportional to their cost when cast
+- Unarmoured is overall stronger, and your unarmoured rating now scales with your speed and agility attributes
+- Armorer has been overhauled to be a more important skill, expensive equipment is now more difficult to repair and your equipment degrades slower as your armorer skill increases
+- Athletics increases your swim speed more than it does in the base game
+- Mercantile now gains experience from the value of the items sold, not from haggling
+- Casting spells with higher magicka costs now rewards more experience than casting cheap spells
 - Pickpocketing has been overhauled, the value of items you can steal has been increased and various bugs have been fixed
-- The costs of most magic effects have been changed in the ESP file to make almost all spell effects viable, with the current exception of summoning effects
+- The costs of most magic effects have been balanced in the ESP file to make almost all spell effects viable
 
 **General:**
-- The difficulty system has been revised, melee scaling has been balanced and player magic damage is now included in difficulty scaling (currently player summons and allies are not included in difficulty scaling, this feature will be added in a future version)
+- The effect of the difficulty setting has been massively revised. Melee scaling has been balanced, and all player magic damage, and all player allies, are now affected by difficulty scaling!
 - More experience is now required to advance at higher skill levels
 - Paying for skill training is much more expensive at high skill levels
 - Books that increase your skill when read stop granting skill increases at skill level 95 and above
@@ -178,7 +129,7 @@ This is a brief summary of the changes made, for more details see the mechanical
 
 
 
-# [3] Mechanics changelog
+# [2] Mechanical changes made by EncoreMP
 
 1. Climbing
 2. New difficulty system
@@ -198,6 +149,7 @@ This is a brief summary of the changes made, for more details see the mechanical
 16. Willpower buff
 17. NPC spellcasting engine fixes
 18. Misc changes
+19. Sneak openMW fix
 
 ## 1, Climbing
 
@@ -226,13 +178,13 @@ The difficulty system has been completely reworked and re-balanced.
 
 For ease of balancing during development, the game was also moved from a 'sliding bar' type difficulty, where any integer value can be used as a difficulty setting, to a a 'tiered' difficulty system like in later games. The difficulty setting is adjusted as with core tes3mp in the server config file. See below for a table of difficulty tiers.
 
-Difficulty now scales ALL player damage dealt and taken, (including magic damage, fatigue from hand to hand, reflected damage, etc) with the exception of player summons and allies as of V0.81. Summons and allies will be added to the difficulty scaling system in a future version.
+The difficulty settings now scale ALL player damage dealt and taken including: magic damage, fatigue from hand to hand, reflected damage, elemental shields. As of V0.90 player allies also obey difficulty scaling and deal less damage on higher difficulties, but take the same damage at all difficulty levels (intended for balance reasons)
 
-This version (V0.81) has been tuned for co-op multiplayer, so damage done is more heavily penalised than damage taken.
+These settings have been tuned for co-op multiplayer, so damage done is more heavily penalised than damage taken.
 
 **The tier system**
 
-| Tier           | Melee & other [1] dealt (%) | Melee taken (%) | Magic & other [2] dealt (%) | Magic & other [2] taken (%) |
+| Tier           | Melee & other [1] dealt (%) | Melee taken (%) | Magic & other [2] dealt (%) | Magic & other [3] taken (%) |
 | -------------- | --------------------------- | --------------- | --------------------------- | --------------------------- |
 | 1: Apprentice  | 100                         | 100             | 100                         | 100                         |
 | 2: Journeyman  | 75                          | 150             | 85                          | 125                         |
@@ -242,15 +194,31 @@ This version (V0.81) has been tuned for co-op multiplayer, so damage done is mor
 | 6: Nerevarine  | 15                          | 500             | 25                          | 300                         |
  
 [1] Both melee and on-hit enchantments scale using these values  
-[2] Both magic damage and fatigue damage dealt from hand to hand scale using these values
+[2] Magic damage, hand to hand fatigue damage, and all types of damage dealt by player allies scale using these values  
+[3] Magic damage and hand to hand fatigue damage taken by the player scale using these values
  
 **Comments**
 - Magic damage taken only affects damage dealt by non-player actors, so drinking potions or using self damaging scrolls will not cause you to take any more damage. Nor will you take more magic damage from scripted effects or environmental sources such as traps
-- For balance reasons, anything reflected onto the player deals 1x damage regardless of difficulty, but anything reflected onto non-players receives the magic damage step down
+- For balance reasons, anything reflected onto the player deals 1x damage regardless of difficulty, but anything reflected onto non-player actors receives the magic damage step down
 - As in the base game physical damage taken by the player or enemies is first reduced by their armour rating, and then any difficulty modifiers apply. This means that you do not need higher armour values to achieve reasonable damage reduction on higher difficulty settings, but it becomes a lot more important when you are being hit for 5x damage!
+- Player allies do not take any increased damage on higher difficulties, but deal less damage as described above. Any type of damage from an ally follows the above scaling: spells, melee, fatigue, etc, are all scaled the same way for simplicity
+
+**What does the game consider an ally?**
+- The engine determines if something is a player 'ally' in the same way the base engine checked if something was a player's summon, via:
+    - Checking whether the actor has the AI package "follow player through doors" active
+    - Checking that the target of the AI package (who they are following) is one of the players who are currently active on the server
+- In practise if an ally will follow you through doors it's damage will scale, regardless of where they came from. Some examples of who this includes are:
+    - All player summons
+    - Commanded creatures/humanoids
+    - Modded or base game companions
+    - Quest companions who follow you through doors
+- Some examples of what is not counted as an ally:
+    - A NPC such as a guard fighting nearby, even if they are 'friendly' to the player
+    - Temporary allies that do not follow the player
+	- Something summoned by an ally (a potential loophole, but a very edge case in the base game)
 
 
-**Changing difficulty settings**
+**How to change the difficulty tiers**
 
 The new difficulty tiers are controlled by the global difficulty score in the server config file as follows,
 
@@ -263,8 +231,8 @@ The new difficulty tiers are controlled by the global difficulty score in the se
 | 151-200             | 5: Agent       |
 | 201+                | 6: Nerevarine  |
 
-- There is no difference in difficulty within a given tier, e.g. setting it to either 201 or 999 will have the same effect (Nerevarine difficulty), and setting it to 52 or 96 would both result in master difficulty
-- The only reason number ranges were kept was so that it would be easier to go back to a sliding scale system later on if needed
+- There is no difference in difficulty within a given tier, e.g. setting it to either 201 or 999 will have the same effect (Nerevarine difficulty), and setting it to 52 or 96 would both result in Master difficulty
+- The only reason the number ranges were kept was so that it would be easier to go back to a sliding scale system later on if needed
 
 ## 3, Enchanting overhaul
 
@@ -325,7 +293,7 @@ The new difficulty tiers are controlled by the global difficulty score in the se
 - On strike enchantments (scrolls) cost start at 1x GMST and increase in cost per point non-linearly, and at 25 points have the "impossible cost" applied
 	- For reference, the most damaging on-strike enchantments, found on artefacts, are around the 20-25 point cost range
 - Ammunition will enchant in batches of 20, if the default server settings are left as is, and the price for a set of 20 ammunition. Ammunition follows the same cost logic as on-strike but at 1/10th the price
-- Constant effect enchantments cost 2x GMST per point (2000g per point). As of V0.81 this a linear cost per point, it may be revised in future to be more expensive at the high end
+- Constant effect enchantments cost 2x GMST per point (2000g per point). As of V0.90 this a linear cost per point, it may be revised in future to be more expensive at the high end
 
 
 ## 4, Experience gain adjustments
@@ -339,7 +307,7 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 - In the base game a skill required experience equal to its level to advance. This logic has been kept as a baseline, but there are now some additional rules that apply:
 	- A skill can never require less than 20 experience to advance
 		- This was done to make early skill choices more meaningful
-	- Experience gain is reduced for all skills once they are above level 50:
+	- Experience gain is reduced for skills above level 50:
 		- Below skill level 50 there is no reduction to experience gain
 		- From levels 51 to 60, all experience gained is multiplied by 0.8
 		- From levels 61 to 70, all experience gained is multiplied by 0.65
@@ -366,7 +334,7 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 
 - Skill books no longer grant skill increases when the relevant skill is at level 95 or above
 - Paying to train skills has been made more expensive, and the cost of training now increases non-linearly with skill level
-- The change to training costs respects the GMST (`iTrainingMod`), which has been set to 7 in V0.8.1
+- The change to training costs respects the GMST (`iTrainingMod`), which has been set to 7 in V0.90
 - If you want to adjust the training costs shown below you can do so by adjusting the GMST value.
 	- Note that these are the base costs to train a skill at the example levels, and that your mercantile skill will reduce the cost of training as in the base game
 
@@ -592,8 +560,8 @@ The following changes have been made,
 - The player now earns mercantile experience not by haggling, but based on the value of items they sell (and how much they sell them for)
 	- Earning experience through haggling was completely removed during development for ease of testing and balance, though it could be re-enabled in a future version
 - You do not earn any experience from buying items, this was an intentional design choice as it opened up many ways to exploit the new system
-- The player earns 1 experience for every 111gp they make in sales as of V0.81. So for example at skill 30 you need 30 experience to level, so you would have to sell a total of around 3300g worth of item to level
-- If this rate seems too low, or high, you can adjust it by changing the experience value for a successful bargain in the ESP file. This is set to 0.45xp in V0.81, and that figure results in the gold to XP ratio described above
+- The player earns 1 experience for every 111gp they make in sales as of V0.90. So for example at skill 30 you need 30 experience to level, so you would have to sell a total of around 3300g worth of item to level
+- If this rate seems too low, or high, you can adjust it by changing the experience value for a successful bargain in the ESP file. This is set to 0.45xp in V0.90, and that figure results in the gold to XP ratio described above
 - If you sell an item for less than the offer made by the NPC you will receive less experience proportional to how much you discounted the sale (as giving things away cheaply is not good merchant behaviour)
 - The value of any items you receive in exchange for a sale you make is also counted towards the 'sale value' for the purpose of awarding experience. For example,
 	- If you have 1000g worth of gems, and the merchant makes an initial offer of 500gp - you stand to earn 4.5xp from the transaction (the system uses the sale value of the items, not their base value)
@@ -726,8 +694,6 @@ The order of operations in EncoreMP is:
 
 ## 14, Pickpocketing overhaul
 
-Pickpocketing has been reworked extensively, but sneaking and remaining undetected have not yet been addressed - so you will likely still have difficulty with not being noticed at low skill levels. However, if you can hide successfully, the value of what you can steal is more reasonable now
-
 **Pickpocketing difficulty overhaul**
 - In the core game your chance of pickpocketing anything more than 100-200g was essentially zero, even at maximum skill, due to how heavily weighted item value was in the equations
 - The difficulty check for pickpocketing no longer takes into account the victim's attributes or skills (in the base game your chance of succeeding was lowered by the item's value, and by the NPC's sneak, luck, and agility scores)
@@ -806,56 +772,124 @@ A consequence of this is that the game now expects NPCs to only use handcrafted 
 - Enchanted on-strike weapons no longer display the "no-charge" message when their charge is depleted, and no longer play the "no-charge" sound effects when attacking with insufficient charge
 - The server and client have been recompiled (a big thanks to Skooma-Breath for their help with the server) so that they have different checksums. This prevents EncoreMP clients and servers from connecting to other versions of tes3mp
 
+## 19, OpenMW fix to sneaking behaviour 
 
-# [4] V0.81 known issues & comments
+EncoreMP now includes the fix added to OpenMW in V0.50: https://gitlab.com/OpenMW/openmw/-/issues/6029 which makes it so that out of combat you only have to pass sneak checks periodically.
+
+Changed sneaking behaviour:
+- Out of combat enemies will only roll to spot you every 5 seconds, and they will keep that roll result for that interval
+- In combat they will still check every frame, so it is very hard to stay hidden once in a fight
+
+Context:
+
+OpenMW V0.50 introduced cached stealth checks, fixing a longstanding bug in OpenMW that caused it to diverge from core game behaviour.
+
+In the Bethesda version of Morrowind you only had to pass a stealth check every few seconds, whereas up until OpenMW V0.50 you had to pass a stealth check potentially up to every frame. 
+
+This meant that the sneak icon was not a reliable indicator of whether you were actually sneaking, and it was extremely hard to do anything illegal with NPCs around. As EncoreMP is based on OpenMW 0.47 it inherited this issue.
+
+
+Now out of combat, once you are hidden you should have a reliable 5 second window to do things in - but be aware that any changes to your stats, the enemy's stats, or either of your positionings, can potentially still cause you to be seen (this is intentional behaviour and mirrors the original version of the game)
+
+# [3] TES3MP project information
+
+This section has been copied verbatim from the tes3mp project information as requested by the original authors of that work - see this section for details about tes3mp, OpenMW, the authors, and how you can support those projects.
+
+---
+
+Copyright (c) 2008-2015, OpenMW Team  
+Copyright (c) 2016-2022, David Cernat & Stanislav Zhukov
+
+TES3MP is a project adding multiplayer functionality to [OpenMW](https://github.com/OpenMW/openmw), an open-source game engine that supports playing "The Elder Scrolls III: Morrowind" by Bethesda Softworks.
+
+* TES3MP version: 0.8.1
+* OpenMW version: 0.47.0
+* License: GPLv3 with additional allowed terms (see [LICENSE](https://github.com/TES3MP/TES3MP/blob/master/LICENSE) for more information)
+
+Font Licenses:
+* DejaVuLGCSansMono.ttf: custom (see [files/mygui/DejaVuFontLicense.txt](https://github.com/TES3MP/TES3MP/blob/master/files/mygui/DejaVuFontLicense.txt) for more information)
+
+### Project status
+
+[Version changelog](https://github.com/TES3MP/TES3MP/blob/master/tes3mp-changelog.md)
+
+As of version 0.8.1, TES3MP is fully playable, providing very extensive player, NPC, world and quest synchronization, as well as state saving and loading, all of which are highly customizable via [serverside Lua scripts](https://github.com/TES3MP/CoreScripts).
+
+Remaining gameplay problems mostly relate to AI and the fact that clientside script variables need to be placed on a synchronization whitelist to avoid packet spam.
+
+TES3MP now also has a [VR branch](https://github.com/TES3MP/TES3MP/tree/0.8.1-vr) that combines its code with that of Mads Buvik Sandvei's [OpenMW VR](https://gitlab.com/madsbuvi/openmw).
+
+### Donations
+
+You can benefit the project by donating on Patreon to our two developers, [David Cernat](https://www.patreon.com/davidcernat) and [Koncord](https://www.patreon.com/Koncord), as well as by supporting [OpenMW](https://openmw.org).
+
+### Contributing
+
+Helping us with documentation, bug hunting and video showcases is always greatly appreciated.
+
+For code contributions, it's best to start out with modestly sized fixes and features and work your way up. There are so many different possible implementations of more major features – many of which would cause undesirable code or vision conflicts with OpenMW – that those should be talked over in advance with the existing developers before effort is spent on them.
+
+Feel free to contact the [team members](https://github.com/TES3MP/TES3MP/blob/master/tes3mp-credits.md) for any questions you might have.
+
+### Getting started
+
+* [Quickstart guide](https://github.com/TES3MP/TES3MP/wiki/Quickstart-guide)
+* [Steam group](https://steamcommunity.com/groups/mwmulti) and its [detailed FAQ](https://steamcommunity.com/groups/mwmulti/discussions/1/353916184342480541/)
+* [TES3MP section on OpenMW forums](https://forum.openmw.org/viewforum.php?f=45)
+* [Discord server](https://discord.gg/ECJk293)
+* [Subreddit](https://www.reddit.com/r/tes3mp)
+* [Known issues and bug reports](https://github.com/TES3MP/TES3MP/issues)
+
+
+
+# [4] Known issues & comments
 
 **Base game pre-made spells retain their original magicka costs**
-- [ ] Pre-made spells sold by merchants do not reflect the updated ESP spell effect costs - Instead of responding to the changes made in the ESP file, these spells retain their original magicka costs as if the magic effects were still at their base game values 
+- Pre-made spells sold by merchants do not reflect the updated ESP spell effect costs - Instead of responding to the changes made in the ESP file, these spells retain their original magicka costs as if the magic effects were still at their base game values 
 - This appears to be a core feature of OpenMW and tes3mp - and forcibly updating the magicka costs of all spells would result in changes to AI combat behaviour and changes to AI auto-generated spell lists
-- For these reasons the base game spells were left at their original values for V0.81
-- There is the potential to address this in a future version in a way that should preserve the original costs for NPCs and creatures, whilst giving the player the updated costed versions when buying pre-made spells (but this will not be a simple fix so it has been put on hold)
-- The workaround during play in V0.81 is to buy a spell with the effects you want, and then to re-make it via spellmaking as a custom spell - anything made via the spellmaking menu will use the updated ESP effect costs
-- Since some spell effects have been made more expensive in EncoreMP, pre-made spells which use those effects (levitate, open, fortify skill, etc) are now cheaper to cast than what the player would otherwise have access to via spellmaking or enchanting. For the time being, you will have to either manually edit these spells or simply house-rule not to use them
+- For these reasons the base game spells were left at their original values for V0.90
+- There is the potential to address this in a future version in a way that should preserve the original costs for NPCs and creatures, whilst giving the player the updated costed versions when buying pre-made spells (this is being worked on currently)
+- The workaround during play in V0.90 is to buy a spell with the effects you want, and then to re-make it via spellmaking as a custom spell - anything made via the spellmaking menu will use the updated ESP effect costs
+- Since some spell effects have been made more expensive in EncoreMP, pre-made spells which use those effects (levitate, open, fortify skill, and a few others) are cheaper to cast than what the player should have access to via spellmaking. For the time being, you will have to either manually remake these spells or simply house-rule not to use them
 
 **Enchanting**
-- [ ] The V0.81 changes to the enchanting code are a little 'fragile' - Some of the balance depends on the spell effect costs being set to the values in the V0.81 ESP. This will be addressed when enchanting is reviewed in the future
+- The V0.90 changes to the enchanting code are a little 'fragile' - Some of the balance depends on the spell effect costs being set to the values in the V0.90 ESP. This will be addressed when enchanting is reviewed in the future
 	- For the time being you can change the spell effect costs in the ESP file but be wary of the effect on balance, particualrly when lowering the costs of destruction or restoration effects
 
-**Difficulty scaling**
-- [ ] As of V0.81, player summons and player allies do not have their damage dealt scaled by difficulty. If you want a challenge avoid using them on high difficulties for now
-
 **Resist magicka**
-- [ ] If the player has more than 60% resist magicka, NPC/creature AI will still act as if they the player had values above 60% when making decisions about what to do in combat
-	- This was intentionally left like this to avoid re-working the AI, as it would have an impact on AI on AI combat as well. It might be possible to update the AI to treat only the player differently, but this a very minor issue
-- [ ] The UI still shows resist magicka values above 60%, but this is a UI issue only - the engine is working properly in regards to the mechanics
+- If the player has more than 60% resist magicka, the combat AI of enemies will still behave as if the player had MR values above 60% when making decisions about what to do in combat
+	- This was intentionally as is to avoid changing the combat AI, as doing so would have knock on effects on NPC behaviour in fights. It may be possible to update the AI to accomodate this in the future, but this a very minor issue in practise
+- The UI still shows resist magicka values above 60%, but this is a UI issue only - the engine is working properly in regards to the mechanics
 
 **Melee combat**
-- [ ] An accuracy boost was given to all staff weapons as part of the melee overhaul. But this was actually done to all weapons in the class `BluntTwoWide`. In the base game this class is only used for staffs, and all other 2h blunt weapons are in a separate category. Modded content may class some powerful 2h blunt weapons as staffs, in which case they will be more accurate than intended in V0.81 (as of writing this however, this is not an issue for any tamriel rebuilt content)
+- An accuracy boost was given to all 'staff' weapons as part of the melee overhaul. However this achieved by increasing the accuracy of all weapons belonging to the class `BluntTwoWide`  
+- In the base game this category is only used for staff weapons which do very low damage. All other two handed blunt weapons are grouped in a separate category
+- However if modded content adds high damage 2h blunt weapons and classes them as `BluntTwoWide` they will recieve the accuracy boost intended for staffs and be more powerful than intended (as of writing this however, this is not an issue for any tamriel rebuilt content)
 
 **NPC spellcasting**
-- [ ] Several behind the scenes changes were made to the engine to clean up some core game (or at least inherent to OpenMW) issues which affect NPC spellcasting when spell effect costs are changed from their base game values. A consequence of these engine changes is that the engine now expects NPCs to be using spells that were made with the base game spell effect costs  
--  You can ignore this unless you are using modded content that: 
-	-  [1] Changes the spell effect costs notably, 
-	-  [2] Gives spells to NPCs with auto-calculated values, and
+- Several behind the scenes changes were made to the engine to clean up some core game (or at least inherent to OpenMW) issues which affected NPC spellcasting when spell effect costs were changed from their base game values  
+- A consequence of these engine changes is that the EncoreMP engine now expects NPCs to be casting spells that were made using the base game spell effect costs  
+-  You will not be affected by this issue unless you are using modded content that: 
+	-  [1] Changes base game spell effect costs notably, 
+	-  [2] Gives spells to NPCs made with the new spell effect cost values, and
 	-  [3] expects the NPCs to cast those spells with the auto-calculated values
 - This scenario would have been an issue anyway in core openMW, due to the behind the scenes issues that needed fixing
 
-**Server/Client visual checksum**
-- [ ] The checksum has been correctly updated for the EncoreMP server/client (so that EncoreMP cannot connect to baseline tes3mp servers), however EncoreMP servers still display as "V0.8.1" in the server browsing UI
+**Server/client visual checksum**
+- The server/client checksum has been correctly updated for  EncoreMP (so that EncoreMP cannot connect to baseline tes3mp servers), however EncoreMP servers still display their checksum as being for "V0.8.1" in the server browsing UI
 	- This was due to an issue with compiling - it is a UI problem only that will be addressed in the future
 
 # [5] Partner files
 
 **ESP companion**
-- This overhaul requires the ESP file `EncoreMPV081` to function as intended. This ESP adds no new content, it only changes magic effect costs, experience gain values, and some GMSTs
-- See the partner file "EncoreMP V0.81 ESP companion" for a full list of changes
+- This overhaul requires the ESP file `EncoreMPV090` to function as intended. This ESP adds no new content, it only changes magic effect costs, experience gain values, and some GMSTs
+- See the partner file "EncoreMP V0.90 ESP companion" for a full list of changes made by the ESP
 
 **ESP optional new content companion**
-- There is an optional ESP file which overhauls some content in the original game. This is not required, and EncoreMP is not balanced around it. As of V0.81 it includes racial ability changes, birth sign changes, and a change to the (tribunal) assassin spawn script that stops them appearing before level 10
-- See the partner file "EncoreMP V0.81 new content ESP companion" for a full list of changes
+- There is an optional ESP file which overhauls some content in the original game. This is not required, and EncoreMP is not balanced around it. As of V0.90 it includes racial ability changes, birth sign changes, and a change to the (tribunal) assassin spawn script that stops them appearing before level 10
+- See the partner file "EncoreMP V0.90 new content ESP companion" for a full list of changes
 
 **Compiling companion**
-- If you are curious about how the changes were made, or the finer details of the mechanics, have a look at the partner file "V0.81 Beta release compiling changes"
+- If you are curious about how the changes were made, or the finer details of the mechanics, have a look at the partner file "V0.90 Beta release compiling changes"
 - This file contains a complete list of all of the changes made to the base tes3mp code, and some coments on why many of the changes were made
-
 

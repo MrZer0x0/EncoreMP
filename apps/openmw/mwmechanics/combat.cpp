@@ -41,6 +41,7 @@
 // added by EncoreMP
 
 #include "weapontype.hpp"
+#include "aipackage.hpp"
 
 // added by EncoreMP
 
@@ -555,18 +556,37 @@ namespace MWMechanics
             static const float fElementalShieldMult = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>().find("fElementalShieldMult")->mValue.getFloat();
             x = fElementalShieldMult * magnitude * (1.f - 0.01f * x);
 
+            // determine if the source of the Elemental shield is a creature allied with the player, and set Boolean to true if so
+            bool sourceIsPlayerAlly = false;
+
+            if (!victim.isEmpty() && victim.getClass().isActor())
+            {
+                MWMechanics::CreatureStats& statsSource = victim.getClass().getCreatureStats(victim);
+                for (const auto& package : statsSource.getAiSequence())
+                {
+                    if (!package) continue;
+                    if (package && package->followTargetThroughDoors())
+                    {
+                        const MWWorld::Ptr& master = package->getTarget();
+                        if (master.isEmpty()) continue;
+                        bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                        if (!masterIsPlayer) continue;
+                        sourceIsPlayerAlly = true;
+                    }
+                }
+            }
+
+
             MWWorld::Ptr player = MWMechanics::getPlayer();
 
             if (attacker == player)
             {
                 x *= magicdamagetaken();
             }
-
-            if (attacker != player)
+            else if ((victim == player) || (sourceIsPlayerAlly == true))
             {
                 x *= castenchantedDamagescale();
             }
-
 
 
             MWMechanics::DynamicStat<float> health = attackerStats.getHealth();

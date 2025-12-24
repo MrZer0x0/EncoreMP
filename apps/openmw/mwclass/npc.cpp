@@ -66,6 +66,7 @@
 
 #include "../mwworld/esmstore.hpp"
 #include "../mwmechanics/weapontype.hpp"
+#include "../mwmechanics/aipackage.hpp"
 
 // EncoreMP header additions
 
@@ -861,6 +862,27 @@ namespace MWClass
         if (!object.isEmpty())
             stats.setLastHitObject(object.getCellRef().getRefId());
 
+        // EncoreMP, check if attacker is allied to the player
+
+        bool attackerIsPlayerAlly = false;
+
+        if (!attacker.isEmpty() && attacker.getClass().isActor())
+        {
+            MWMechanics::CreatureStats& statsAttacker = attacker.getClass().getCreatureStats(attacker);
+            for (const auto& package : statsAttacker.getAiSequence())
+            {
+                if (!package) continue;
+                if (package && package->followTargetThroughDoors())
+                {
+                    const MWWorld::Ptr& master = package->getTarget();
+                    if (master.isEmpty()) continue;
+                    bool masterIsPlayer = (master == MWMechanics::getPlayer()) || mwmp::PlayerList::isDedicatedPlayer(master);
+                    if (!masterIsPlayer) continue;
+                    attackerIsPlayerAlly = true;
+                }
+            }
+        }
+
 
         if (damage > 0.0f && !object.isEmpty())
             MWMechanics::resistNormalWeapon(ptr, attacker, object, damage);
@@ -1020,8 +1042,20 @@ namespace MWClass
         if (ishealth)
         {
             if (!attacker.isEmpty() && !godmode)
-                damage = scaleDamage(damage, attacker, ptr);
-
+            {
+                if ((attacker == MWMechanics::getPlayer()) || (ptr == MWMechanics::getPlayer()))
+                {
+                    damage = scaleDamage(damage, attacker, ptr);
+                }
+                else
+                {
+                    if (attackerIsPlayerAlly)
+                    {
+                        float allyDamageMult = allyDamageDealt();
+                        damage *= allyDamageMult;
+                    }
+                }
+            }
             if (damage > 0.0f)
             {
                 sndMgr->playSound3D(ptr, "Health Damage", 1.0f, 1.0f);
@@ -1040,7 +1074,18 @@ namespace MWClass
             if (!attacker.isEmpty() && !godmode)
                 if (damage > 0)
                 {
-                    damage = scaleHandDamage(damage, attacker, ptr);
+                    if ((attacker == MWMechanics::getPlayer()) || (ptr == MWMechanics::getPlayer()))
+                    {
+                        damage = scaleDamage(damage, attacker, ptr);
+                    }
+                    else
+                    {
+                        if (attackerIsPlayerAlly)
+                        {
+                            float allyDamageMult = allyDamageDealt();
+                            damage *= allyDamageMult;
+                        }
+                    }
                 }
 
             // EncoreMP logic fork, bottom is core behaviour, top is slot for potential player H2H changes
