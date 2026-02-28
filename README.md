@@ -18,7 +18,7 @@ This is the fourth public beta release of EncoreMP: V0.91
 
 **Hosted at**: https://github.com/Tower-Numid/EncoreMP
 
-**Live release (V0.91) download page**: [add when setup]
+**Live release (V0.91) download page**: https://github.com/Tower-Numid/EncoreMP/releases/tag/0.91
 
 **Required and optional ESP files**
 - V0.91 requires the ESP `EncoreMPV091` to function as intended (this contains spell effect cost changes and minimal GMST changes)
