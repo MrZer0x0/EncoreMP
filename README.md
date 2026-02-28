@@ -145,7 +145,7 @@ Unless stated, all changes made by EncoreMP affect the player only and not NPCs/
 
 
 
-**Setting:**
+**Settings:**
 - As of V0.91 the first wave of new server settings have been added which allow toggling of some EncoreMP features using the server config file 
 - Almost all EncoreMP features will be tied to server settings in the upcoming releases
 
