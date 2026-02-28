@@ -493,13 +493,13 @@ namespace MWMechanics
 
         if (attacker == getPlayer())
         {
-            attackTerm += (skillValue * 0.7) +
+            attackTerm += (skillValue * 0.8) +
                 (stats.getAttribute(ESM::Attribute::Agility).getModified() / 5.0f) +
                 (stats.getAttribute(ESM::Attribute::Luck).getModified() / 10.0f);
             attackTerm *= stats.getFatigueTerm();
             attackTerm += mageffects.get(ESM::MagicEffect::FortifyAttack).getMagnitude() -
                 mageffects.get(ESM::MagicEffect::Blind).getMagnitude();
-            attackTerm += 20;
+            attackTerm += 10;
         }
         else {
             attackTerm += skillValue +
@@ -706,9 +706,18 @@ namespace MWMechanics
                         damage *= fDamageStrengthBase +
                             (((attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Strength).getModified() + releventskill) / 2) * fDamageStrengthMult * 0.1f);
                     
-                        ///add the agility bonus for long blades
+                        ///add the stat bonus for long blades, agility by default unless toggled off
                         
+                        bool useAgility = Settings::Manager::getBool("long blades use agility for damage scaling", "Game");
+
                         releventattribute = attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Agility).getModified();
+
+                        if (useAgility == false)
+                        {
+                            releventattribute = attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Strength).getModified();
+                        }
+
+                        /// end of stat bonus
 
                         if (releventattribute > 50)
                         {

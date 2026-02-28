@@ -645,11 +645,17 @@ namespace MWClass
 
             const ESM::WeaponType* weapInfo = MWMechanics::getWeaponType(weaponType);
 
+            bool twoHandPenalty = Settings::Manager::getBool("two handed weapons receive an accuracy penalty", "Game");
+            bool staveAccuracyBonus = Settings::Manager::getBool("staves receive accuracy bonus instead of two handed penalty", "Game");
+
             if (weapInfo)
             {
                 if (weaponType == ESM::Weapon::LongBladeTwoHand || weaponType == ESM::Weapon::AxeTwoHand || weaponType == ESM::Weapon::BluntTwoClose)
                 {
-                    hitchance = hitchance - 15;
+                    if (twoHandPenalty == true)
+                    {
+                        hitchance = hitchance - 15;
+                    }
                 }
                 if (weaponType == ESM::Weapon::SpearTwoWide || weaponType == ESM::Weapon::ShortBladeOneHand)
                 {
@@ -657,11 +663,21 @@ namespace MWClass
                 }
                 if (weaponType == ESM::Weapon::BluntTwoWide)
                 {
-                    hitchance += 20;
+                    if (staveAccuracyBonus == true)
+                    {
+                        hitchance += 20;
+                    }
+                    else
+                    {
+                        if (twoHandPenalty == true)
+                        {
+                            hitchance = hitchance - 15;
+                        }
+                    }
+
                 }
             }
         }
-
 
         // end of EncoreMP accuracy modifiers
 

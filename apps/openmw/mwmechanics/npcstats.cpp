@@ -13,6 +13,10 @@
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
 
+// encoreMP addition
+
+#include <components/settings/settings.hpp>
+
 MWMechanics::NpcStats::NpcStats()
     : mDisposition (0)
 , mReputation(0)
@@ -216,6 +220,8 @@ void MWMechanics::NpcStats::useSkill (int skillIndex, const ESM::Class& class_, 
     }
     skillGain *= extraFactor;
 
+    float globalXPMod = Settings::Manager::getFloat("global XP gain multiplier", "Game");
+
     float xpreductionmultiplier = 1.0f;
 
     if (base >= 50)
@@ -245,6 +251,17 @@ void MWMechanics::NpcStats::useSkill (int skillIndex, const ESM::Class& class_, 
 
     skillGain *= xpreductionmultiplier;
 
+    // block to process the global XP multiplier setting
+
+    if (globalXPMod <= 0.0f)
+    {
+        globalXPMod = 1.0f;
+    }
+
+    skillGain *= globalXPMod;
+
+    //
+
     MWMechanics::SkillValue& value = getSkill (skillIndex);
 
     value.setProgress(value.getProgress() + skillGain);
@@ -259,14 +276,18 @@ void MWMechanics::NpcStats::useSkill (int skillIndex, const ESM::Class& class_, 
 void MWMechanics::NpcStats::increaseSkill(int skillIndex, const ESM::Class &class_, bool preserveProgress, bool readBook)
 {
     float base = getSkill (skillIndex).getBase();
+    bool bookLevelLimit = Settings::Manager::getBool("skill books have level limit", "Game");
 
     if (base >= 100.f)
         return;
 
     if (readBook)
     {
-        if (base >= 95.f)
-            return;
+        if (base >= 90.f)
+            if (bookLevelLimit == true)
+            {
+                return;
+            }
     }
 
     base += 1;

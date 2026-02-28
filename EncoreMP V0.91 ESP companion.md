@@ -1,4 +1,4 @@
-This file details all the changes made in the required ESP file for the V0.90 EncoreMP beta release, `EncoreMPV090.ESP`.
+This file details all the changes made in the required ESP file for the V0.91 EncoreMP beta release, `EncoreMPV091.ESP`.
 
 # GMSTs
 
@@ -33,10 +33,10 @@ This file details all the changes made in the required ESP file for the V0.90 En
 	- Note that elemental shield effects are resisted unusually in the base game, something that has not been changed yet, so expect to still see them doing about 0.5 damage per point of magnitude against a lot of enemies.
 
 **Spell prices**
-- `fSpellValueMult` set to 20 (versus 10 in the base game)
-	- This value is used as a multiplier when calculating the gold cost of buying a spell (based on its magicka cost). So increasing it to 20 roughly doubles the cost of buying a spell versus the base game.
-- `fSpellMakingValueMult` set to 20 (versus 7 in the base game)
-	- This value is used as a multiplier when calculating the gold cost of making a spell (based on its magicka cost). So increasing it to 20 roughly triples the cost of spellmaking versus the base game (and brings the cost in line with the change to spell buying).
+- `fSpellValueMult` set to 15 (versus 10 in the base game)
+	- This value is used as a multiplier when calculating the gold cost of buying a spell (based on its magicka cost)
+- `fSpellMakingValueMult` set to 15 (versus 7 in the base game)
+	- This value is used as a multiplier when calculating the gold cost of making a spell (based on its magicka cost)
 
 **Hand to Hand**
 - `fHandtoHandHealthPer` set to 0.4 (versus 0.1 in the base game)
@@ -68,7 +68,7 @@ If a skill or XP value is not mentioned then it has been left at the base game v
 - Eating an ingredient: 0.5xp to 0.75xp
 
 **Armorer**
-- Successful repair: 0.4xp to 0.8xp
+- Successful repair: 0.4xp to 1.0xp
 
 **Athletics**
 - Running: 0.02xp to 0.04xp
@@ -106,98 +106,78 @@ If a skill or XP value is not mentioned then it has been left at the base game v
 **Mercantile**
 - Successful haggle (now used for XP gain from value sold): 0.3xp to 0.45xp
 
-# Spell effect costs
+# Changed spell effect costs
 
 
 ==**Alteration**==  
-Burden 1 -> 0.2  
-Feather 1 -> 0.1  
-Lock: unchanged (2)  
-Shield 2 -> 0.6  
-Swift swim 2 -> 0.2  
-All three elemental shields 3 -> 1  
-Jump: unchanged (3)  
-Levitate 3 -> 6  
-Slowfall 3 -> 2  
-Water breathing 3 -> 2  
-Water walking 3 -> 2  
-Open 6 -> 15
+
+Burden: 1 -> 0.3  
+Feather: 1 -> 0.1  
+All three elemental shields: 3 -> 1  
+Open: 6 -> 10  
+Shield: 2 -> 0.6  
+Slowfall: 3 -> 2  
+Swift swim: 2 -> 0.3  
+Water walking: 3 -> 2  
+
 
 ==**Conjuration**==  
-Turn undead: unchanged (0.2)  
-Bound weapons: unchanged (2)   
-Bound armour: unchanged (2)   
-Command creature 15 -> 7    
-Command humanoid 15 -> 8  
-Summons: unchanged  
+
+No effect costs changed in conjuration  
+
 
 ==**Destruction**==  
-Sun damage: unchanged (1)  
-Fire/Frost damage: unchanged (5)    
-Shock damage 7 -> 6   
-Poison damage 9 -> 4   
-Drain health 4 -> 3   
-Damage health 8 -> 7   
-Weakness to fire/frost/shock/poison 2 -> 0.7   
-Weakness to magicka 2 -> 1   
-Drain fatigue 4 -> 1   
-Damage fatigue 4 -> 2   
-Drain Magicka 4 -> 1   
-Damage Magicka 8 -> 4   
-Damage attribute 8 -> 15   
-Drain attribute: unchanged (1)   
-Drain skill: unchanged (1)   
-Disintegrate weapon 6 -> 1   
-Disintegrate armour 6 -> 2   
+
+Damage attribute: 8 -> 12   
+Damage fatigue: 4 -> 2.5   
+Damage health: 8 -> 7   
+Damage magicka: 8 -> 6   
+Disintegrate armour: 6 -> 1.5   
+Disintegrate weapon: 6 -> 1   
+Drain fatigue: 4 -> 0.5   
+Drain magicka: 4 -> 1   
+Poison damage: 9 -> 4   
+Shock damage: 7 -> 6   
+
 
 ==**Illusion**==  
-Night eye 0.2 -> 0.3    
-Light: unchanged (0.2)  
-Sanctuary: unchanged (1)  
-Chameleon: unchanged (1)  
-Rally target: unchanged (0.2)  
-Frenzy target 1 -> 3  
-Demoralize target 1 -> 0.5 (Also demoralize humanoid was set to the illusion school, not mysticism as in the base game)  
-Calm target 1 -> 0.5  
-Blind 1 -> 0.6  
-Sound 3 -> 0.70  
-Charm 5 -> 1.5  
-Invisibility 20 -> 10  
-Silence 40 -> 30  
-Paralyse 40 -> 60  
+
+Blind: 1 -> 0.7  
+Charm: 5 -> 1.5  
+Demoralize target: 1 -> 0.8  (Demoralize humanoid set to illusion)  
+Frenzy humanoid: 1 -> 3  
+Invisibility: 20 -> 15  
+Sanctuary: 1 -> 0.8  
+Silence: 40 -> 30  
+Sound: 3 -> 0.6  
 
 
 ==**Mysticism**==  
-Detect animal 0.75 -> 0.1  
-Detect enchantment 1 -> 0.6  
-Detect key 1 -> 0.2  
-Telekinesis 1 -> 6  
-Absorb health: unchanged (8)  
-Absorb fatigue 4 -> 3    
-Absorb attribute 2 -> 1.5  
-Soul trap 2 -> 1.5    
-Dispel 5 -> 2.5    
-Reflect 10 -> 2  
-Spell Absorb 10 -> 2  
-Mark (unchanged)    
-Recall (unchanged)    
-Almisivi intervention (unchanged)    
-Divine intervention (unchanged)  
+
+Absorb attribute: 2 -> 1.5  
+Absorb fatigue: 4 -> 3    
+Detect animal: 0.75 -> 0.2  
+Detect enchantment: 1 -> 0.3  
+Detect key: 1 -> 0.3  
+Dispel: 5 -> 3    
+Reflect: 10 -> 2  
+Soul trap: 2 -> 4    
+Spell absorption: 10 -> 2  
+Telekinesis: 1 -> 2  
 
 
 ==**Restoration**==  
-Resist paralysis 0.2 -> 0.05    
-Resist common disease 2 -> 0.1    
-Resist fire/frost/shock/poison 2 -> 0.4    
-Resist magicka 2 -> 0.5    
-Resist blight disease 5 -> 0.2    
-Resist corprus disease unchanged (5)  
-Fortify attribute 1 -> 0.5    
-Fortify skill 1 -> 1.5  
-Restore attribute 1 -> 5   
-Restore fatigue 1 -> 1.5    
-Restore health 5 -> 6.5  
-Cure Poison: unchanged (100)  
-Cure Paralysis: unchanged (100)  
-Cure common disease 300 -> 450  
-Cure blight disease 2000 -> 700  
+
+Cure blight disease: 2000 -> 800  
+Cure common disease: 300 -> 450  
+Fortify attribute: 1 -> 0.7   
+Fortify skill: 1 -> 1.5  
+Resist blight disease: 5 -> 0.2  
+Resist common disease: 2 -> 0.1  
+Resist fire/frost/shock/poison: 2 -> 0.4  
+Resist magicka: 2 -> 0.5  
+Resist paralysis: 0.2 -> 0.1  
+Restore attribute: 1 -> 5  
+Restore fatigue: 1 -> 1.5  
+Restore health: 5 -> 6.5  
+

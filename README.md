@@ -14,43 +14,47 @@ If you enjoy this work please support tes3mp and OpenMW, without which this woul
 
 ### **EncoreMP project status**  
 
-This is the third public beta release of EncoreMP: V0.90
+This is the fourth public beta release of EncoreMP: V0.91
 
-It requires the ESP file `EncoreMPV090` to function as intended (this is for balance reasons, and due to some changes to how the GMSTs operate). See the ESP companion file for more details on these changes. There is also an optional content ESP in the repository that balances birth-signs and racial abilities, but it is not required to play EncoreMP.
+**Hosted at**: https://github.com/Tower-Numid/EncoreMP
 
-Hosted at: https://github.com/Tower-Numid/EncoreMP
+**Live release (V0.91) download page**: [add when setup]
 
-Live release (V0.90) download page: [add when setup]
+**Required and optional ESP files**
+- V0.91 requires the ESP `EncoreMPV091` to function as intended (this contains spell effect cost changes and minimal GMST changes)
+- The optional content ESP `EncoreMPV091newcontent`  balances birth-signs and racial abilities
+- The optional (but strongly recommended) spell buying ESPs update the magicka costs of spells for sale by NPCs (see the mechanics section for more details)
+    - You should only load **one** of the three spell buying ESP files
+    - These are a huge quality of life feature, but they are optional and can be left out if they conflict with other content
 
-Discussion page: https://github.com/Tower-Numid/EncoreMP/discussions  
 
 ### **Contents**
 1. An introduction to EncoreMP
-2. Mechanical changes made by EncoreMP
-   <ol type="1">
-	 <li>Climbing</li>
-	 <li>New difficulty system</li>
-     <li>Enchanting overhaul</li>
-     <li>Experience gain adjustments</li>
-     <li>Training costs and skill book adjustments</li>
-     <li>Player resist magicka cap</li>
-     <li>Melee combat changes</li>
-     <li>Hand to hand combat changes</li>
-     <li>Ranged combat changes</li>
-     <li>Armour rating adjustments</li>
-     <li>Armorer overhaul</li>
-     <li>Mercantile overhaul</li>
-     <li>Alchemy overhaul</li>
-     <li>Pickpocketing overhaul</li>
-     <li>Athletics and swimming</li>
-     <li>Willpower buff</li>
-     <li>NPC spellcasting locked to base game effect costs</li>
-     <li>Miscellaneous changes</li>
-     <li>Sneak openMW fix</li>
-	</ol>
-3. TES3MP project information
-4. Known issues & comments
-5. Partner files
+2. Mechanical changes made by EncoreMP    
+	2.1. Climbing    
+	2.2. Difficulty system overhaul   
+	2.3. Enchanting overhaul    
+	2.4. XP gain changes    
+	2.5. Training cost changes    
+	2.6. Resist magicka cap    
+	2.7. Melee combat changes    
+	2.8. Hand to hand combat changes    
+	2.9. Ranged combat changes    
+	2.10. Armour rating changes (various)    
+	2.11. Armorer overhaul    
+	2.12. Mercantile overhaul    
+	2.13. Alchemy overhaul    
+	2.14. Pickpocketing overhaul    
+	2.15. Swimming    
+	2.16. Willpower buff    
+	2.17. NPC spellcasting engine fixes    
+	2.18. Misc changes    
+	2.19. Sneak openMW fix    
+	2.20. Updated spell magicka costs in spell-buying menus    
+3. New gameplay settings
+4. TES3MP project information
+5. Known issues & comments
+6. Partner files
 
 # [1] An introduction to EncoreMP
 
@@ -89,17 +93,29 @@ If not, see the installation instructions from the tes3mp quickstart guide on Gi
 
 Once you have installed a working version of tes3mp somewhere on your computer, all you need to do is:
 
-1. Download the release version of this project from Github (V0.90)    
-2. Move the ESP file `EncoreMPV090` into Morrowind's 'data files' folder, as is done with other ESP mods     
-3. Unzip the rar file `EncoreMP.V0.90.beta.rar` anywhere on your computer
+1. Download the release version of this project from Github (V0.91)    
+2. Move the ESP file `EncoreMPV091` into Morrowind's 'data files' folder, as is done with other ESP mods     
+2a. Do the same for the appropriate spell list ESP to enable updated spell magicka costs from merchants     
+2b. Do the same for the optional content ESP if you want it
+3. Unzip the rar file `EncoreMP.V0.91.beta.rar` anywhere on your computer     
 4. Within that folder, set your modlist via the openmw-launcher to match that required by the server  
-   - 	By default the server `requiredDataFiles` lists Morrowind, Tribunal, Bloodmoon, and EncoreMPV090.ESP. However as with tes3mp any mods can be added to the server  
+   - By default the server `requiredDataFiles` lists Morrowind, Tribunal, Bloodmoon, and EncoreMPV091.ESP. However as with tes3mp any mods can be added to the server  
 5. EncoreMP can then be played within the unzipped folder from anywhere on your computer  
 
+**Spell list ESP files, (use only one)**
+ - Using one of these ESPs is strongly recommended for quality of life. They will update the magicka costs of pre-made spells for sale at merchants for the content listed below
+ - Load only **one** of them
+    - `EncoreMPV091Spells1Base` for Morrowind, Bloodmoon, and Tribunal
+    - `EncoreMPV091Spells2TRcore` for Morrowind, Bloodmoon, Tribunal, Tamriel data, and Tamriel mainland
+    - `EncoreMPV091Spells3TRall` for Morrowind, Bloodmoon, Tribunal, Tamriel data, Tamriel mainland, Project Cyrodil, and Skyrim Home of The Nords
+- If you have content not listed above you can still use it without issues, but any pre-made spells from that content for sale at merchants will not have their magicka costs updated in menus
+    - It is possible to make your own ESPs for any new content, but currently it has to be done by hand in the creation kit, which can be very time consuming for large content packs
+ 
 
 ### **What does it change?**
 
-Here is a brief summary of the changes made. For more details see the mechanical changes section below, not everything is listed here (unless stated all changes only affect the player character):
+This is a brief summary of the changes made. For more details see the mechanics section below. Not all features are listed here.    
+Unless stated, all changes made by EncoreMP affect the player only and not NPCs/creatures.
 
 **Skills:**
 - Enchanting has been overhauled - making scrolls is now viable, any item can hold a reasonable enchantment, the skill is more viable at low levels
@@ -119,7 +135,7 @@ Here is a brief summary of the changes made. For more details see the mechanical
 - The effect of the difficulty setting has been massively revised. Melee scaling has been balanced, and all player magic damage, and all player allies, are now affected by difficulty scaling!
 - More experience is now required to advance at higher skill levels
 - Paying for skill training is much more expensive at high skill levels
-- Books that increase your skill when read stop granting skill increases at skill level 95 and above
+- Books that increase your skill when read stop granting skill increases at skill level 90 and above
 - The player no longer benefits from resist magicka values above 60%
 - The willpower attribute has been buffed, it now contributes more to spell casting success rates and grants small amounts of resist magicka when willpower is raised above 50
 
@@ -129,29 +145,36 @@ Here is a brief summary of the changes made. For more details see the mechanical
 
 
 
-# [2] Mechanical changes made by EncoreMP
+**Setting:**
+- As of V0.91 the first wave of new server settings have been added which allow toggling of some EncoreMP features using the server config file 
+- Almost all EncoreMP features will be tied to server settings in the upcoming releases
 
-1. Climbing
-2. New difficulty system
-3. Enchanting overhaul
-4. XP gain changes
-5. Training cost changes
-6. Resist magicka cap
-7. Melee combat changes
-8. Hand to hand combat changes
-9. Ranged combat changes
-10. Armour rating changes (various)
-11. Armorer overhaul
-12. Mercantile overhaul
-13. Alchemy overhaul
-14. Pickpocketing overhaul
-15. Swimming
-16. Willpower buff
-17. NPC spellcasting engine fixes
-18. Misc changes
-19. Sneak openMW fix
 
-## 1, Climbing
+
+# [2] Mechanical changes
+
+	2.1. Climbing    
+	2.2. Difficulty system overhaul   
+	2.3. Enchanting overhaul    
+	2.4. XP gain changes    
+	2.5. Training cost changes    
+	2.6. Resist magicka cap    
+	2.7. Melee combat changes    
+	2.8. Hand to hand combat changes    
+	2.9. Ranged combat changes    
+	2.10. Armour rating changes (various)    
+	2.11. Armorer overhaul    
+	2.12. Mercantile overhaul    
+	2.13. Alchemy overhaul    
+	2.14. Pickpocketing overhaul    
+	2.15. Swimming    
+	2.16. Willpower buff    
+	2.17. NPC spellcasting engine fixes    
+	2.18. Misc changes    
+	2.19. Sneak openMW fix    
+	2.20. Updated spell magicka costs in spell-buying menus    
+
+## [2.1] Mechanics: Climbing
 
 **The acrobatics skill now lets you climb**
 - The player's acrobatics skill now lets them climb increasingly steep surfaces by attempting to walk up them
@@ -172,13 +195,13 @@ Below are some examples of how these changes affect game play:
 - 77° - Reached at skill 80. Practically any exterior obstacle is now scalable, although not necessarily in a straight line (some very sleep slopes may require some moving around to find a path still). A lot of spacious interiors (such as caves) are climbable now as well
 - 89° - Reached at skill 92. Any surface with an angle of 89° or below can be climbed, this is essentially everything in the game apart from walls
 
-## 2, New difficulty system
+## [2.2] Mechanics: Difficulty system overhaul
 
 The difficulty system has been completely reworked and re-balanced.
 
 For ease of balancing during development, the game was also moved from a 'sliding bar' type difficulty, where any integer value can be used as a difficulty setting, to a a 'tiered' difficulty system like in later games. The difficulty setting is adjusted as with core tes3mp in the server config file. See below for a table of difficulty tiers.
 
-The difficulty settings now scale ALL player damage dealt and taken including: magic damage, fatigue from hand to hand, reflected damage, elemental shields. As of V0.90 player allies also obey difficulty scaling and deal less damage on higher difficulties, but take the same damage at all difficulty levels (intended for balance reasons)
+The difficulty settings now scale ALL player damage dealt and taken including: magic damage, fatigue from hand to hand, reflected damage, elemental shields. Player allies also obey difficulty scaling and deal less damage on higher difficulties, but take the same damage at all difficulty levels (intended for balance reasons)
 
 These settings have been tuned for co-op multiplayer, so damage done is more heavily penalised than damage taken.
 
@@ -234,7 +257,7 @@ The new difficulty tiers are controlled by the global difficulty score in the se
 - There is no difference in difficulty within a given tier, e.g. setting it to either 201 or 999 will have the same effect (Nerevarine difficulty), and setting it to 52 or 96 would both result in Master difficulty
 - The only reason the number ranges were kept was so that it would be easier to go back to a sliding scale system later on if needed
 
-## 3, Enchanting overhaul
+## [2.3] Mechanics: Enchanting overhaul
 
 **Every item now has a usable enchanting capacity**
 - All items in the game that can be enchanted have increased enchanting capacities, with a capacity of 30 (approximately) being the new minimum. Very high capacity items in the base game are either unchanged or have been reduced in capacity slightly by the new logic
@@ -293,12 +316,13 @@ The new difficulty tiers are controlled by the global difficulty score in the se
 - On strike enchantments (scrolls) cost start at 1x GMST and increase in cost per point non-linearly, and at 25 points have the "impossible cost" applied
 	- For reference, the most damaging on-strike enchantments, found on artefacts, are around the 20-25 point cost range
 - Ammunition will enchant in batches of 20, if the default server settings are left as is, and the price for a set of 20 ammunition. Ammunition follows the same cost logic as on-strike but at 1/10th the price
-- Constant effect enchantments cost 2x GMST per point (2000g per point). As of V0.90 this a linear cost per point, it may be revised in future to be more expensive at the high end
+- Constant effect enchantments cost 2x GMST per point (2000g per point). As of V0.91 this a linear cost per point, it may be revised in future to be more expensive at the high end
 
 
-## 4, Experience gain adjustments
+## [2.4] Mechanics: Experience gain adjustments
 
-The rate of experience gain for all skills has been adjusted. Note that many of the experience gain values were also adjusted in the ESP file to complement these changes, see the ESP companion file for more information.
+The rate of experience gain for all skills has been adjusted. Note that many of the experience gain values were also adjusted in the ESP file to complement these changes, see the ESP companion file for more information.    
+	- [`A new server setting has been added which acts as a global XP gain modifier, to reduce or increase all XP gained for skills by a percentage`]
 
 Overall experience gain has been reduced at high skill levels. This was done to delay the point at which many character's reach the 'power threshold' and begin to find most of the game's content too easy.
 
@@ -330,11 +354,12 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 	- 40 magicka, x4.07
 	- 50 magicka, x4.95
  
-## 5, Training costs and skill book adjustments
+## [2.5] Mechanics: Training costs and skill book adjustments
 
-- Skill books no longer grant skill increases when the relevant skill is at level 95 or above
+- Skill books no longer grant skill increases when the relevant skill is at level 90 or above
+	- [`This feature can be disabled in the server settings`]
 - Paying to train skills has been made more expensive, and the cost of training now increases non-linearly with skill level
-- The change to training costs respects the GMST (`iTrainingMod`), which has been set to 7 in V0.90
+- The change to training costs respects the GMST (`iTrainingMod`), which has been set to 7 in V0.91
 - If you want to adjust the training costs shown below you can do so by adjusting the GMST value.
 	- Note that these are the base costs to train a skill at the example levels, and that your mercantile skill will reduce the cost of training as in the base game
 
@@ -351,7 +376,7 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 | 90           | 6300                                       | 630            |
 | 99           | 10150                                      | 697            |
 
-## 6, Player resist magicka cap
+## [2.6] Mechanics: Player resist magicka cap
 
 - The resist magicka effect now provides no benefit to the player above 60%
 	- This change was implemented for balance reasons. Reaching 100% resist magicka allowed the player to negate most of the downsides of unique items and to be immune to a wide range of dangerous spells in the late game
@@ -366,51 +391,50 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 	- It was decided to leave this AI behavior mismatch unchanged, as otherwise the AI would have to have been adjusted which could have resulted in unintended behaviour (especially when an AI is fighting another AI, like a summon or a guard)
 	- This may be resolvable in a future version
 
-## 7, Melee combat changes
+## [2.7] Mechanics: Melee combat changes
 
 **Weapon accuracy**
 - Melee accuracy is now higher at low skill levels (player accuracy at 5 skill is now around 15% versus most low level enemies, versus around 5% in the base game)
 - Melee accuracy now scales slightly slower, and reaches a lower final value at 100 skill 
-	- At 100 skill, against the strongest enemies, the player's hit chance will be around 90% with a 1x fatigue modifier, around 108% with a 1.25x fatigue modifier, and only around 72% with a 0.75x modifier
-	- In the base game you reaches 100% accuracy at 80 skill with a 1.25x fatigue modifier, and 100% accuracy at 100 skill with a 1x fatigue modifier
+	- At 100 skill, against the strongest enemies, the player's hit chance will be around 90% with a 1x fatigue modifier
+	- Accuracy from skill is now 10 + (weapon skill x 0.8)
 - **Two handed weapons now give a flat -15% chance to hit**
 	- This was added to make the choice between one and two handed weapons more meaningful, and to distinguish two handed weapons as items requiring more skill to use effectively
 	-  There are some exceptions to this, see the weapon type changes below
+	- [`This accuracy penalty can be disabled via the server settings`]
 
 **Weapon damage scaling**
-- Your strength attribute now contributes half as much as in the base game to your melee weapon damage scaling (both positive and negative)
-	- For example a strength score of 100 now adds +25% damage to weapon damage instead of +50%
-	- A strength score of 1 now applies a -25% damage modifier instead of a -50% modifier
-- The relevant melee weapon skill now contributes to damage done with melee weapons. In the base game your weapon skills only affected accuracy
-- The contribution from skill follows the same logic as strength does in EncoreMP
-	- At 100 weapon skill you get a +25% damage modifier to the relevant weapons
-	- At a weapon skill of 1 you take a -25% damage penalty
-	- For example in EncoreMP, if you have had a strength score of 100 and a weapon skill of 50, you would get a sum +25% increase to damage dealt
-		- If you had 100 strength and 100 skill you would get a +50% damage modifier
-		- If you had 50 skill and 1 strength, you would get a -25% damage modifier
-		- If you had 1 skill and 1 strength you would get a -50% damage modifier
+- Your weapon damage modifier is now determined by both your weapon skill and your attributes
+- Your skill adds +25% damage at 100 skill, and inflicts a -25% damage penalty at 1 skill
+- Your strength add +25% damage at 100 strength, and inflicts a -25% damage penalty at 1 strength
+- These stack, so at 100 skill and 100 strength you reach the +50% damage modifier that you would normally reach in the base game
+- Some weapon types (long blades, axes, and maces) gain additional damage modifiers from your attributes, see blow
 
 **Weapon type benefits**
 - All weapons now have an additional mechanical benefit, depending on what type they are
 	- **Short blades** receive a flat +10% to hit chance (equivalent to about 15 skill levels)
 	- **Spears** receive a flat  +10% to hit chance and do not receive the -15% to hit that all other 2h weapons do
-	- **Long blades** gain additional bonus damage from the characters agility score as well as their strength
-		- For every 10 points of agility above 50, long blades gain +5% damage, reaching +25% damage at 100 agility
-		- This stacks with the bonuses to damage that all weapons receive from strength and skill
-		- There is no penalty to damage for being below 50 agility
-		- For example if a character had 100 skill, strength and agility they would do 175% damage with long blades
-		- If they had 30 agility, 50 strength and 50 skill they would do 100% weapon damage
-	- **Maces and Axes** gain additional bonus damage from the characters strength score when it is above 50, in addition to the normal bonuses the character receives from their strength and from their skill
-		- This follows all of the same rules as described above for long blades
-		- For example if a character had 50 skill and 100 strength, they gain a +50% damage bonus when using maces or axes. This is because they first receive the baseline +25% damage boost that all weapons would get from 100 strength, and then the additional +25% boost from strength that maces/axes receive using the same logic as described for long blades
-		- In effect maces/axes scale twice with strength
 	- **Staves** (a sub-set of blunt weapons) receive a flat +20% to hit chance, and do not take the -15% to hit that other 2h weapons do
-		- In the base game staves are classed as belonging to a different weapon group than all other blunt weapons. Staves are classified as `BluntTwoWide` weapons in the core game ESM files, and all staff like weapons added by the original developers have very low damage comapred to all other weapon types
-		-  The +20% bonus to hit was given to everything in the `BluntTwoWide` weapon category. As a result if modded content adds powerful two handed blunt weapons to this category, they will wrongly recieve the accuracy bonus and may be overpowered
-		- As of writing this, this is not an issue in any tamriel rebuilt content, however if required this change will be reverted in future
+		- Staves are classified as anything in the category `BluntTwoWide`
+		- All staff weapons in the base game and tamriel rebuilt have very low damage
+		- A +20% hit chance has been given to everything in the `BluntTwoWide` weapons category
+		- Note that if a mod adds a powerful two handed blunt weapon as `BluntTwoWide` to this category, it will also receive this accuray boost and may be a little overpowered
+		- [`The stave accuracy bonus can be disabled via the server settings. If disabled staves will take the -15% accuracy penalty that all two handed weapons do, unless that feature is also disabled`]
+	- **Long blades** gain additional bonus damage from the players agility (in addition to the damage bonuses from strength and skill described in weapon damage scaling)
+		- For every 10 points of agility above 50, long blades gain an additional +5% damage modifier
+		- This equates to a +25% damage at 100 agility, and the bonus from attributes is not capped (buffing past 100 will help)
+		- There is no penalty to damage for being below 50 agility
+		- Example: A character has 100 skill, 100 strength, and 100 agility. They do 175% damage with long blades
+		- Example: A character has 30 agility, 50 strength and 50 skill. They do 100%  damage with long blades
+		- [`Long blades can be toggled to use strength instead of agility via the server settings`]
+	- **Maces and Axes** gain additional bonus damage from the characters strength score when it is above 50, following the same logic as described above for long blades
+		- This is in addition the damage scaling every weapon type gets from strength and skill
+		- For every 10 points of strength above 50, axes and maces gain an additional +5% damage modifier
+		- Example: A character has 100 skill and 50 strength. They do 125% damage with axes/maces
+		- Example: A character has 100 skill and 100 strength. They do 175% damage with axes/maces
 
 
-## 8, Hand to hand combat changes
+## [2.8] Mechanics: Hand to hand combat changes
 
 **Health damage done**
 - Health damage done by hand to hand attacks has been increased by adjusting the GMST in the ESP file,`fHandtoHandHealthPer`, which has been increased from 0.1 to 0.4
@@ -433,7 +457,7 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 - The reason the OpenMW behaviour was changed was that previously it resulted in unusual behaviour at low strength values, and gave very high scaling with strength past 100
 
 
-## 9, Ranged combat changes
+## [2.9] Mechanics: Ranged combat changes
 
 **Accuracy**
 - Ranged weapons follow the same logic as the melee accuracy changes, but in addition all ranged attacks recieve a flat +20% to their hit chance
@@ -459,7 +483,7 @@ Overall experience gain has been reduced at high skill levels. This was done to 
 	- e.g. changing the GMST to 10 would mean you end up with (at 100 skill) a 20% chance to recovery magical ammunition and a 40% chance to recover normal ammunition
 	- There are no issues with increasing the GMST value. If you end up with over a 100% chance to recover ammunition (e.g. by setting the GMST to 200), there are no bugs or unusual behaviour
 
-## 10, Armour rating adjustments (player and creatures)
+## [2.10] Mechanics: Armour rating adjustments (player and creatures)
 
 **Player: equipment derived armour ratings**
 
@@ -505,7 +529,7 @@ This was done to make creatures a little more durable against physical attacks, 
 	- At 100 speed and 100 agility, you would recieve a 1.5x multiplier. This means at 100 skill, agility, and speed, you would have an unmaroured rating of 225 (comparable to some medium armour at full skill, but not quite as good as full heavy armour at 100 skill)
 - The calculations above respect the GMST `fUnarmoredBase1` and they assume it has the default value of 0.1, which results in the above armour scores
 
-## 11, Armorer overhaul
+## [2.11] Mechanics: Armorer overhaul
 
 In the base game once you were able to reliably repair an iron sword, you could reliably repair anything, so there was not much benefit to levelling the skill.  
 
@@ -554,14 +578,14 @@ The following changes have been made,
 - An extra rule has been added so that you can never be asked to pay more than 3.33gp per point of item health, to account for very expensive and low durability items. e.g. a 50 health item worth 5000gp, some enchanted helms in the base game, will only cost 166gp to repair instead of the full 5000 x 0.33 = 1650gp
  
 
-## 12, Mercantile overhaul
+## [2.12] Mechanics: Mercantile overhaul
 
 **The player now earns experience through the value of items sold, not by haggling**
 - The player now earns mercantile experience not by haggling, but based on the value of items they sell (and how much they sell them for)
 	- Earning experience through haggling was completely removed during development for ease of testing and balance, though it could be re-enabled in a future version
 - You do not earn any experience from buying items, this was an intentional design choice as it opened up many ways to exploit the new system
-- The player earns 1 experience for every 111gp they make in sales as of V0.90. So for example at skill 30 you need 30 experience to level, so you would have to sell a total of around 3300g worth of item to level
-- If this rate seems too low, or high, you can adjust it by changing the experience value for a successful bargain in the ESP file. This is set to 0.45xp in V0.90, and that figure results in the gold to XP ratio described above
+- The player earns 1 experience for every 111gp they make in sales as of V0.91. So for example at skill 30 you need 30 experience to level, so you would have to sell a total of around 3300g worth of item to level
+- If this rate seems too low, or high, you can adjust it by changing the experience value for a successful bargain in the ESP file. This is set to 0.45xp in V0.91, and that figure results in the gold to XP ratio described above
 - If you sell an item for less than the offer made by the NPC you will receive less experience proportional to how much you discounted the sale (as giving things away cheaply is not good merchant behaviour)
 - The value of any items you receive in exchange for a sale you make is also counted towards the 'sale value' for the purpose of awarding experience. For example,
 	- If you have 1000g worth of gems, and the merchant makes an initial offer of 500gp - you stand to earn 4.5xp from the transaction (the system uses the sale value of the items, not their base value)
@@ -581,7 +605,7 @@ The following changes have been made,
 	- This was done to stop a potential exploit, where you otherwise can break even from buying/selling something by haggling, and endlessly circulate the item back and forth for free experience
 
 
-## 13, Alchemy overhaul
+## [2.13] Mechanics: Alchemy overhaul
 
 This is a complete overhaul of the skill, changing nearly everything about it, but the end result is it still behaves in practise a lot like core alchemy.
 
@@ -692,7 +716,7 @@ The order of operations in EncoreMP is:
 - For example, if you make a potion using a gemstone worth 200g and some saltrice worth 1g, the average ingredient value would be 100.5g, and you would receive a flat +24% to your odds of making the potion
 
 
-## 14, Pickpocketing overhaul
+## [2.14] Mechanics: Pickpocketing overhaul
 
 **Pickpocketing difficulty overhaul**
 - In the core game your chance of pickpocketing anything more than 100-200g was essentially zero, even at maximum skill, due to how heavily weighted item value was in the equations
@@ -739,7 +763,7 @@ The order of operations in EncoreMP is:
 	- Note that the engine now treats this GMST differently in EncoreMP due to code changes, and expects it to be 1.0 to produce the above example difficulties  
 - You can adjust the gold values which the player can steal by adjusting the GMST. Lowering it makes it easier to steal, for example setting it 0.1 in the new engine means that you would be able to steal (and see) 10x the stated values above
 
-## 15, Athletics and swimming
+## [2.15] Mechanics: Athletics and swimming
 
 - In the base game, the player's swimming speed is set to 50% of their running speed before factoring in their athletics skill. Levelling your athletics skill from 1-100 scales this from 50% of your running speed up to 60%. This was not very noticeable.
 - Now your swimming speed scales from 50-80% of you running speed as you go from 1-100 skill
@@ -747,7 +771,7 @@ The order of operations in EncoreMP is:
 	- This cap was only added as guarding, since technically in both systems your swimming speed is rising proportional to the square of your athletics, so there is a slim risk of reaching some truly absurd numbers and crashing the game
   
 
-## 16, Willpower buff
+## [2.16] Mechanics: Willpower buff
 
 Willpower has been given a slight buff, and also now gives a small amount of resist magicka.
 - Your willpower now contributes 1.5x as much as it did in the base game to your spellcasting success rate (before factoring in the fatigue modifier)
@@ -755,7 +779,7 @@ Willpower has been given a slight buff, and also now gives a small amount of res
 	- Every 10 points of willpower above 50 adds 2% resist magicka, so 100 willpower gives 10% resist magicka
 	- This stacks with normal resist magicka additively, but still obeys the hard cap of 60% for resist magicka
 
-## 17, NPC spellcasting locked to base game effect costs
+## [2.17] Mechanics: NPC spellcasting locked to base game effect costs
 
 This is a purely 'behind the scenes' change to the engines behaviour. If you are not changing the spell effect costs in the ESP file you can ignore this section.
 
@@ -765,14 +789,14 @@ NPCs are now hard coded to use the base game spell effect costs regardless of th
 
 A consequence of this is that the game now expects NPCs to only use handcrafted spells, or auto-calculated spells that were made (auto-calculated) in the creation kit with the base game spell effect costs. Tamriel Rebuilt does not change the spell effect costs, so this has no impact on any Tamriel Rebuilt content.
 
-## 18, Miscellaneous changes
+## [2.18] Mechanics: Miscellaneous changes
 
 - The sound played when repairing equipment with armorer's tools has been reduced to 50% of the original volume
 	- It was way too loud
 - Enchanted on-strike weapons no longer display the "no-charge" message when their charge is depleted, and no longer play the "no-charge" sound effects when attacking with insufficient charge
 - The server and client have been recompiled (a big thanks to Skooma-Breath for their help with the server) so that they have different checksums. This prevents EncoreMP clients and servers from connecting to other versions of tes3mp
 
-## 19, OpenMW fix to sneaking behaviour 
+## [2.19] Mechanics: OpenMW fix to sneaking behaviour 
 
 EncoreMP now includes the fix added to OpenMW in V0.50: https://gitlab.com/OpenMW/openmw/-/issues/6029 which makes it so that out of combat you only have to pass sneak checks periodically.
 
@@ -791,7 +815,102 @@ This meant that the sneak icon was not a reliable indicator of whether you were 
 
 Now out of combat, once you are hidden you should have a reliable 5 second window to do things in - but be aware that any changes to your stats, the enemy's stats, or either of your positionings, can potentially still cause you to be seen (this is intentional behaviour and mirrors the original version of the game)
 
-# [3] TES3MP project information
+
+## [2.20] Mechanics: Updated spell magicka costs in spell-buying menus    
+
+**Summary**
+
+- If you want spell costs in the menus to be updated to reflect the new spell effect costs, use one of the spell list ESPs
+- Only use one
+- There is no consequence to not including them, or mis-matching the versions, except that pre-made spells for sale will have unchanged magicka costs
+
+**Background to this change**    
+A behind the scenes change has been made to how the spell buying menu works, this affects all spells for sale by NPCs.    
+
+EncoreMP updates some spell effect costs, however these effect changes only affect custom spells, enchantments, and potions made by the player. All pre-made spells for sale by NPCs are unaffected by this and retain their original magicka costs.
+
+This could be addressed by updating the magicka costs of all pre-made spells in the game manually via an ESP file.   
+
+However since pre-made spells are used by every NPC in the game, updating pre-made spell costs would change NPC behaviour in several ways:
+- The most serious consequence of changing pre-made spell costs is that NPCs may no longer be able to cast the spells assigned to them by the engine
+    - e.g. If you updated the spell "firebloom" to cost 110 magicka, no fire atronach in the game would be able to cast their signature spell anymore!
+    - This is an extreme example, but even small changes to spell costs will disrupt the balance and intended behaviour of NPCs
+- Auto-generated NPC spell lists (a feature used a lot by the original developers) may udpdate themselves to reflect the new costs, resulting in unintended changes to NPC spell lists
+- Spellcasting difficulty for NPCs depends on spell magicka costs (NPCs don't get a free 100% casting success rate in Morrowind, they actually have to pass a spellcasting check just like the player - increasing spell costs can make spells too hard for an NPC to ever succeed at)
+
+**The engine change to address this**    
+This is not the easiest solution to maintain in the long run, but it has been tested and is working with no issues.    
+
+The engine has been updated so that it is possible to buy modified versions of the spells that an NPC knows, without having to change the costs of the original spells. This avoids all of the issues listed above.    
+
+This has done via a change to the code for the spell buying menu,     
+- For every spell for sale by an NPC, the engine now looks for a 'variant' of that spell in the ESP files
+- If it can find a 'variant' it shows that to the player instead, if not it falls back to showing the original spell
+- A 'variant' is always the spells original ID, concatenated with the prefix `@`
+    - '@' was chosen as it is never used in the base game or Tamriel Rebuilt spell lists, and is very unlikely to be used in other modded content
+- For example, if an NPC would normally sell the spell "Fireball" (ID: "fireball") to the player, the engine will now look in the ESP files to see if there is a spell with the ID "@fireball"
+- If it can find "@fireball", it will show that to the player **instead** of the original "fireball" spell
+- This way it is possible to manually assign new costs to any spell you want, as a variant, whilst leaving the original spell untouched
+
+**Pre-made spell ESPS**    
+There are three ESPs included in the V0.91 release that contain manually populated lists of spells with the @ prefix and updated costs.     
+You should only load one of these ESPs:
+- `EncoreMPV091Spells1Base` for Morrowind, Bloodmoon, and Tribunal
+- `EncoreMPV091Spells2TRcore` for Morrowind, Bloodmoon, Tribunal, Tamriel data, and Tamriel mainland
+- `EncoreMPV091Spells3TRall` for Morrowind, Bloodmoon, Tribunal, Tamriel data, Tamriel mainland, Project Cyrodil, and Skyrim Home of The Nords
+
+By loading one of these ESPS, every spell for sale in the game will have  updated magicka costs that reflect the spell effect cost changes, and all spells used by NPCs will be unchanged.
+
+- It does not matter too much if you don't load any of these ESPs, the only consequence is that pre-made spells for sale will still have their original magicka costs    
+- These ESPs have been intentionally seperated from the main EncoreMP file so that you can modify them yourself or take them out completely if you already have content that changes spell costs
+- These are all up to date with the most recent main releases for these projects as of February 2026, however the only consequence of using them with the wrong versions will be that that some spells for sale will still have their original magicka costs
+- These ESPs have been manually populated, so if you further modify EncoreMP yourself by changing the spell effect costs, you are going to have to go in and manually update these as well (sorry!) 
+- **If you want to make your own variant spell lists, see the compiling notes file (section 30) for more information on how this works**   
+
+
+**Planned long term solution**
+
+- I am not yet sure if this is feasible, but in the long term the intention is to make a simple program that rips the contents of your ESP files and auto-generates a new spell list ESP based on the current spell effect costs
+- This way you will be able to update the spell effect costs yourself, and then automatically re-generate the spell list
+- This will also allow for automatic patching with any other modded content
+
+# [3] New gameplay settings
+
+There are several new gameplay settings which can be configured via the server `config.lua` file.    
+These are server wide, to prevent desync in behaviour, and so configured by the server owner prior to launch.    
+
+**Complete list of new server settings**    
+
+`"long blades use agility for damage scaling"` - Boolean    
+- True: Long blades use agility to scale their bonus damage
+- False: Long blades use strength to scale their bonus damage (like axes and maces)    
+
+`"two handed weapons receive an accuracy penalty"` - Boolean
+- True: two-handed weapons take the -15% to hit penalty
+- False: two-handed weapons recieve no penalty to their hit chance 
+
+`staves receive accuracy bonus instead of two handed penalty` - Boolean    
+- True: Staves recieve the +20% to hit chance bonus
+- False: Staves use whatever modifier applies to other 2h weapons (if 2h accuracy penalty is on, staves take the -15% hit chance penalty, if that setting is also false then staves take neither the +20% bonus nor the -15% penalty) 
+
+`skill books have level limit` - Boolean  
+- True: Skill books do not advance a players skill past 90
+- False: Base game behaviour, skill books work at any level
+
+`global XP gain multiplier` - Float
+- This value is multiplied by the XP earned for all skills
+- 1.0 by default 
+- Examples
+    - 1.0 = all XP gain is multiplied by 1 (no effect)
+    - 0.2 = all XP gained is reduced to 20%
+    - 1.5 = all XP gain is increased to 150%
+- Cannot be set to 0 or to negative values
+    - If you do this, the engine will default back to normal (1.0) XP gain to prevent errors
+- If you want to effectively disable XP gain globally set it to something like 0.00001
+- Otherwise no upper or lower limits
+
+
+# [4] TES3MP project information
 
 This section has been copied verbatim from the tes3mp project information as requested by the original authors of that work - see this section for details about tes3mp, OpenMW, the authors, and how you can support those projects.
 
@@ -842,18 +961,10 @@ Feel free to contact the [team members](https://github.com/TES3MP/TES3MP/blob/ma
 
 
 
-# [4] Known issues & comments
-
-**Base game pre-made spells retain their original magicka costs**
-- Pre-made spells sold by merchants do not reflect the updated ESP spell effect costs - Instead of responding to the changes made in the ESP file, these spells retain their original magicka costs as if the magic effects were still at their base game values 
-- This appears to be a core feature of OpenMW and tes3mp - and forcibly updating the magicka costs of all spells would result in changes to AI combat behaviour and changes to AI auto-generated spell lists
-- For these reasons the base game spells were left at their original values for V0.90
-- There is the potential to address this in a future version in a way that should preserve the original costs for NPCs and creatures, whilst giving the player the updated costed versions when buying pre-made spells (this is being worked on currently)
-- The workaround during play in V0.90 is to buy a spell with the effects you want, and then to re-make it via spellmaking as a custom spell - anything made via the spellmaking menu will use the updated ESP effect costs
-- Since some spell effects have been made more expensive in EncoreMP, pre-made spells which use those effects (levitate, open, fortify skill, and a few others) are cheaper to cast than what the player should have access to via spellmaking. For the time being, you will have to either manually remake these spells or simply house-rule not to use them
+# [5] Known issues & comments
 
 **Enchanting**
-- The V0.90 changes to the enchanting code are a little 'fragile' - Some of the balance depends on the spell effect costs being set to the values in the V0.90 ESP. This will be addressed when enchanting is reviewed in the future
+- The V0.91 changes to the enchanting code are a little 'fragile' - Some of the balance depends on the spell effect costs being set to the values in the V0.91 ESP. This will be addressed when enchanting is reviewed in the future
 	- For the time being you can change the spell effect costs in the ESP file but be wary of the effect on balance, particualrly when lowering the costs of destruction or restoration effects
 
 **Resist magicka**
@@ -863,8 +974,9 @@ Feel free to contact the [team members](https://github.com/TES3MP/TES3MP/blob/ma
 
 **Melee combat**
 - An accuracy boost was given to all 'staff' weapons as part of the melee overhaul. However this achieved by increasing the accuracy of all weapons belonging to the class `BluntTwoWide`  
-- In the base game this category is only used for staff weapons which do very low damage. All other two handed blunt weapons are grouped in a separate category
-- However if modded content adds high damage 2h blunt weapons and classes them as `BluntTwoWide` they will recieve the accuracy boost intended for staffs and be more powerful than intended (as of writing this however, this is not an issue for any tamriel rebuilt content)
+	- In the base game this category is only used for staff weapons which do very low damage. All other two handed blunt weapons are grouped in a separate category
+	- However if modded content adds high damage 2h blunt weapons and classes them as `BluntTwoWide` they will recieve the accuracy boost intended for staffs and be more powerful than intended (as of writing this however, this is not an issue for any tamriel rebuilt content)
+	- [`The staves accuracy bonus can be disabled in the server settings if desired`]
 
 **NPC spellcasting**
 - Several behind the scenes changes were made to the engine to clean up some core game (or at least inherent to OpenMW) issues which affected NPC spellcasting when spell effect costs were changed from their base game values  
@@ -879,17 +991,33 @@ Feel free to contact the [team members](https://github.com/TES3MP/TES3MP/blob/ma
 - The server/client checksum has been correctly updated for  EncoreMP (so that EncoreMP cannot connect to baseline tes3mp servers), however EncoreMP servers still display their checksum as being for "V0.8.1" in the server browsing UI
 	- This was due to an issue with compiling - it is a UI problem only that will be addressed in the future
 
-# [5] Partner files
+**Updated spell magicka costs in spell-buying menus**
+- The effect of the change made is that when the player buys a spell, they actually have the @ variant added to their spellbook
+- e.g. if the player buys 'Poisonbloom' they would actually own the ID '@poisonbloom' behind the scenes
+- Quests or scripts that check for the player owning specific spells will not work if the player owns the variant instead
+    - Luckily in the base game this is not an issue, as it only happens in one quest ("Wizard Spells") and the spells involved do not have @ variants as their spell effect costs have not been changed
+    - I am also not aware of any Tamriel Rebuilt content that checks for spell IDs, but I have not checked everything
+- In any case, if it happens the solution is just to add the correct spell ID via the in-game console, e.g. "player->addspell poisonbloom"
+    - This will still work in every case, the spell ESPs do not affect the original spell records
+- Also, watch out. When adding or removing spells via the in-game console, you have to put quotation marks around spells with an @ prefix, don't ask me why, the console just works that way
+    - `player->addspell @poisonbloom` will not work
+    - `player->addspell "@poisonbloom"` will
+
+**New server settings**
+- Be aware that if you delete a setting entry completely from the server config file, the game will still run as normal with no crashes, but the engine will fall back to using whatever the last value for that setting was, as cached in the openMW `settings.cfg` file
+	- This is not an issue unless you think you have accidentally taken out a setting from the server config file - if in doubt, i'd recommend just downloading a new fresh copy and pasting in the server config file again
+
+# [6] Partner files
 
 **ESP companion**
-- This overhaul requires the ESP file `EncoreMPV090` to function as intended. This ESP adds no new content, it only changes magic effect costs, experience gain values, and some GMSTs
-- See the partner file "EncoreMP V0.90 ESP companion" for a full list of changes made by the ESP
+- This overhaul requires the ESP file `EncoreMPV091` to function as intended. This ESP adds no new content, it only changes magic effect costs, experience gain values, and some GMSTs
+- See the partner file "EncoreMP V0.91 ESP companion" for a full list of changes made by the ESP
 
 **ESP optional new content companion**
-- There is an optional ESP file which overhauls some content in the original game. This is not required, and EncoreMP is not balanced around it. As of V0.90 it includes racial ability changes, birth sign changes, and a change to the (tribunal) assassin spawn script that stops them appearing before level 10
-- See the partner file "EncoreMP V0.90 new content ESP companion" for a full list of changes
+- There is an optional ESP file which overhauls some content in the original game. This is not required, and EncoreMP is not balanced around it. As of V0.91 it includes racial ability changes, birth sign changes, and a change to the (tribunal) assassin spawn script that stops them appearing before level 10
+- See the partner file "EncoreMP V0.91 new content ESP companion" for a full list of changes
 
 **Compiling companion**
-- If you are curious about how the changes were made, or the finer details of the mechanics, have a look at the partner file "V0.90 Beta release compiling changes"
+- If you are curious about how the changes were made, or the finer details of the mechanics, have a look at the partner file "V0.91 Beta release compiling changes"
 - This file contains a complete list of all of the changes made to the base tes3mp code, and some coments on why many of the changes were made
 

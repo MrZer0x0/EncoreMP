@@ -1,9 +1,13 @@
 
-Note the section headings and version references are out of date in places - but the code changes shown are current (V0.90), as is the reasoning behind them
+# Compiling Changelog
+V0.91.    
 
-# 3, Compiling Changelog
+A guide to the coding changes made, and the reasoning behind them. Useful if you want to change parts of the project yourself, or learn about the engine structure.        
 
-## 3.1, Enchanting
+Some sections are missing, this is intentional, they have been removed as they became obsolete.    
+
+
+## 1, Enchanting
 `openmw\enchanting.cpp`
 `openmw\spellutil.cpp`
 
@@ -58,7 +62,7 @@ Note the section headings and version references are out of date in places - but
 ---
 
 
-## 3.1a, Fixing the enchanted item on-use bug I introduced
+## 1a, Fixing the enchanted item on-use bug I introduced
 
 `spellcasting.cpp`
 
@@ -185,19 +189,22 @@ The result is that behaviour is unchanged for on-use items, but for on-strike it
 
 
 
-## 3.2, XP gain
+## 2, XP gain
 `npcstats.cpp`
 - [ ] XP gain changes
 - Changed the `useSkill` function to add a non-linear curve insertion of code block. Simply checks for players base skill level and reduces the XP gained by the multipliers shown in the mechanics changelog depending on level
 - Also changed the `getSkillProgressRequirement` function in `npcstats.cpp` to have a floor value of 20, so skills below 20 will still require 20xp to advance. Done by adding a `std:: max 20` pre-check function to the existing calculation
+- Added a new setting to the engine, `global XP gain multiplier` which is 1.0f by default
+- This is a float value which is multiplied by all XP earned for all skills
+- Good if you want to drag out the low levels and experience an epic TR game
 
-## 3.3, Training costs
+## 3, Training costs
 `trainingwindow.cpp`
 - [ ] Training costs
 - `trainingwindow.cpp` modified in two locations as in section 1.1 work area 2 in such a way as to produce a non-linear increase in training costs for all skills whilst respecting the GMST. So the GMST setting of 10 can be doubled to 20, for example, and the non-linear price increases will also double uniformly.
 - Note that two edits were required (with duplicate code) as this file calculates the cost mechanically and the cost in the UI (training window) independently
 
-## 3.4, MR cap
+## 4, MR cap
 `spellcasting.cpp`
 `inventorystore.cpp`
 
@@ -210,31 +217,45 @@ The result is that behaviour is unchanged for on-use items, but for on-strike it
  - In `inventorystore.cpp` the `updateMagicEffects` function was modified with the same logic but formatted slightly differently as this file required
  - The two changes were necessary as `inflict` in `spellcasting.cpp` covers all possible sources of negative effects except for constant effect enchantments, which are handled via the `inventorystore.cpp` code
 
-## 3.5, Miscellaneous changes and fixes
+## 5, Miscellaneous changes and fixes
 `npcstats.cpp`
 `repair.cpp`
 
-- [ ] Skill books do not work at skill 95 and above anymore
-- Added a single conditional clause that returns the function if the skill-up gain is from a book and the base skill is 95 or above. The relevant function is `increaseSkill` in `npcstats.cpp` under the `if (readBook)` check
-
-- [ ] Reduced the armorer sounds by changing the `repair` function within `repair.cpp` to play the sound at 0.5 instead of 1.0. 
-- This has to be done twice, as the tes3mp also sends a packet with the same information for others to hear. Also whilst the original values (from openmw) are written as "1.0" (which makes them doubles), I had to manually define them as floats when changing this otherwise a type conversion error was called. No effect on gameplay or code behaviour, just worth noting as an implicit conversion that has been made explicit
-## 3.6, Melee changes
+- Skill books do not work at skill 90 and above anymore
+	- Added a single conditional clause that returns the function if the skill-up gain is from a book and the base skill is 90 or above. The relevant function is `increaseSkill` in `npcstats.cpp` under the `if (readBook)` check.
+	- Updated the `npcstats.cpp` file to include `settings.hpp` so that it can get settings
+	- Added a fork in the logic that disables this feature if the Boolean `skill books have level limit` if set to false in the server config file
+- Reduced the armorer sounds by changing the `repair` function within `repair.cpp` to play the sound at 0.5 instead of 1.0. 
+	- This has to be done twice, as the tes3mp also sends a packet with the same information for others to hear. Also whilst the original values (from openmw) are written as "1.0" (which makes them doubles), I had to manually define them as floats when changing this otherwise a type conversion error was called. No effect on gameplay or code behaviour, just worth noting as an implicit conversion that has been made explicit
+## 6, Melee changes
 `npc.cpp`
 `combat.cpp`
 
 **Accuracy**
-- [ ] The change to base hit chance calculations are implemented in the function `getHitChance` within `combat.cpp`. Something like (skill x 0.7) + 20, instead of (skill x1). Agility, luck, fatigue and enemy evasion are all handled normally
-- [ ] 2h accuracy penalties are implemented in the same function `hit` within `npc.cpp`
+- The change to base hit chance calculations are implemented in the function `getHitChance` within `combat.cpp`. Now accuracy is (skill x 0.8) + 10, instead of (skill x1). Agility, luck, fatigue and enemy evasion are all handled normally
+- 2h accuracy penalties are implemented in the same function `hit` within `npc.cpp`
 
 **Damage**
-- [ ] The change to how base damage is calculated (using skill as well as an attribute, with the same sum benefit of +50%) is implemented in the function `adjustWeaponDamage` within `combat.cpp`
+- The change to how base damage is calculated (using skill as well as an attribute, with the same sum benefit of +50%) is implemented in the function `adjustWeaponDamage` within `combat.cpp`
 
 **Weapon type benefits**
-- [ ] Weapon type accuracy variations are implemented in `npc.cpp` within the function `hit`
-- [ ] The changes to what contributes to damage for each weapon are implemented in the function `adjustWeaponDamage` within `combat.cpp`
+- Weapon type accuracy variations are implemented in `npc.cpp` within the function `hit`
+- The changes to what contributes to damage for each weapon are implemented in the function `adjustWeaponDamage` within `combat.cpp`
 
-## 3.7, Ranged changes
+**Gameplay settings**
+- Three new gameplay settings have been added to toggle EncoreMP behaviour
+- "long blades use agility for damage scaling"
+	- If true: Long blades use agility to scale their bonus damage 
+	- If false: Long blades use strength to scale their bonus damage (like axes and maces)
+- "two handed weapons receive an accuracy penalty"
+	- If true: 2 handed weapons take the -15% to hit penalty
+	- If false: 2 handed weapons recieve no penalty to their hit chance 
+- "staves receive accuracy bonus instead of two handed penalty"
+	- If true: Staves recieve the +20% to hit chance bonus
+	- If false: Staves use whatever modifier applies to other 2h weapons (if 2h accuracy penalty is on, staves take the -15% hit chance penalty, if that setting is also false then staves take neither the +20% bonus nor the -15% penalty) 
+
+
+## 7, Ranged changes
 `combat.cpp`
 **Accuracy**
 - [ ] Ranged attacks follow the same accuracy change logic as implemented for melee, as determined in the `getHitChance` function within `combat.cpp`
@@ -250,7 +271,7 @@ The result is that behaviour is unchanged for on-use items, but for on-strike it
 	- The same function also allows for enchanted ammo recovery, but this only becomes possible at 50 skill and above. You start at 0 recovery rate at 50 skill, and each level beyond 50 adds 1/25th of the GMST recovery rate, so every 25 levels adds another 1x GMST up to 2x GMST total at 100 skill. This function hard caps the players skill it checks at 100 before processing, so there is no way to achieve beyond 2x GMST recovery rate.
 
 
-## 3.8, Acrobatics and climbing
+## 8, Acrobatics and climbing
 `movementsolver.hpp`
 Headers added (to call base player skill)
 
@@ -273,7 +294,7 @@ The climbing angle is hard capped at 89° to minimise the risk of unusual behavi
 	- Other areas of code checked and certainly of no concern for unintended behaviour, these two I couldn't pick apart in the time I spent on this (I am way out of my depth with the physics engine stuff)
 
 
-## 3.9, Difficulty Tiers and new difficulty scaling
+## 9, Difficulty Tiers and new difficulty scaling
 Modified files:
 `difficultyscaling.hpp`
 `difficultyscaling.cpp`
@@ -281,7 +302,7 @@ Modified files:
 
 [Note that in addition to these changes, further changes were made in later sections detailed here such as for hand to hand, which also affect the difficulty scaling files]
 
-### 3.9.1, Tier function
+### 9.1, Tier function
 In `difficultyscaling.hpp`
 - `int difficultyTier();` function defined
 
@@ -331,7 +352,7 @@ int difficultyTier()
 }
 ```
 
-### 3.9.2, Moving melee damage to tiers
+### 9.2, Moving melee damage to tiers
 
 In `difficultyscaling.cpp`:
 The `float scaledamage` function has been updated to use the difficulty tier values as input for damage scaling, and now outputs pre-defined discrete damage modifiers at each tier as shown in this section. The effect of difficulty on melee damage dealt/taken now no longer operates via an equation which inputs `x` as difficulty.
@@ -403,7 +424,7 @@ float scaleDamage(float damage, const MWWorld::Ptr& attacker, const MWWorld::Ptr
 ```
 
 
-### 3.9.3, Scaling on-strike and adding enchantment type detection
+### 9.3, Scaling on-strike and adding enchantment type detection
 
 Via the following changes, on-strike enchantments specifically are tied to their own damage scaling table, which also operates off of difficulty tier - for now it is identical to melee damage dealt, but it is coded separately for ease of balancing
 
@@ -564,7 +585,7 @@ if (mEnchantmentType == ESM::Enchantment::WhenStrikes && target != player && mCa
 ```
 
 
-### 3.9.4, Castonce enchantment damage scaling
+### 9.4, Castonce enchantment damage scaling
 
 I scaled down this damage less aggressively than with melee, as unlike melee you can run out of mana/charge when casting, so it is a finite resource
 
@@ -608,7 +629,7 @@ if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::
 }
 ```
 
-### 3.9.5, On-use enchantment damage scaling
+### 9.5, On-use enchantment damage scaling
 
 Done via updating the start of the above function to allow for either `castonce` or `whenused`. No other changes needed, working, they both use the same damage scaling function as a result (intended)
 
@@ -616,7 +637,7 @@ Done via updating the start of the above function to allow for either `castonce`
 if ((mEnchantmentType == ESM::Enchantment::CastOnce || mEnchantmentType == ESM::Enchantment::WhenUsed)
 ```
 
-### 3.9.6, Spell damage dealt
+### 9.6, Spell damage dealt
 
 One change was left unfinished as it is not yet required, but will be:
 - The actual scaling function that processes the spell magnitude in `difficultyscaling.cpp` is the same one that does enchanted items, etc, as for now I decided the scaling for each could match, but in the next revision it would be better to separate them so that they can be scaled separately 
@@ -836,7 +857,7 @@ so that it defaults them to go through spell, and the other filters take everyth
 
 The original issue I found, and had to correct by defaulting the source type to spell rather than none, was that pre-made spells bought from vendors had a chance (unclear if all or just some did) to be passed straight to inflict via the ptr & item function, so they escaped the flag of spell as the source type, and were not being stepped down
 
-### 3.9.7, Magic damage taken
+### 9.7, Magic damage taken
 
 This is a magic damage amplifier for damage taken by the player (restricted to certain, damaging, effects) that excludes non actor sources of magic (such as traps and scripted effects). It also excludes self targeted effects by the player
 
@@ -897,7 +918,7 @@ Testing confirmed:
 - Constant effect items are not affected
 - Damage reflected at you via the reflect effect is not amplified (See the reflect section below)
 
-### 3.9.8, Accounting for reflected damage
+### 9.8, Accounting for reflected damage
 
 By default all of the changes so far did not account for reflected effects (although some of the code above this may have been documented after reflect corrections were made to it).
 
@@ -944,7 +965,7 @@ the fix was to change it to
 - so that instead it looks for effects locally originating from the player, regardless of the original source, and so now it includes all reflected effects and properly steps them down on high difficulties
 
 
-## 3.9a Elemental shield damage scaling bug
+## 9a Elemental shield damage scaling bug
 
 Elemental shield was, up until V0.40 (pre public release), still operating off of the base game damage scaling function, and so was being scaled as if it were melee damage.
 
@@ -973,7 +994,7 @@ Replaced with
 ```
 
 
-## 3.10, Equipment derived armour ratings
+## 10, Equipment derived armour ratings
 
 `armor.cpp`
 
@@ -1041,7 +1062,7 @@ and to add the if statement logic
 so that only in cases were armour is being calculated for the player, and their skill is below 30, the modified equation of (skill + 5) / (GMST + 5) is used
 
 
-## 3.11, Unarmoured derived armour ratings
+## 11, Unarmoured derived armour ratings
 `npc.cpp`
 
 Within `npc.cpp` the function `getArmorRating` calculates player armour rating locally
@@ -1125,7 +1146,7 @@ x1.25 at 100 speed
 ```
 
 
-## 3.12, Creature armour ratings
+## 12, Creature armour ratings
 
 `creature.cpp`
 
@@ -1170,15 +1191,15 @@ The effect is creature armour rating is now 10AC at a minimum for everything, th
 
 10 + shield + level boost (which is +2 at level 5+, and +5 at level 10+)
 
-## 3.13, Armorer
+## 13, Armorer
 
-### 3.13.1, Equipment degradation rates
+### 13.1, Equipment degradation rates
 Changes made to
 `npc.cpp`
 `combat.cpp`
 `difficultyscaling.cpp`
 `difficultyscaling.hpp`
-#### 3.13.1.1, Shields
+#### 13.1.1, Shields
 Shields taking damage is governed in `combat.cpp` beginning at line 165
 
 They take damage equal to the damage dealt by the creature (before difficulty and before armour applies, so the base damage in the engine for that creature)
@@ -1242,7 +1263,7 @@ The changes are that,
 	- The final damage taken is raised to 1 if the multiplier reduces it to any less
 
 
-#### 3.13.1.2, Armour
+#### 13.1.2, Armour
 `npc.cpp`
 
 The function changed was the following block of code, within `void Npc::onHit(const MWWorld::Ptr &ptr, float damage, bool ishealth, const MWWorld::Ptr &object, const MWWorld::Ptr &attacker, const osg::Vec3f &hitPosition, bool successful)` within `npc.cpp`
@@ -1287,7 +1308,7 @@ It just scales down the amount of armour damage taken exactly as it does for shi
                     }
 ```
 
-#### 3.13.1.3, Weapons
+#### 13.1.3, Weapons
 `combat.cpp`
 function `reduceWeaponCondition`
 
@@ -1344,7 +1365,7 @@ Identical degradation reduction logic implemented as for armour and shields, 100
     }
 ```
 
-#### 3.13.1.4, Accounting for difficulty
+#### 13.1.4, Accounting for difficulty
 `difficultyscaling.cpp`
 `difficultyscaling.hpp`
 
@@ -1466,11 +1487,11 @@ and for weapons,
 ```
 
 
-### 3.13.2, Your armorer repair success rate now depends on item value
+### 13.2, Your armorer repair success rate now depends on item value
 Header additions to `repair.cpp` and `merchantrepair.cpp`
 `repair.cpp`
 `merchantrepair.cpp`
-#### 3.13.2.1, General changes
+#### 13.2.1, General changes
 The following header addition was added to both `repair.cpp` and `merchantrepair.cpp`
 `#include "../mwworld/inventorystore.hpp"`
 
@@ -1508,7 +1529,7 @@ Weapons are separated from armour using a block like this
 ```
 
 
-#### 3.13.2.2, Assigning item tiers
+#### 13.2.2, Assigning item tiers
 To make balancing and implementation easier, items have been broken up (within this code block) into 'tiers' which are determined by their price. So that an item in tier 5 can have one difficulty at skill 50, and an item in tier 7 can be much harder at the same skill.
 
 Within `repair.cpp` the 'item price -> tier' logic results in the following tiers by equipment type
@@ -1596,7 +1617,7 @@ Followed by this block, which processes weapons into lower tiers for balance rea
 
 To be honest, this was a very messy way to do it, and the entire concept of a tier 3.5 ended up being pretty much pointless. This needs a future clean-up, where I just adjust the initial tier assignment logic for weapons.
 
-#### 3.13.2.3, Success rate equations
+#### 13.2.3, Success rate equations
 `repair.cpp`
 The original code simply did
 `float x = (0.1f * pcStrength + 0.1f * pcLuck + armorerSkill) * fatigueTerm;`
@@ -1729,7 +1750,7 @@ There is one per tier, and the equations which govern them are,
     }
 ```
 
-### 3.13.3, Armorer's tools now modify success rate
+### 13.3, Armorer's tools now modify success rate
 `repair.cpp`
 This was done within `repair.cpp` as well, modifying the same block as was done above.
 
@@ -1777,7 +1798,7 @@ See the code block below, the relevant bit is the tool quality adjustment logic.
 
 
 
-### 3.13.4, Armour repair costs
+### 13.4, Armour repair costs
 `merchantrepair.cpp`
 The core repair code now reads
 
@@ -1827,7 +1848,7 @@ This was done to make the prices more reasonable for testing, and for the first 
 
 
 
-## 3.14, Athletics derived swim speed
+## 14, Athletics derived swim speed
 `npc.cpp`
 
 This change boosts the contribution to swim speed (as a % of base run speed) by the player's athletics from 1% a level to 3% a level. Resulting in the player going from 50-80% swim speed, vs 50-60% in the base game, when they go from 1-100 athletics.
@@ -1916,14 +1937,14 @@ This change
 - Caps skill contribution to swimming only
 - Toggles variable value for player and non-players (which are preserved with base game behaviour)
 
-## 3.16, Mercantile
+## 16, Mercantile
 `mechanicsmanagerimp.cpp`
 `tradewindow.cpp`
 `trading.cpp`
 
 To facilitate the changes listed in the mechanics changelog, the following changes were made at an engine level
 
-### 3.16.2.1, Mercantile disposition has reduced effect on bartering
+### 16.2.1, Mercantile disposition has reduced effect on bartering
 `mechanicsmanagerimp.cpp`
 
 In the base game every points of disposition above or below 50 adds or removes 1 mercantile skill. This means that by bribing an NPC up to 100 disposition you effectively gain 50 mercantile skill, which reduces the value of levelling the actual skill quite a lot.
@@ -1946,12 +1967,12 @@ float pcTerm = (clampedDisposition - 50 + a + b + c) * playerStats.getFatigueTer
 The result is that now every 4 points of disposition above or below 50 adds or removes 1 effective mercantile skill, and the highest effective boost you can get at 100 disposition is + 12.5 mercantile levels.
 
 
-### 3.16.2.2, Mercantile disposition has reduced effect on haggling
+### 16.2.2, Mercantile disposition has reduced effect on haggling
 
 Not actually a compiling level change, but listed here as it complements the engine level change made above. At an ESP level the GMST `fDispositionMod` governs the extent to which disposition affects haggling, it is 1.0 by default and was adjusted to 0.25 so that 4 points of disposition above or below 50 add or remove 1 effective mercantile level. Now as with bartering, the maximum benefit you can get from 100 disposition is +12.5 effective mercantile levels.
 
 
-### 3.16.2.3, Adjustments to min and max buy/sell rates
+### 16.2.3, Adjustments to min and max buy/sell rates
 `tradewindow.cpp`
 
 To fix a loophole where with sufficient mercantile and haggling (quite easy to reach actually in the old system due to disposition) you could make infinite money buying and reselling items, the buying/selling rate caps were adjusted, and floors were put in as well.
@@ -1971,7 +1992,7 @@ These two additions mean that no matter your skill, and no matter the merchant, 
 
 Note: these are local changes to item selling and buying, since this change is hosted within `tradewindow.cpp`, as a result all other service charges remain uncapped and be reduced much more than to 90%, if you have a high enough mercantile skill
 
-### 3.16.2.4, Setting a hard limit on haggling of 10%
+### 16.2.4, Setting a hard limit on haggling of 10%
 `trading.cpp`
 
 To go with the change above which hard caps the barter rates, a hard limit has been placed on haggling rates (although this is not an ideal solution, and is likely to be revised in future versions).
@@ -1994,7 +2015,7 @@ This way you can still haggle past this point for one off purchases, but you can
 
 This is a very aggressive and crude fix, and will likely be replaced with something more nuanced in a later version, but for now it serves it's purpose without introducing any bugs.
 
-### 3.16.2.5, XP gain overhaul
+### 16.2.5, XP gain overhaul
 
 #### Generic XP gain functions
 
@@ -2197,7 +2218,7 @@ The end result is that
 - Buying things intentionally does not give XP
 
 
-## 3.17, NPC spellcasting locked to base game spell effect costs
+## 17, NPC spellcasting locked to base game spell effect costs
 
 `spellutil.cpp`
 `spellutil.hpp`
@@ -2207,7 +2228,7 @@ The end result is that
 
 An exhaustive search was done in the engine for all direct and indirect references to spell effect costs made by NPCs. Three areas were found and adjusted so that NPCs used new hard-coded base game spell effect cost values.
 
-### 3.17.1, Locking `calcSpellBaseSuccessChance()`
+### 17.1, Locking `calcSpellBaseSuccessChance()`
 `spellutil.cpp`
 
 The function `calcSpellBaseSuccessChance()` iterates over the weakest school of magic in a spell that the player or an NPC is casting to determine which spell school is the least effective at casting a multi-school spell. It does by using live ESP values for spell effect costs, whereas actual spell cost is locked at the point of spell creation.
@@ -2326,7 +2347,7 @@ Changes
 This only affects NPC spell selection priority, via their casting chances, and this change now means that NPCs operate independently of ESP level magic effect changes. This has the consequence that NPCs are now only compatible with base game magic effect costs, **so any modded content that changes ESP level magic effect costs, give those spells to NPCs and expects them to cast them will have balance issues.**
 - This is an intentional design choice, as it is the easiest solution to fix this issue and to ensure full TR compatibility.
 
-### 3.17.2, New hardcoded function, `getBaseGameEffectCost`
+### 17.2, New hardcoded function, `getBaseGameEffectCost`
 `spellutil.cpp`
 `spellutil.hpp`
 
@@ -2360,7 +2381,7 @@ In `spellutil.cpp` the function was added as follows (this is an abbreviated ver
 - If it fails to return anything (which should never happen, but to stop crashing just in case) it defaults to an effect cost of 1.0f
 
 
-### 3.17.3, Locking `calcWeakestSchool()`
+### 17.3, Locking `calcWeakestSchool()`
 `autocalcspell.cpp`
 `autocalcspell.hpp`
 
@@ -2556,7 +2577,7 @@ In summary
 - `calcNpcSpells` now calls `calcAutoCastChance` with the Boolean flag set to true, and `calcAutoCastChance` calls `calcWeakestSchool` with whatever it's Boolean flag is set to at the point of call
 - The sum effect is that all NPC calls to `calcWeakestSchool` result in the Boolean being true, and it calling out to the hard coding function, and all player calls result in the Boolean being false
 
-### 3.17.4, Locking `calcEffectCost()`
+### 17.4, Locking `calcEffectCost()`
 `spellpriority.cpp`
 
 `calcEffectCost` modified to carry a Boolean that is false by default
@@ -2650,11 +2671,11 @@ Modified,
 
 
 
-## 3.18 Alchemy overhaul
+## 18 Alchemy overhaul
 `alchemy.cpp`
 `spellcasting.cpp`
 
-### 3.18.1, Potion weight change
+### 18.1, Potion weight change
 
 `alchemy.cpp`
 
@@ -2707,7 +2728,7 @@ So your skill and attributes help reduce potion weight, heavier potions take lon
 Since potion weight is capped at 1 in the calculations before reduction apply, it doesn't matter what the original potion weight would have been if it would be above 1. The same skill is needed to mitigate the carry weight of an originally 20 weight potion, or a 2 weight potion.
 
 
-### 3.18.2, Potions no longer stack
+### 18.2, Potions no longer stack
 `spellcasting.cpp`
 
 This block
@@ -2751,7 +2772,7 @@ So now if you drink 10 of the same healing potion using hotkeys, it does nothing
 You can still drink 10 different potions to stack the effects, if you really want.
 
 
-### 3.18.3, Potion making success rate
+### 18.3, Potion making success rate
 `alchemy.cpp`
 
 **Base game**
@@ -2847,7 +2868,7 @@ It's not perfect, but I went with a straight line instead of another non-linear 
 This function can be summarised as,
 - Average item value multiplied by 0.158, + 8.4
 
-### 3.18.4, Modifying alchemy factor based on ingredient quality
+### 18.4, Modifying alchemy factor based on ingredient quality
 `alchemy.cpp`
 
 This system gets the average value of all ingredients used in a potion, and increases or decreases the players alchemy factor based on what it gets
@@ -2953,7 +2974,7 @@ The overall effect is that
 - Using more expensive in ingredients results in stronger potions, which is most notable at low levels
 - The highest values of ingredients, an average of 100g+, adds a flat +10% modifier in addition at a flat skill boost, so that even at very high skill/factor they have an effect
 
-### 3.18.5, Reduce the impact of the mortar
+### 18.5, Reduce the impact of the mortar
 `alchemy.cpp`
 
 The aim here was to make mortar quality above or below 1.0 have 50% less of an effect, to limit how much the player can stack multipliers to potion strength, to avoid (or at least delay) making absurdly strong potions at the high end
@@ -2999,7 +3020,7 @@ The aim here was to make mortar quality above or below 1.0 have 50% less of an e
     // end step down mortar effectiveness, EncoreMP
 ```
 
-### 3.18.6, Switch potion making to a magicka costed system
+### 18.6, Switch potion making to a magicka costed system
 `alchemy.cpp`
 
 **Part one, converting alchemy factor into a magicka budget**
@@ -3072,7 +3093,7 @@ Went back to the original magnitude/duration budgeting code and did this,
             1.0f : durHolder;
 ```
 
-### 3.18.7, Adjusted behaviour for all other tools
+### 18.7, Adjusted behaviour for all other tools
 `alchemy.cpp`
 
 The full original function read:
@@ -3202,7 +3223,7 @@ void MWMechanics::Alchemy::applyTools(int flags, float& value) const
 }
 ```
 
-### 3.18.8, Capping potion values at sum cost of ingredients
+### 18.8, Capping potion values at sum cost of ingredients
 `alchemy.cpp`
 
 Aim: Cap the value of a potion the player makes by the sum value of the ingredients used in the potion
@@ -3221,7 +3242,7 @@ Only the `std::min` addition was new by me. It uses the sum ingredient value var
 - This is a harsh cap, and means that you can never make money from alchemy by mass buying and processing ingredients. But this was intentional, to stop any exploitative gameplay loops.
 	- The only problem with this first version, is that it is not realistic. You should be able to make money selling powerful healing potions, people would be willing to pay more than the base ingredients are worth. So this is something to revisit after some playtesting.
 
-### 3.18.9, Reducing XP gained from cheap ingredient potions
+### 18.9, Reducing XP gained from cheap ingredient potions
 `alchemy.cpp`
 
 Aim: XP gain from making a potion scales with either average item value, or sum item value, or there is just a penalty below a certain value and skill. In essence, I want to make spamming 1g potions non-viable past a certain point, and I want to reward using high value ingredients in potions with more XP.
@@ -3278,7 +3299,7 @@ If average potion ingredient value is less than 5gp,
 - You earn 12.5% of the normal XP if skill 60 to 90
 - You earn 5% of the normal XP if skill 90+
 
-### 3.18.10, GMST value and behaviour changes
+### 18.10, GMST value and behaviour changes
 `alchemy.cpp`
 
 To simplify the base game logic I have set `fPotionStrengthMult` to 1.0. 
@@ -3305,7 +3326,7 @@ Right after tools are applied, and right before it rounds the values, the effect
 
 Since the spell making logic is (magnitude x 2) x duration, to generate effect cost, if you want to adjust that ratio for potions you just need to change the two GMSTs whilst respecting the ratio.
 
-## 3.21, More XP from casting expensive spells
+## 21, More XP from casting expensive spells
 `spellcasting.cpp`
 
 
@@ -3336,7 +3357,7 @@ New code
         //end of EncoreMP, more XP from high costed spells
 ```
 
-## 3.23, Willpower change (buff)
+## 23, Willpower change (buff)
 `spellutil.cpp`
 `spellcasting.cpp`
 `inventorystore.cpp`
@@ -3469,14 +3490,14 @@ Within `void MWWorld::InventoryStore::updateMagicEffects(const Ptr& actor)`
 
 and the same for all the other sequential groups of magical effect checks.
 
-## 3.25, Hand to Hand changes
+## 25, Hand to Hand changes
 `combat.cpp`
 `npc.cpp`
 `creature.cpp`
 `difficultyscaling.cpp`
 `difficultyscaling.hpp`
 
-### 3.25.1, Accuracy
+### 25.1, Accuracy
 
 This change has not been made here, it was done during the original melee accuracy pass, but I have included it as a reminder of what was done there.
 
@@ -3492,7 +3513,7 @@ Accuracy += 20
 ```
 So it has a higher floor, and scales slower. This is the same code used for weapon accuracy.
 
-### 3.25.2, Damage done at low skill levels
+### 25.2, Damage done at low skill levels
 `combat.cpp`
 
 Since in core the damage done by hand to hand is derived from your skill multiplied by your attack draw strength, you do trivial amounts of damage at low skill.
@@ -3530,7 +3551,7 @@ The first few lines were changed to
 
 Whereas before damage was just equal to your skill
 
-### 3.25.3, Fatigue damage difficulty based scaling
+### 25.3, Fatigue damage difficulty based scaling
 `npc.cpp`
 `creature.cpp`
 `difficultyscaling.cpp`
@@ -3651,7 +3672,7 @@ Within `creature.cpp`, within the else fork (else covers if `isHealth` if false)
 This is the exact same logic and reasoning as with the NPC file. Note there are some syntax changes, which I inferred from the creature files code for when `isHealth` is true. 
 Also, for creatures I didn't check if there are any non-attack sourced calls to this function (as with the NPC function) where `isHealth = false` and damage = 0, but to be safe I put the guarding in anyway as a precaution.
 
-### 3.25.4, Changing Openmw strength scaling behaviour
+### 25.4, Changing Openmw strength scaling behaviour
 `combat.cpp`
 
 Openmw adds an optional strength scaling for hand to hand combat. I would like to keep this, and suggest it be toggled on by default, however the way it is implemented is slightly buggy and not in line with how attributes affect other skills.
@@ -3725,11 +3746,11 @@ Now it does,
 
 As stated in the comments, the guarding might not be strictly necessary, and the way the code is written is redundant, there's no need for the if forks as the logic works the same above and below 50. I just decided to leave it in for now until I start cleaning things.
 
-## 3.26, Pickpocketing overhaul
+## 26, Pickpocketing overhaul
 `pickpocket.cpp`
 `pickpocketitemmodel.cpp`
 
-### 3.26.1, You can no longer get caught when closing the pickpocketing UI
+### 26.1, You can no longer get caught when closing the pickpocketing UI
 `pickpocket.cpp`
 
 This finish function triggers when you close the menu, previously it was
@@ -3755,7 +3776,7 @@ Now it just does
 
 So you can never fail closing the item menu
 
-### 3.26.2, Item difficulty is value x1, providing GMST is 1.0. Change to expected GMST value
+### 26.2, Item difficulty is value x1, providing GMST is 1.0. Change to expected GMST value
 `pickpocket.cpp`
 
 Updated `pick()` to
@@ -3774,7 +3795,7 @@ Updated `pick()` to
 - Set the GMST `fPickPocketMod` to 1.0 (up from 0.3 in the base game)
 - So now providing the GMST is 1.0, the value term is equal to stack value
 
-### 3.26.3, Updating what items can appear to the player in the NPC inventory window when sneaking
+### 26.3, Updating what items can appear to the player in the NPC inventory window when sneaking
 `pickpocketitemmodel.cpp`
 
 Changed the item model function to the following:
@@ -3870,7 +3891,7 @@ These changes mean that when the player pickpockets, they can only see items up 
 So at 30 agility, 40 luck and 5 skill, you have a term of 15
 This means you can see items up to 75g in value
 
-### 3.26.4, Change to pickpocketing difficulty logic
+### 26.4, Change to pickpocketing difficulty logic
 `pickpocket.cpp`
 
 The `getDetected` function was completely overhauled to
@@ -3925,7 +3946,7 @@ This mean at maximum fatigue, you have a baseline success chance of 62.5%. If yo
 
 The idea with this change is to complement the menu logic, which determines which item appears, so that the player knows that any item they are capable of seeing is one they have a good chance of stealing. This is my way of unhiding the logic a little, without making the player memorise numbers.
 
-## 3.27, Updating server checksum
+## 27, Updating server checksum
 
 `Version.hpp`
 
@@ -3936,7 +3957,7 @@ Changes `Version.hpp` to,
 #define OPENMW_VERSION_HPP
 
 #define TES3MP_VERSION "0.8.1"
-#define TES3MP_PROTO_VERSION 803
+#define TES3MP_PROTO_VERSION 804
 
 #define TES3MP_DEFAULT_PASSW "blankpassword"
 #define TES3MP_MASTERSERVER_PASSW "12345"
@@ -3946,13 +3967,13 @@ Changes `Version.hpp` to,
 
 ```
 
-Working, this now produces a server and client that both have the internal checksum version of 803, instead of 10 for the core tes3mp release.
+Working, this now produces a server and client that both have the internal checksum version of 804, instead of 10 for the core tes3mp release.
 
 I have tested and it properly prevents you from connecting with the wrong version to the server, and from using the wrong client on a normal server.
 
 For some reason I decided not to get into, any change at all to the TESMP_VERSION (which is the user facing string) causes the build to fail with fatal errors. So I have left that as is, and as a consequence right now despite the checksum actually being different it still displays the same previous version on the server browser
 
-## 3.28, Caching stealth checks
+## 28, Caching stealth checks
 
 To implement the V0.50 OpenMW changes,
 
@@ -4076,11 +4097,11 @@ In `aicombataction.cpp` updated
 to pass the flag as false
 
 
-## 3.29, Ally difficulty scaling
+## 29, Ally difficulty scaling
 
 This is documented in sections, as like player difficulty scaling each part of allied damage is handled in a separate location in the code.
 
-### 3.29.1, New difficulty scaling function
+### 29.1, New difficulty scaling function
 
 In `difficultyscaling.hpp` a new function was declared,
 `float allyDamageDealt();`
@@ -4106,7 +4127,7 @@ float allyDamageDealt()
 
 This is what is called for all ally damage scaling
 
-### 3.29.2, Creature allies physical damage
+### 29.2, Creature allies physical damage
 
 **Creature allies, melee attacks**
 Within `creature.cpp`,
@@ -4213,7 +4234,7 @@ and
 - As per the code comments, I had to fork the logic so that only one type of damage scaling was called, otherwise a creature attacking the player on high difficulty would have called both the increased and decreased damage done functions
 
 
-### 3.29.3, NPC allies physical damage
+### 29.3, NPC allies physical damage
 
 This was the same as the creature physical damage scaling logic, but it had to be implemented separately as NPCs handle their combat in their own file.
 
@@ -4295,7 +4316,7 @@ As with the other ally changes, I had to fork the logic to make sure the difficu
 Also unlike the creature changes, I had to also check here that the neither the attacker nor the victim was the player - as the player character routes it's combat behaviour through the NPC file, so the player can potentially be an attacker here unlike in the creature file.
 
 
-### 3.29.4, Allied elemental shield damage
+### 29.4, Allied elemental shield damage
 - This captures both NPC and creature allies
 
 Within `combat.cpp` the `applyElementalShields()` function was modified,
@@ -4346,7 +4367,7 @@ Then forked elemental shield behaviour based on the result of the Boolean,
             MWBase::Environment::get().getSoundManager()->playSound3D(attacker, "Health Damage", 1.0f, 1.0f);
 ```
 
-### 3.29.5, Allied spellcasting
+### 29.5, Allied spellcasting
 - This captures both NPC and creature allies
 
 Within `spellcasting.cpp`, within the `inflict` function
@@ -4397,7 +4418,7 @@ The Boolean was then used to fork the damage logic for spellcasting,
 ```
 
 
-### 3.29.6, Allied enchantments
+### 29.6, Allied enchantments
 - This captures both NPC and creature allies
 
 Within `spellcasting.cpp`, within the `inflict` function
@@ -4435,10 +4456,230 @@ and also toggle damage scaling for on-use and cast-once (scroll) damage scaling
                 }
 ```
 
-### 3.29.7, Note on reflected spells
+### 29.7, Note on reflected spells
 
 The existing code already accounts for reflected damage, and treats it as normal spell damage for the purposes of difficulty scaling.
 
 In other words, damage reflected by a player or their ally is stepped down by difficulty, all other reflection damage is handled normally (at 1x).
 
 This is because the code stores (in the case of reflected damage) the original caster as `mCaster`, and the current source of the effect (so the actor who is reflecting) as `caster`. All of the ally damage scaling only reduces damage done if the `caster` is the player or their ally the damage of the effect is reduced, so the existing damage reduction code captures both direct and reflected damage coming from the player or their allies.
+
+
+
+## 30, Spell buying substitution system
+`spellbuyingwindow.cpp`    
+
+The function `void SpellBuyingWindow::setPtr(const MWWorld::Ptr& actor, int startOffset)` was updated as shown below,    
+
+```
+    void SpellBuyingWindow::setPtr(const MWWorld::Ptr& actor, int startOffset)
+    {
+        center();
+        mPtr = actor;
+        clearSpells();
+
+        MWMechanics::Spells& merchantSpells = actor.getClass().getCreatureStats (actor).getSpells();
+
+        std::vector<const ESM::Spell*> spellsToSort;
+
+        std::string prefix = "@";
+
+        for (MWMechanics::Spells::TIterator iter = merchantSpells.begin(); iter!=merchantSpells.end(); ++iter)
+        {
+            const ESM::Spell* spell = iter->first;
+
+            if (spell->mData.mType!=ESM::Spell::ST_Spell)
+                continue; // don't try to sell diseases, curses or powers
+
+            if (actor.getClass().isNpc())
+            {
+                const ESM::Race* race =
+                        MWBase::Environment::get().getWorld()->getStore().get<ESM::Race>().find(
+                        actor.get<ESM::NPC>()->mBase->mRace);
+                if (race->mPowers.exists(spell->mId))
+                    continue;
+            }
+
+            if (playerHasSpell(iter->first->mId))
+                continue;
+
+            spellsToSort.push_back(iter->first);
+        }
+
+        // EncoreMP spell replacement trial
+
+        //get all spell records in the game
+        const auto& allSpells = MWBase::Environment::get().getWorld()->getStore().get<ESM::Spell>();
+
+        //make an empty vector to hold spells to be added to the merchant spell list
+        std::vector<const ESM::Spell*> encoreSpellsToAdd;
+        std::vector<std::string> spellsToDelete;
+
+        //ranged based loop over merchant spells for sale, no modifying of original vector within this loop
+        for (const ESM::Spell* s : spellsToSort)
+        {
+            if (!s) continue;
+
+            std::string spellID = s->mId;
+            std::string encoreID = prefix + spellID;
+            const ESM::Spell* spellToInsert = nullptr;
+            
+
+            spellToInsert = allSpells.search(encoreID);
+
+            
+            if (spellToInsert && !spellToInsert->mId.empty() && spellToInsert->mData.mType == ESM::Spell::ST_Spell)
+            {
+                if (playerHasSpell(spellToInsert->mId))
+                {
+                    spellsToDelete.push_back(spellID);
+                }
+                else
+                {
+                    encoreSpellsToAdd.push_back(spellToInsert);
+                    spellsToDelete.push_back(spellID);
+                }
+            }
+        }
+
+        //add all new spells, stored in the vector, to the merchant spell list for sale
+        for (const ESM::Spell* s : encoreSpellsToAdd) 
+        {
+            spellsToSort.push_back(s);
+        }
+
+        //delete all the original spells in the merchant for sale list for which new IDs were found
+        spellsToSort.erase(std::remove_if(spellsToSort.begin(), spellsToSort.end(),[&](const ESM::Spell* elem) 
+            {
+                if (!elem) return false;
+                return std::find(spellsToDelete.begin(), spellsToDelete.end(), elem->mId)
+                != spellsToDelete.end();
+            }
+            ),
+            spellsToSort.end()
+        );
+
+        // EncoreMP spell replacement trial end
+
+        std::stable_sort(spellsToSort.begin(), spellsToSort.end(), sortSpells);
+
+        for (const ESM::Spell* spell : spellsToSort)
+        {
+            addSpell(*spell);
+        }
+
+        spellsToSort.clear();
+
+        updateLabels();
+
+        // Canvas size must be expressed with VScroll disabled, otherwise MyGUI would expand the scroll area when the scrollbar is hidden
+        mSpellsView->setVisibleVScroll(false);
+        mSpellsView->setCanvasSize (MyGUI::IntSize(mSpellsView->getWidth(), std::max(mSpellsView->getHeight(), mCurrentY)));
+        mSpellsView->setVisibleVScroll(true);
+        mSpellsView->setViewOffset(MyGUI::IntPoint(0, startOffset));
+    }
+```
+
+**What this change does:**    
+This function has been updated to look for spells with the @ prefix in the game files (ESPs, ESMs).    
+If a spell with the prefix @ is found, e.g. a spell with the ID "@fireball", then the spell buying menu will now automatically hide the original spell, "fireball" in this case, and display the @ prefix variant instead.   
+
+**Example:**    
+A merchant sells the spells "fireball" and "levitate". In an ESP file you have made a custom spell with the ID "@fireball".   
+When the player goes to buy spells from that merchant they will see in the merchants spell list the original "levitate" spell, but they will now no longer see the original "fireball" spell, that spell will be automatically removed and substituted for the spell with the ID "@fireball".    
+
+**What problem is this trying to solve?**    
+Updating the spell costs via an ESP file works for custom spellmaking (any potions, spell, or enchantments the player makes will use those custom values) but it does not affect already existing spells in the game files.
+
+If you update the spell effect cost for poison damage to be lower, any spells the player makes will obey the new cost - but any pre-made spells the player buys will use the base game magicka costs for those spells.
+
+This means that when custom spell costs are used, the spell buying menus will sell comparatively cheap or over costed spells, disrupting the game balance.
+
+A potential solution to this would be just to update the costs of all existing spells, however just doing that introduces some problems... 
+
+If you manually updated the cost of the spell "Poisonbloom", from 39 to 20 magicka, this would correctly update the magicka cost of the pre-made spell when the player buys it from a merchant, but it would have two significant undesirable effects on the game world,
+
+- **[Issue one]** Every NPC/creature using the spell "Poisonbloom" will now be paying the reduced cost (20 magicka) and so have twice as many casts as the game designer intended, and find the spell much easier to cast (making effects that lower enemy spell success much less useful)    
+	- The same is true in reverse, increasing the cost causes even more problems - creatures/NPCs can end up with spells they cannot possibly cast due to increased costs
+	- In practise this is the most serious issue
+
+- **[Issue two]** Most NPCs in the core game, and in many mods like tamriel rebuilt, do not have their spells assigned to them manually, and instead rely on a hidden system which selects spells for them based on their skills, magicka, and the cost of the spell
+	- This is a core feature of Morrowind/the creation kit - developers/modders can make an NPC and select for them to auto-generate their spell list, which will result in a selection of level appropriate spells
+- **[Issue two continued]** However this auto-generation logic means that another consequence of changing pre-made spell costs is that some NPCs will now spawn with different spell lists,
+	- The core engine's auto spell selection logic will always try to find the most costly spells that the NPC can still comfortably cast (based on skill) and that they have enough magicka for a few casts of
+	- So for example if an NPC would normally know the spell "Summon Ancestral Ghost" (costing 21 magicka) and you manually changed that spell cost to 40 magicka, that NPC may now no longer spawn with that spell at all (if the new cost is now higher than their maximum magicka, or if the engine determines that it is now too difficult for them to cast based on their conjuration skill)
+	- But the spell list auto-selection logic would still look for spells to fill their spell list, so that NPC may instead spawn into the game with another conjuration spell that costs round 20 magicka, e.g. "Saintly Word" (23 magicka) - because the engine looks for a spell they can comfortable cast based on their skill
+	- Now without meaning to, you've changed your ghost summoning NPC into a turn undead NPC!
+
+Problem 2 is a bit more random in how it plays out. Some NPCs are locked, so they won't update spell lists (but they would still experience problem 1), some aren't, and it can also depend on whether you open the ESP files and click on the spells/NPCs after the costs have been changed (or whether you have another ESP file open at the same time that changes spell costs... etc etc).
+
+In short, changing the core spell costs always results in problem 1, and will sporadically cause problem 2 (based on the settings the author chose for the NPC, and how the mod file has handled since it was downloaded)
+
+**How does this solution help?**    
+By looking for spells with the prefix "@" (an arbitrarily selected and unused character in Morrowinds spell IDs) and then substituting what the player sees on the spell buying menu with those spells, it is possible to leave the original spells completely unchanged and to still introduce custom costed pre-made spells for players.
+
+An example:    
+Take the spell "fireball": 5 magicka, 2-20 points in 5ft on target    
+Now you make this spell in the creation kit    
+"@fireball": 10 magicka, 2-20 points in 5ft on target    
+
+When the player goes to buy spells from a merchant, if that merchant would have sold the player the fireball spell, they will now sell them instead the "@fireball" spell. So the player sees, buys, and uses the 10 magicka version of the spell, and every NPC/creature in the game still gets the original 5 magicka version of the spell!
+
+This way you can introduce completely custom costed spells that appear in the spell buying menus without having any affect on the existing spells.
+
+**Menu behaviour**
+- When the player has either the normal spell ID in their spell book, or the @ prefix variant then the merchant will no longer offer to sell the player that spell
+- It is okay if only some of the spells for sale in a list have @ variants, the engine will fall back to offering the default spells if any do not have variants
+
+    
+**Rules and limitations**    
+There are a few things you have to be aware of when making or adjusting custom spells using the special @ prefix,
+- Morrowind has a 31 character limit on spell IDs, so you cannot add an @ prefix to a spell whose ID is already 31 characters long. Thankfully this is a non-issue in all of the core game and tamriel rebuilt at the moment
+- Any spells made like this must be set **not** to auto-calculate their costs in the creation kit. If you set them to auto-calculate, your custom @ spells ID variants will become available to NPCs and pollute their auto-generated spell lists
+- The ID of the spell added to the players spell book this way will be an @ variant - if you want to add or remove such a spell with the ingame console you have to put the ID in quotation marks, as the console doesn't like strings that start with @
+	- `player->removespell "@fireball"` will work
+	- `player->removespell @fireball` will not
+- Content that checks if the player has a specific spell in their spell book (e.g. the Telvanni quest "wizard spells") will not count the @ variants. Luckily at the moment this is not an issue in the base game (as the spells needed for that quest are not affected) and to my knowledge not an issue in tamriel rebuilt. If it is, you can manually add the correct spell IDs to your spell book, or as a mod patch update the spell ID checking script to also accept the @ variants 
+
+
+## 31, Gameplay settings
+
+**How they are implemented**    
+- Settings are read from the user config file in openMW, however tes3mp changes this so that settings are pushed from the server `config.lua` file into the engine at launch, over-riding any user settings.    
+- Default fallback values are added to the `defaults.bin` file.
+- The engine looks for settings in the order: 
+	- [1] User settings (via lua pushing the config file values into the engine)
+	- [2] User settings that have been cached in the OpenMW `settings.cfg` file
+	- [3] Defaults settings, acting as fallback values
+	- [4] If none of these can be found, the engine throws a (fatal) error
+- It is neccessary to add any setting to the `defaults.bin` file to prevent fatal errors, in the event that the server config file omits a setting
+	- Settings are added to the `defaults.bin` file by editing the `settings-default.cfg` file in the source files, which is used to build the `defaults.bin` file during compiling
+	- Where you add the settings in that file matters, as the section heading acts as part of the setting key when they are looked up. For EncoreMP all the settings have been placed in the [Game] section
+- Since the user setting values are pushed from the `config.lua` in the server folder, all adding the user settings involves is adding a new row to the `config.gameSettings = {` section of that file
+	- Be aware if you modify this further that the `config.lua` file is not part of the build when you compile, so you need to paste the most up to date `config.lua` file into the final version of any build you do 
+
+**List of all settings**
+- "long blades use agility for damage scaling"
+	- If true: Long blades use agility to scale their bonus damage 
+	- If false: Long blades use strength to scale their bonus damage (like axes and maces)
+- "two handed weapons receive an accuracy penalty"
+	- If true: 2 handed weapons take the -15% to hit penalty
+	- If false: 2 handed weapons recieve no penalty to their hit chance 
+- "staves receive accuracy bonus instead of two handed penalty"
+	- If true: Staves recieve the +20% to hit chance bonus
+	- If false: Staves use whatever modifier applies to other 2h weapons (if 2h accuracy penalty is on, staves take the -15% hit chance penalty, if that setting is also false then staves take neither the +20% bonus nor the -15% penalty) 
+- `global XP gain multiplier` - Float
+    - This value is multiplied by the XP earned for all skills
+    - 1.0 by default 
+    - Examples
+        - 1.0 = all XP gain is multiplied by 1 (no effect)
+        - 0.2 = all XP gained is reduced to 20%
+        - 1.5 = all XP gain is increased to 150%
+    - Cannot be set to 0 or to negative values
+        - If you do this, the engine will default back to normal (1.0) XP gain to prevent errors
+    - If you want to effectively disable XP gain globally set it to something like 0.00001
+    - Otherwise no upper or lower limits
+
+- `skill books have level limit` - Boolean  
+	- True: Skill books do not advance a players skill past 90
+	- False: Base game behaviour, skill books work at any level

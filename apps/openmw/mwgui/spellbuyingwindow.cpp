@@ -112,6 +112,8 @@ namespace MWGui
 
         std::vector<const ESM::Spell*> spellsToSort;
 
+        std::string prefix = "@";
+
         for (MWMechanics::Spells::TIterator iter = merchantSpells.begin(); iter!=merchantSpells.end(); ++iter)
         {
             const ESM::Spell* spell = iter->first;
@@ -133,6 +135,61 @@ namespace MWGui
 
             spellsToSort.push_back(iter->first);
         }
+
+        // EncoreMP spell replacement trial
+
+        //get all spell records in the game
+        const auto& allSpells = MWBase::Environment::get().getWorld()->getStore().get<ESM::Spell>();
+
+        //make an empty vector to hold spells to be added to the merchant spell list
+        std::vector<const ESM::Spell*> encoreSpellsToAdd;
+        std::vector<std::string> spellsToDelete;
+
+        //ranged based loop over merchant spells for sale, no modifying of original vector within this loop
+        for (const ESM::Spell* s : spellsToSort)
+        {
+            if (!s) continue;
+
+            std::string spellID = s->mId;
+            std::string encoreID = prefix + spellID;
+            const ESM::Spell* spellToInsert = nullptr;
+            
+
+            spellToInsert = allSpells.search(encoreID);
+
+            
+            if (spellToInsert && !spellToInsert->mId.empty() && spellToInsert->mData.mType == ESM::Spell::ST_Spell)
+            {
+                if (playerHasSpell(spellToInsert->mId))
+                {
+                    spellsToDelete.push_back(spellID);
+                }
+                else
+                {
+                    encoreSpellsToAdd.push_back(spellToInsert);
+                    spellsToDelete.push_back(spellID);
+                }
+            }
+        }
+
+        //add all new spells, stored in the vector, to the merchant spell list for sale
+        for (const ESM::Spell* s : encoreSpellsToAdd) 
+        {
+            spellsToSort.push_back(s);
+        }
+
+        //delete all the original spells in the merchant for sale list for which new IDs were found
+        spellsToSort.erase(std::remove_if(spellsToSort.begin(), spellsToSort.end(),[&](const ESM::Spell* elem) 
+            {
+                if (!elem) return false;
+                return std::find(spellsToDelete.begin(), spellsToDelete.end(), elem->mId)
+                != spellsToDelete.end();
+            }
+            ),
+            spellsToSort.end()
+        );
+
+        // EncoreMP spell replacement trial end
 
         std::stable_sort(spellsToSort.begin(), spellsToSort.end(), sortSpells);
 
