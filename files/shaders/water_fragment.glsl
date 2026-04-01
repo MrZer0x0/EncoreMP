@@ -9,6 +9,9 @@
 #endif
 
 #define REFRACTION @refraction_enabled
+#define RAIN_RIPPLE_DETAIL @rain_ripple_detail
+#define SHADER_WATER_RIPPLES @shader_water_ripples
+#define MAX_SHADER_RIPPLES 16
 
 // Inspired by Blender GLSL Water by martinsh ( https://devlog-martinsh.blogspot.de/2012/07/waterundewater-shader-wip.html )
 
@@ -53,8 +56,16 @@ const vec3 WATER_COLOR = vec3(0.090195, 0.115685, 0.12745);
 
 // ---------------- rain ripples related stuff ---------------------
 
+#if RAIN_RIPPLE_DETAIL == 0
+const float RAIN_RIPPLE_GAPS = 4.0;
+const float RAIN_RIPPLE_RADIUS = 0.16;
+#elif RAIN_RIPPLE_DETAIL == 2
+const float RAIN_RIPPLE_GAPS = 8.0;
+const float RAIN_RIPPLE_RADIUS = 0.09;
+#else
 const float RAIN_RIPPLE_GAPS = 5.0;
 const float RAIN_RIPPLE_RADIUS = 0.1;
+#endif
 
 vec2 randOffset(vec2 c)
 {
@@ -68,7 +79,17 @@ float randPhase(vec2 c)
   return fract((c.x * c.y) /  (c.x + c.y + 0.1));
 }
 
-vec4 circle(vec2 coords, vec2 i_part, float phase)
+vec4 circleSimple(vec2 coords, vec2 i_part, float phase)
+{
+  vec2 center = vec2(0.5,0.5) + (0.5 - RAIN_RIPPLE_RADIUS) * (2.0 * randOffset(i_part) - 1.0);
+  vec2 toCenter = coords - center;
+  float d = length(toCenter);
+  float r = RAIN_RIPPLE_RADIUS * mix(0.45, 1.0, phase);
+  float ring = smoothstep(r, r - 0.03, d) * smoothstep(r - 0.09, r - 0.03, d);
+  return vec4(0.0, 0.0, 1.0, ring * (1.0 - phase));
+}
+
+vec4 circleDetailed(vec2 coords, vec2 i_part, float phase)
 {
   vec2 center = vec2(0.5,0.5) + (0.5 - RAIN_RIPPLE_RADIUS) * (2.0 * randOffset(i_part) - 1.0);
   vec2 toCenter = coords - center;
@@ -79,12 +100,9 @@ vec4 circle(vec2 coords, vec2 i_part, float phase)
   if (d > r)
     return vec4(0.0,0.0,1.0,0.0);
 
-  float sinValue = (sin(d / r * 1.2) + 0.7) / 2.0;
-
+  float sinValue = (sin(d / max(r, 0.001) * 1.2) + 0.7) / 2.0;
   float height = (1.0 - abs(phase)) * pow(sinValue,3.0);
-
   vec3 normal = normalize(mix(vec3(0.0,0.0,1.0),vec3(normalize(toCenter),0.0),height));
-
   return vec4(normal,height);
 }
 
@@ -92,19 +110,70 @@ vec4 rain(vec2 uv, float time)
 {
   vec2 i_part = floor(uv * RAIN_RIPPLE_GAPS);
   vec2 f_part = fract(uv * RAIN_RIPPLE_GAPS);
-  return circle(f_part,i_part,fract(time * 1.2 + randPhase(i_part)));
+#if RAIN_RIPPLE_DETAIL == 0
+  return circleSimple(f_part, i_part, fract(time * 1.1 + randPhase(i_part)));
+#else
+  return circleDetailed(f_part, i_part, fract(time * 1.2 + randPhase(i_part)));
+#endif
 }
 
 vec4 rainCombined(vec2 uv, float time)     // returns ripple normal in xyz and ripple height in w
 {
+#if RAIN_RIPPLE_DETAIL == 0
+  return rain(uv, time);
+#elif RAIN_RIPPLE_DETAIL == 2
+  return
+    rain(uv,time) +
+    rain(uv + vec2(10.5,5.7),time) +
+    rain(uv * 0.75 + vec2(3.7,18.9),time) +
+    rain(uv * 0.9 + vec2(5.7,30.1),time) +
+    rain(uv * 0.8 + vec2(1.2,3.0),time) +
+    rain(uv * 1.2 + vec2(22.3,7.4),time) +
+    rain(uv * 1.1 + vec2(14.8,11.2),time);
+#else
   return
     rain(uv,time) +
     rain(uv + vec2(10.5,5.7),time) +
     rain(uv * 0.75 + vec2(3.7,18.9),time) +
     rain(uv * 0.9 + vec2(5.7,30.1),time) +
     rain(uv * 0.8 + vec2(1.2,3.0),time);
+#endif
 }
 
+vec4 shaderWaterRipples(vec2 worldXY)
+{
+#if SHADER_WATER_RIPPLES
+  vec3 rippleNormal = vec3(0.0, 0.0, 1.0);
+  float rippleHeight = 0.0;
+
+  for (int i = 0; i < MAX_SHADER_RIPPLES; ++i)
+  {
+    if (i >= rippleSourceCount)
+      break;
+
+    vec4 source = rippleSources[i];
+    vec4 data = rippleData[i];
+    vec2 toCenter = worldXY - source.xy;
+    float dist = length(toCenter);
+    float progress = data.x;
+    float radius = max(source.z, 1.0);
+    float strength = source.w;
+    float ageFade = clamp(data.z, 0.0, 1.0);
+    float waveFront = mix(radius * 0.15, radius * data.y, progress);
+    float envelope = exp(-abs(dist - waveFront) / max(radius * 0.18, 1.0));
+    float ring = sin((dist / max(radius * 0.08, 1.0) - progress * 22.0));
+    float height = ring * envelope * ageFade * strength;
+
+    vec2 dir = dist > 0.001 ? toCenter / dist : vec2(0.0);
+    rippleNormal += vec3(dir * height * 1.6, 0.0);
+    rippleHeight += abs(height);
+  }
+
+  return vec4(normalize(rippleNormal), rippleHeight);
+#else
+  return vec4(0.0, 0.0, 1.0, 0.0);
+#endif
+}
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -
 
 float fresnel_dielectric(vec3 Incoming, vec3 Normal, float eta)
@@ -149,6 +218,9 @@ uniform float far;
 uniform vec3 nodePosition;
 
 uniform float rainIntensity;
+uniform int rippleSourceCount;
+uniform vec4 rippleSources[MAX_SHADER_RIPPLES];
+uniform vec4 rippleData[MAX_SHADER_RIPPLES];
 
 #define PER_PIXEL_LIGHTING 0
 
@@ -192,7 +264,8 @@ void main(void)
     else
       rainRipple = vec4(0.0);
 
-    vec3 rippleAdd = rainRipple.xyz * rainRipple.w * 10.0;
+    vec4 actorRipple = shaderWaterRipples(worldPos.xy);
+    vec3 rippleAdd = rainRipple.xyz * rainRipple.w * 10.0 + actorRipple.xyz * actorRipple.w * 2.0;
 
     vec2 bigWaves = vec2(BIG_WAVES_X,BIG_WAVES_Y);
     vec2 midWaves = mix(vec2(MID_WAVES_X,MID_WAVES_Y),vec2(MID_WAVES_RAIN_X,MID_WAVES_RAIN_Y),rainIntensity);
@@ -259,10 +332,10 @@ void main(void)
     vec3 scatterColour = mix(SCATTER_COLOUR*vec3(1.0,0.4,0.0), SCATTER_COLOUR, clamp(1.0-exp(-sunHeight*SUN_EXT), 0.0, 1.0));
     vec3 lR = reflect(lVec, lNormal);
     float lightScatter = clamp(dot(lVec,lNormal)*0.7+0.3, 0.0, 1.0) * clamp(dot(lR, vVec)*2.0-1.2, 0.0, 1.0) * SCATTER_AMOUNT * sunFade * clamp(1.0-exp(-sunHeight), 0.0, 1.0);
-    gl_FragData[0].xyz = mix( mix(refraction,  scatterColour,  lightScatter),  reflection,  fresnel) + specular * sunSpec.xyz + vec3(rainRipple.w) * 0.2;
+    gl_FragData[0].xyz = mix( mix(refraction,  scatterColour,  lightScatter),  reflection,  fresnel) + specular * sunSpec.xyz + vec3(rainRipple.w) * 0.2 + vec3(actorRipple.w) * 0.08;
     gl_FragData[0].w = 1.0;
 #else
-    gl_FragData[0].xyz = mix(reflection,  waterColor,  (1.0-fresnel)*0.5) + specular * sunSpec.xyz + vec3(rainRipple.w) * 0.7;
+    gl_FragData[0].xyz = mix(reflection,  waterColor,  (1.0-fresnel)*0.5) + specular * sunSpec.xyz + vec3(rainRipple.w) * 0.7 + vec3(actorRipple.w) * 0.12;
     gl_FragData[0].w = clamp(fresnel*6.0 + specular * sunSpec.w, 0.0, 1.0);     //clamp(fresnel*2.0 + specular * gl_LightSource[0].specular.w, 0.0, 1.0);
 #endif
 

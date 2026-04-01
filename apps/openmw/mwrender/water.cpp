@@ -1,6 +1,7 @@
 #include "water.hpp"
 
 #include <iomanip>
+#include <algorithm>
 
 #include <osg/Fog>
 #include <osg/Depth>
@@ -10,6 +11,7 @@
 #include <osg/PositionAttitudeTransform>
 #include <osg/ClipNode>
 #include <osg/FrontFace>
+#include <osg/Uniform>
 
 #include <osgDB/ReadFile>
 
@@ -210,11 +212,17 @@ public:
     }
 };
 
-class RainIntensityUpdater : public SceneUtil::StateSetUpdater
+namespace
+{
+    static const int sMaxShaderRipples = 16;
+}
+
+class WaterStateUpdater : public SceneUtil::StateSetUpdater
 {
 public:
-    RainIntensityUpdater()
+    explicit WaterStateUpdater(RippleSimulation* simulation)
         : mRainIntensity(0.f)
+        , mSimulation(simulation)
     {
     }
 
@@ -226,8 +234,18 @@ public:
 protected:
     void setDefaults(osg::StateSet* stateset) override
     {
-        osg::ref_ptr<osg::Uniform> rainIntensityUniform = new osg::Uniform("rainIntensity", 0.0f);
-        stateset->addUniform(rainIntensityUniform.get());
+        stateset->addUniform(new osg::Uniform("rainIntensity", 0.0f));
+        stateset->addUniform(new osg::Uniform("rippleSourceCount", 0));
+
+        osg::ref_ptr<osg::Uniform> rippleSources = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "rippleSources", sMaxShaderRipples);
+        osg::ref_ptr<osg::Uniform> rippleData = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "rippleData", sMaxShaderRipples);
+        for (int i = 0; i < sMaxShaderRipples; ++i)
+        {
+            rippleSources->setElement(i, osg::Vec4f(0.f, 0.f, 0.f, 0.f));
+            rippleData->setElement(i, osg::Vec4f(0.f, 0.f, 0.f, 0.f));
+        }
+        stateset->addUniform(rippleSources);
+        stateset->addUniform(rippleData);
     }
 
     void apply(osg::StateSet* stateset, osg::NodeVisitor* /*nv*/) override
@@ -235,10 +253,39 @@ protected:
         osg::ref_ptr<osg::Uniform> rainIntensityUniform = stateset->getUniform("rainIntensity");
         if (rainIntensityUniform != nullptr)
             rainIntensityUniform->set(mRainIntensity);
+
+        osg::ref_ptr<osg::Uniform> rippleSourceCount = stateset->getUniform("rippleSourceCount");
+        osg::ref_ptr<osg::Uniform> rippleSources = stateset->getUniform("rippleSources");
+        osg::ref_ptr<osg::Uniform> rippleData = stateset->getUniform("rippleData");
+        if (!rippleSourceCount || !rippleSources || !rippleData || !mSimulation)
+            return;
+
+        const bool enabled = Settings::Manager::getBool("shader water ripples", "Water");
+        const std::vector<ShaderRipple>& ripples = mSimulation->getShaderRipples();
+        int count = enabled ? std::min(static_cast<int>(ripples.size()), sMaxShaderRipples) : 0;
+        rippleSourceCount->set(count);
+
+        for (int i = 0; i < sMaxShaderRipples; ++i)
+        {
+            osg::Vec4f source(0.f, 0.f, 0.f, 0.f);
+            osg::Vec4f data(0.f, 0.f, 0.f, 0.f);
+
+            if (i < count)
+            {
+                const ShaderRipple& ripple = ripples[ripples.size() - count + i];
+                const float progress = ripple.mLifetime > 0.f ? std::min(1.f, ripple.mAge / ripple.mLifetime) : 1.f;
+                source.set(ripple.mWorldPos.x(), ripple.mWorldPos.y(), ripple.mRadius, ripple.mStrength);
+                data.set(progress, ripple.mRingScale, 1.f - progress, ripple.mWorldPos.z());
+            }
+
+            rippleSources->setElement(i, source);
+            rippleData->setElement(i, data);
+        }
     }
 
 private:
     float mRainIntensity;
+    RippleSimulation* mSimulation;
 };
 
 osg::ref_ptr<osg::Image> readPngImage (const std::string& file)
@@ -464,7 +511,7 @@ public:
 
 Water::Water(osg::Group *parent, osg::Group* sceneRoot, Resource::ResourceSystem *resourceSystem,
              osgUtil::IncrementalCompileOperation *ico, const std::string& resourcePath)
-    : mRainIntensityUpdater(nullptr)
+    : mWaterStateUpdater(nullptr)
     , mParent(parent)
     , mSceneRoot(sceneRoot)
     , mResourceSystem(resourceSystem)
@@ -541,7 +588,10 @@ void Water::updateWaterMaterial()
         mRefraction = nullptr;
     }
 
-    if (Settings::Manager::getBool("shader", "Water"))
+    const bool shaderWaterEnabled = Settings::Manager::getBool("shader", "Water");
+    mSimulation->setShaderWaterRipplesEnabled(shaderWaterEnabled && Settings::Manager::getBool("shader water ripples", "Water"));
+
+    if (shaderWaterEnabled)
     {
         mReflection = new Reflection(mInterior);
         mReflection->setWaterLevel(mTop);
@@ -584,7 +634,7 @@ void Water::createSimpleWaterStateSet(osg::Node* node, float alpha)
 
     node->setStateSet(stateset);
     node->setUpdateCallback(nullptr);
-    mRainIntensityUpdater = nullptr;
+    mWaterStateUpdater = nullptr;
 
     // Add animated textures
     std::vector<osg::ref_ptr<osg::Texture2D> > textures;
@@ -625,6 +675,8 @@ void Water::createShaderWaterStateSet(osg::Node* node, Reflection* reflection, R
     // use a define map to conditionally compile the shader
     std::map<std::string, std::string> defineMap;
     defineMap.insert(std::make_pair(std::string("refraction_enabled"), std::string(refraction ? "1" : "0")));
+    defineMap.insert(std::make_pair(std::string("rain_ripple_detail"), std::to_string(std::clamp(Settings::Manager::getInt("rain ripple detail", "Water"), 0, 2))));
+    defineMap.insert(std::make_pair(std::string("shader_water_ripples"), Settings::Manager::getBool("shader water ripples", "Water") ? "1" : "0"));
 
     Shader::ShaderManager& shaderMgr = mResourceSystem->getSceneManager()->getShaderManager();
     osg::ref_ptr<osg::Shader> vertexShader (shaderMgr.getShader("water_vertex.glsl", defineMap, osg::Shader::VERTEX));
@@ -678,8 +730,8 @@ void Water::createShaderWaterStateSet(osg::Node* node, Reflection* reflection, R
 
     node->setStateSet(shaderStateset);
 
-    mRainIntensityUpdater = new RainIntensityUpdater();
-    node->setUpdateCallback(mRainIntensityUpdater);
+    mWaterStateUpdater = new WaterStateUpdater(mSimulation.get());
+    node->setUpdateCallback(mWaterStateUpdater);
 }
 
 void Water::processChangedSettings(const Settings::CategorySettingVector& settings)
@@ -764,8 +816,8 @@ void Water::setHeight(const float height)
 
 void Water::setRainIntensity(float rainIntensity)
 {
-    if (mRainIntensityUpdater)
-        mRainIntensityUpdater->setRainIntensity(rainIntensity);
+    if (mWaterStateUpdater)
+        mWaterStateUpdater->setRainIntensity(rainIntensity);
 }
 
 void Water::update(float dt)

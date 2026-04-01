@@ -45,12 +45,12 @@ namespace MWRender
     class Refraction;
     class Reflection;
     class RippleSimulation;
-    class RainIntensityUpdater;
+    class WaterStateUpdater;
 
     /// Water rendering
     class Water
     {
-        osg::ref_ptr<RainIntensityUpdater> mRainIntensityUpdater;
+        osg::ref_ptr<WaterStateUpdater> mWaterStateUpdater;
 
         osg::ref_ptr<osg::Group> mParent;
         osg::ref_ptr<osg::Group> mSceneRoot;
