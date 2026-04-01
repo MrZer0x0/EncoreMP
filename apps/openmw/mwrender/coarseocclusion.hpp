@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <osg/BoundingBox>
 #include <osg/BoundingSphere>
 #include <osg/Matrix>
 #include <osg/observer_ptr>
@@ -13,7 +14,6 @@ namespace osg
 {
     class Camera;
     class Node;
-    class BoundingBox;
 }
 
 namespace MWWorld
