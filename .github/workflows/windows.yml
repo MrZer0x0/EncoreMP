@@ -1,0 +1,82 @@
+name: Windows Build
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'fix/*'
+      - 'feat/*'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  Windows:
+    runs-on: windows-2022
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      # ── Кэшируем скачанные зависимости ──
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: win-deps-v2-${{ hashFiles('CI/before_script.msvc.sh') }}
+          restore-keys: |
+            win-deps-v2-
+
+      # ── Скачиваем CrabNet (замена RakNet) ──
+      - name: Download CrabNet
+        run: |
+          curl -o CrabNet.7z -L \
+            https://github.com/DreamWeave-MP/CrabNet/releases/download/Stable-CI/CrabNet-Windows-Release.7z
+          7z x -y CrabNet.7z -oextern/raknet
+
+      # ── Запуск штатного скрипта подготовки зависимостей MSVC ──
+      # Скрипт скачивает Boost, Bullet, FFmpeg, MyGUI, OpenAL, OSG, Qt, SDL2,
+      # LZ4, LuaJIT, ICU, zlib и конфигурирует CMake
+      - name: Setup Dependencies & Configure
+        run: |
+          CI/before_script.msvc.sh \
+            -c ${{ env.BUILD_TYPE }} \
+            -p x64 \
+            -v 2022 \
+            -V \
+            -i "${{ github.workspace }}/install"
+
+      # ── Сборка ──
+      - name: Build
+        run: |
+          cd MSVC2022_64
+          cmake --build . --config ${{ env.BUILD_TYPE }} -- //m:$(nproc)
+
+      # ── Установка ──
+      - name: Install
+        run: |
+          cd MSVC2022_64
+          cmake --install . --config ${{ env.BUILD_TYPE }}
+
+      # ── Упаковка артефакта ──
+      - name: Package
+        run: |
+          cd "${{ github.workspace }}/install"
+          7z a -mx=5 "${{ github.workspace }}/EncoreMP-Windows-x64.7z" .
+
+      # ── Загрузка артефакта в GitHub ──
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EncoreMP-Windows-x64
+          path: EncoreMP-Windows-x64.7z
+          retention-days: 30
