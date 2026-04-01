@@ -88,6 +88,7 @@ namespace MWRender
     class ActorsPaths;
     class RecastMesh;
     class ObjectPaging;
+    class CoarseOcclusionCuller;
     class Groundcover;
 
     class RenderingManager : public MWRender::RenderingInterface
@@ -247,6 +248,9 @@ namespace MWRender
         void setFogColor(const osg::Vec4f& color);
         void updateThirdPersonViewMode();
 
+        bool occlusionVisible(const MWWorld::ConstPtr& ptr) const;
+        void rebuildOcclusionBuffer(const osg::Vec3f& eyePoint);
+
         void reportStats() const;
 
         void updateNavMesh();
@@ -281,6 +285,7 @@ namespace MWRender
         std::unique_ptr<Terrain::World> mGroundcoverWorld;
         std::unique_ptr<TerrainStorage> mTerrainStorage;
         std::unique_ptr<ObjectPaging> mObjectPaging;
+        std::unique_ptr<CoarseOcclusionCuller> mOcclusionCuller;
         std::unique_ptr<Groundcover> mGroundcover;
         std::unique_ptr<SkyManager> mSky;
         std::unique_ptr<FogManager> mFog;

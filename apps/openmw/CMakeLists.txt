@@ -21,7 +21,7 @@ add_openmw_dir (mwrender
     actors objects renderingmanager animation rotatecontroller sky npcanimation vismask
     creatureanimation effectmanager util renderinginterface pathgrid rendermode weaponanimation screenshotmanager
     bulletdebugdraw globalmap characterpreview camera viewovershoulder localmap water terrainstorage ripplesimulation
-    renderbin actoranimation landmanager navmesh actorspaths recastmesh fogmanager objectpaging groundcover
+    renderbin actoranimation landmanager navmesh actorspaths recastmesh fogmanager objectpaging groundcover coarseocclusion
     )
 
 add_openmw_dir (mwinput
@@ -149,6 +149,7 @@ add_openmw_dir (mwmp/processors/worldstate ProcessorCellReset ProcessorClientScr
     )
 
 # Main executable
+
 if (NOT ANDROID)
     openmw_add_executable(tes3mp
         ${OPENMW_FILES}
@@ -162,7 +163,6 @@ else ()
         ${GAME} ${GAME_HEADER}
     )
 endif ()
-
 
 # Sound stuff - here so CMake doesn't stupidly recompile EVERYTHING
 # when we change the backend.
@@ -252,7 +252,7 @@ if(APPLE)
     configure_file("${OpenMW_BINARY_DIR}/openmw.cfg" ${BUNDLE_RESOURCES_DIR} COPYONLY)
     configure_file("${OpenMW_BINARY_DIR}/gamecontrollerdb.txt" ${BUNDLE_RESOURCES_DIR} COPYONLY)
 
-    add_custom_command(TARGET tes3mp
+    add_custom_command(TARGET openmw
         POST_BUILD
         COMMAND cp "${OpenMW_BINARY_DIR}/resources/version" "${BUNDLE_RESOURCES_DIR}/resources")
 

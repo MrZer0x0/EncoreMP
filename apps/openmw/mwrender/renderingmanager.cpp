@@ -68,6 +68,7 @@
 #include "objectpaging.hpp"
 #include "screenshotmanager.hpp"
 #include "groundcover.hpp"
+#include "coarseocclusion.hpp"
 
 namespace MWRender
 {
@@ -318,6 +319,9 @@ namespace MWRender
         }
         else
             mTerrain.reset(new Terrain::TerrainGrid(sceneRoot, mRootNode, mResourceSystem, mTerrainStorage.get(), Mask_Terrain, Mask_PreCompile, Mask_Debug));
+
+        mOcclusionCuller.reset(new CoarseOcclusionCuller);
+        mOcclusionCuller->configureFromSettings();
 
         mTerrain->setTargetFrameRate(Settings::Manager::getFloat("target framerate", "Cells"));
         mTerrain->setWorkQueue(mWorkQueue.get());
@@ -725,6 +729,13 @@ namespace MWRender
                 mGroundcoverUpdater->setWindSpeed(windSpeed);
                 mGroundcoverUpdater->setPlayerPos(playerPos);
             }
+        }
+
+        if (mPlayerAnimation)
+        {
+            const MWWorld::Ptr& player = mPlayerAnimation->getPtr();
+            osg::Vec3f eyePoint(player.getRefData().getPosition().asVec3());
+            rebuildOcclusionBuffer(eyePoint);
         }
 
         updateNavMesh();
@@ -1156,6 +1167,10 @@ namespace MWRender
             {
                 mWater->processChangedSettings(changed);
             }
+            else if (it->first == "Camera" && it->second.find("occlusion ") == 0 && mOcclusionCuller)
+            {
+                mOcclusionCuller->configureFromSettings();
+            }
             else if (it->first == "Shaders" && it->second == "minimum interior brightness")
             {
                 mMinimumAmbientLuminance = std::clamp(Settings::Manager::getFloat("minimum interior brightness", "Shaders"), 0.f, 1.f);
@@ -1316,10 +1331,30 @@ namespace MWRender
     {
         mTerrain->setActiveGrid(grid);
     }
+    void RenderingManager::rebuildOcclusionBuffer(const osg::Vec3f& eyePoint)
+    {
+        if (!mOcclusionCuller)
+            return;
+
+        mOcclusionCuller->configureFromSettings();
+        mOcclusionCuller->rebuild(mViewer->getCamera(), mSceneRoot.get(), eyePoint);
+    }
+
+    bool RenderingManager::occlusionVisible(const MWWorld::ConstPtr& ptr) const
+    {
+        if (!mOcclusionCuller)
+            return true;
+        return mOcclusionCuller->isVisible(ptr);
+    }
+
     bool RenderingManager::pagingEnableObject(int type, const MWWorld::ConstPtr& ptr, bool enabled)
     {
         if (!ptr.isInCell() || !ptr.getCell()->isExterior() || !mObjectPaging)
             return false;
+
+        if (enabled && !ptr.getClass().isActor() && !occlusionVisible(ptr))
+            enabled = false;
+
         if (mObjectPaging->enableObject(type, ptr.getCellRef().getRefNum(), ptr.getCellRef().getPosition().asVec3(), osg::Vec2i(ptr.getCell()->getCell()->getGridX(), ptr.getCell()->getCell()->getGridY()), enabled))
         {
             mTerrain->rebuildViews();
