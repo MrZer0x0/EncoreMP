@@ -44,25 +44,21 @@ jobs:
             https://github.com/DreamWeave-MP/CrabNet/releases/download/Stable-CI/CrabNet-Windows-Release.7z
           7z x -y CrabNet.7z -oextern/raknet
 
-      # ── Фикс: aqtinstall 1.1.3 не работает с setuptools>=82 ──
-      # setuptools 82+ удалил pkg_resources, который нужен aqtinstall 1.1.3
-      # Два варианта фикса (раскомментируйте ОДИН):
-
-      # --- Вариант A: Обновить aqtinstall в скрипте (рекомендуется) ---
-      - name: Fix aqtinstall version
+      # ── Фикс: aqtinstall 1.1.3 несовместим с setuptools>=82 ──
+      # setuptools 82+ удалил pkg_resources. Обновляем aqt до v3 и правим синтаксис.
+      - name: Fix aqtinstall compatibility
         run: |
-          # Заменяем aqtinstall==1.1.3 на совместимую версию
+          # 1) Обновляем версию aqtinstall
           sed -i 's/aqtinstall==1.1.3/aqtinstall>=3.1.0/g' CI/before_script.msvc.sh
-          # Обновляем команду aqt install (API изменился в v3)
-          # В aqt v3: "aqt install-qt" вместо "aqt install"
-          sed -i 's|aqt\" install ${QT_VER}|aqt\" install-qt|' CI/before_script.msvc.sh
-          # Полная команда: aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
-          sed -i 's|install-qt ${QT_VER} windows desktop|install-qt windows desktop ${QT_VER}|' CI/before_script.msvc.sh
 
-      # --- Вариант B (альтернатива): Понизить setuptools ---
-      # - name: Fix setuptools version
-      #   run: |
-      #     sed -i 's/pip install --upgrade pip setuptools wheel/pip install --upgrade pip "setuptools<81" wheel/g' CI/before_script.msvc.sh
+          # 2) Исправляем команду aqt install → aqt install-qt с правильным порядком аргументов
+          #    Старый формат (v1): aqt install <version> windows desktop "<arch>"
+          #    Новый формат (v3):  aqt install-qt windows desktop <version> <arch>
+          sed -i 's|aqt" install ${QT_VER} windows desktop "win${BITS}_msvc${QT_MSVC_YEAR}${SUFFIX}"|aqt" install-qt windows desktop ${QT_VER} win${BITS}_msvc${QT_MSVC_YEAR}${SUFFIX}|' CI/before_script.msvc.sh
+
+          # Проверяем результат
+          echo "=== Patched aqt line ==="
+          grep -n "aqt.*install-qt\|aqtinstall" CI/before_script.msvc.sh
 
       # ── Запуск штатного скрипта подготовки зависимостей MSVC ──
       - name: Setup Dependencies & Configure
