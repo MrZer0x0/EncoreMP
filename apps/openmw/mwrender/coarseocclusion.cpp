@@ -10,6 +10,7 @@
 #include <osg/Vec4f>
 
 #include <components/settings/settings.hpp>
+#include <components/sceneutil/positionattitudetransform.hpp>
 
 #include "../mwworld/ptr.hpp"
 

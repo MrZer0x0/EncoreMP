@@ -4,6 +4,10 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
+#include <algorithm>
+#include <cctype>
+#include <sstream>
+#include <vector>
 
 #include <boost/filesystem/fstream.hpp>
 
@@ -83,6 +87,167 @@ namespace
     {
         if (ret != 0)
             Log(Debug::Error) << "SDL error: " << SDL_GetError();
+    }
+
+    std::string trimCopy(const std::string& value)
+    {
+        std::string::size_type start = value.find_first_not_of(" \t\r\n");
+        if (start == std::string::npos)
+            return std::string();
+
+        std::string::size_type end = value.find_last_not_of(" \t\r\n");
+        return value.substr(start, end - start + 1);
+    }
+
+    bool hasIniKey(const std::vector<std::string>& lines, const std::string& section, const std::string& key)
+    {
+        std::string currentSection;
+
+        for (const std::string& rawLine : lines)
+        {
+            const std::string line = trimCopy(rawLine);
+            if (line.empty() || line[0] == '#' || line[0] == ';')
+                continue;
+
+            if (line.front() == '[')
+            {
+                const std::string::size_type end = line.find(']');
+                if (end != std::string::npos)
+                    currentSection = line.substr(1, end - 1);
+                continue;
+            }
+
+            if (currentSection != section)
+                continue;
+
+            const std::string::size_type equals = line.find('=');
+            if (equals == std::string::npos)
+                continue;
+
+            if (trimCopy(line.substr(0, equals)) == key)
+                return true;
+        }
+
+        return false;
+    }
+
+    void appendIniKeyIfMissing(std::vector<std::string>& lines, const std::string& section, const std::string& key, const std::string& value)
+    {
+        if (hasIniKey(lines, section, key))
+            return;
+
+        bool sectionFound = false;
+        std::size_t insertPos = lines.size();
+
+        for (std::size_t i = 0; i < lines.size(); ++i)
+        {
+            const std::string line = trimCopy(lines[i]);
+            if (line.empty() || line[0] != '[')
+                continue;
+
+            const std::string::size_type end = line.find(']');
+            if (end == std::string::npos)
+                continue;
+
+            const std::string currentSection = line.substr(1, end - 1);
+            if (sectionFound)
+            {
+                insertPos = i;
+                break;
+            }
+
+            if (currentSection == section)
+            {
+                sectionFound = true;
+                insertPos = i + 1;
+            }
+        }
+
+        const std::string entry = key + " = " + value;
+
+        if (!sectionFound)
+        {
+            if (!lines.empty() && !trimCopy(lines.back()).empty())
+                lines.push_back(std::string());
+            lines.push_back("[" + section + "]");
+            lines.push_back(entry);
+            return;
+        }
+
+        lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(insertPos), entry);
+    }
+
+    bool queryPrimaryDisplayResolution(int& width, int& height)
+    {
+        SDL_DisplayMode mode;
+        if (SDL_GetCurrentDisplayMode(0, &mode) == 0 && mode.w > 0 && mode.h > 0)
+        {
+            width = mode.w;
+            height = mode.h;
+            return true;
+        }
+
+        if (SDL_GetDesktopDisplayMode(0, &mode) == 0 && mode.w > 0 && mode.h > 0)
+        {
+            width = mode.w;
+            height = mode.h;
+            return true;
+        }
+
+        SDL_Rect bounds;
+        if (SDL_GetDisplayBounds(0, &bounds) == 0 && bounds.w > 0 && bounds.h > 0)
+        {
+            width = bounds.w;
+            height = bounds.h;
+            return true;
+        }
+
+        width = 1920;
+        height = 1080;
+        return false;
+    }
+
+    std::string formatScalingFactor(int width, int height)
+    {
+        const int maxResolution = std::max(width, height);
+        float scalingFactor = static_cast<float>(maxResolution) / 1280.f;
+        scalingFactor = std::max(0.5f, std::min(4.0f, scalingFactor));
+
+        std::ostringstream stream;
+        stream << std::fixed << std::setprecision(2) << scalingFactor;
+        return stream.str();
+    }
+
+    void ensureDisplaySettingsFile(const boost::filesystem::path& settingsPath)
+    {
+        int width = 1920;
+        int height = 1080;
+        queryPrimaryDisplayResolution(width, height);
+
+        std::vector<std::string> lines;
+        if (boost::filesystem::exists(settingsPath))
+        {
+            boost::filesystem::ifstream input(settingsPath);
+            std::string line;
+            while (std::getline(input, line))
+                lines.push_back(line);
+        }
+
+        const std::size_t oldSize = lines.size();
+
+        appendIniKeyIfMissing(lines, "Video", "resolution x", std::to_string(width));
+        appendIniKeyIfMissing(lines, "Video", "resolution y", std::to_string(height));
+        appendIniKeyIfMissing(lines, "Video", "screen", "0");
+        appendIniKeyIfMissing(lines, "Video", "fullscreen", "true");
+        appendIniKeyIfMissing(lines, "GUI", "scaling factor", formatScalingFactor(width, height));
+
+        if (boost::filesystem::exists(settingsPath) && lines.size() == oldSize)
+            return;
+
+        boost::filesystem::create_directories(settingsPath.parent_path());
+        boost::filesystem::ofstream output(settingsPath, std::ios::out | std::ios::trunc);
+        for (const std::string& line : lines)
+            output << line << '\n';
     }
 
     struct UserStats
@@ -612,8 +777,11 @@ std::string OMW::Engine::loadSettings (Settings::Manager & settings)
     else
         throw std::runtime_error ("No default settings file found! Make sure the file \"defaults.bin\" was properly installed.");
 
+    const boost::filesystem::path settingsPath = mCfgMgr.getUserConfigPath() / "settings.cfg";
+    ensureDisplaySettingsFile(settingsPath);
+
     // load user settings if they exist
-    const std::string settingspath = (mCfgMgr.getUserConfigPath() / "settings.cfg").string();
+    const std::string settingspath = settingsPath.string();
     if (boost::filesystem::exists(settingspath))
         settings.loadUser(settingspath);
 
