@@ -6,6 +6,8 @@
 #include <components/debug/debugging.hpp>
 #include <components/misc/rng.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include "engine.hpp"
 
 /*
@@ -365,11 +367,35 @@ namespace
     };
 }
 
+
+namespace
+{
+    void switchToClientDirectory(const char* argv0)
+    {
+#ifdef ANDROID
+        (void)argv0;
+#else
+        if (!argv0 || !*argv0)
+            return;
+
+        boost::filesystem::path binaryPath = boost::filesystem::system_complete(boost::filesystem::path(argv0));
+        if (!binaryPath.parent_path().empty())
+            boost::filesystem::current_path(binaryPath.parent_path());
+#endif
+    }
+
+    void removePreviousClientLog()
+    {
+        Files::ConfigurationManager cfgMgr(true);
+        boost::system::error_code ec;
+        boost::filesystem::remove(cfgMgr.getLogPath() / "tes3mp-client.log", ec);
+        boost::filesystem::remove(cfgMgr.getLogPath() / "tes3mp-client", ec);
+    }
+}
+
 int runApplication(int argc, char *argv[])
 {
 #ifdef __APPLE__
-    boost::filesystem::path binary_path = boost::filesystem::system_complete(boost::filesystem::path(argv[0]));
-    boost::filesystem::current_path(binary_path.parent_path());
     setenv("OSG_GL_TEXTURE_STORAGE", "OFF", 0);
 #endif
 
@@ -392,6 +418,8 @@ extern "C" int SDL_main(int argc, char**argv)
 int main(int argc, char**argv)
 #endif
 {
+    switchToClientDirectory(argv[0]);
+
     /*
         Start of tes3mp addition
 
@@ -402,16 +430,9 @@ int main(int argc, char**argv)
         End of tes3mp addition
     */
 
-    /*
-        Start of tes3mp change (major)
+    removePreviousClientLog();
 
-        Instead of logging information in openmw.log, use a more descriptive filename
-        that includes a timestamp
-    */
-    return wrapApplication(&runApplication, argc, argv, "/tes3mp-client-" + TimedLog::getFilenameTimestamp());
-    /*
-        End of tes3mp change (major)
-    */
+    return wrapApplication(&runApplication, argc, argv, "/tes3mp-client");
 }
 
 // Platform specific for Windows when there is no console built into the executable.

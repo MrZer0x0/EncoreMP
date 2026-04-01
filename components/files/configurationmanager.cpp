@@ -5,9 +5,21 @@
 #include <components/fallback/validate.hpp>
 
 #include <boost/filesystem/fstream.hpp>
+#include <boost/system/error_code.hpp>
 /**
  * \namespace Files
  */
+
+namespace
+{
+    bool ensureDirectory(const boost::filesystem::path& path)
+    {
+        boost::system::error_code dirErr;
+        boost::filesystem::create_directories(path, dirErr);
+        return boost::filesystem::is_directory(path);
+    }
+}
+
 namespace Files
 {
 
@@ -27,20 +39,26 @@ ConfigurationManager::ConfigurationManager(bool silent)
     : mFixedPath(applicationName)
     , mSilent(silent)
 {
-    setupTokensMapping();
+    mLocalPath = boost::filesystem::current_path();
+    mUserConfigPath = mLocalPath / "userdata";
+    mUserDataPath = mUserConfigPath;
 
-    boost::filesystem::create_directories(mFixedPath.getUserConfigPath());
-    boost::filesystem::create_directories(mFixedPath.getUserDataPath());
-
-    mLogPath = mFixedPath.getUserConfigPath();
-
-    mScreenshotPath = mFixedPath.getUserDataPath() / "screenshots";
-
-    // probably not necessary but validate the creation of the screenshots directory and fallback to the original behavior if it fails
-    boost::system::error_code dirErr;
-    if (!boost::filesystem::create_directories(mScreenshotPath, dirErr) && !boost::filesystem::is_directory(mScreenshotPath)) {
-        mScreenshotPath = mFixedPath.getUserDataPath();
+    if (!ensureDirectory(mUserConfigPath) || !ensureDirectory(mUserDataPath))
+    {
+        mLocalPath = mFixedPath.getLocalPath();
+        mUserConfigPath = mFixedPath.getUserConfigPath();
+        mUserDataPath = mFixedPath.getUserDataPath();
+        ensureDirectory(mUserConfigPath);
+        ensureDirectory(mUserDataPath);
     }
+
+    mLogPath = mUserConfigPath;
+    mScreenshotPath = mUserDataPath / "screenshots";
+
+    if (!ensureDirectory(mScreenshotPath))
+        mScreenshotPath = mUserDataPath;
+
+    setupTokensMapping();
 }
 
 ConfigurationManager::~ConfigurationManager()
@@ -49,9 +67,9 @@ ConfigurationManager::~ConfigurationManager()
 
 void ConfigurationManager::setupTokensMapping()
 {
-    mTokensMapping.insert(std::make_pair(localToken, &FixedPath<>::getLocalPath));
-    mTokensMapping.insert(std::make_pair(userDataToken, &FixedPath<>::getUserDataPath));
-    mTokensMapping.insert(std::make_pair(globalToken, &FixedPath<>::getGlobalDataPath));
+    mTokensMapping.insert(std::make_pair(localToken, &ConfigurationManager::getLocalPath));
+    mTokensMapping.insert(std::make_pair(userDataToken, &ConfigurationManager::getUserDataPath));
+    mTokensMapping.insert(std::make_pair(globalToken, &ConfigurationManager::getGlobalDataPath));
 }
 
 void ConfigurationManager::readConfiguration(boost::program_options::variables_map& variables,
@@ -62,13 +80,13 @@ void ConfigurationManager::readConfiguration(boost::program_options::variables_m
     
     // User config has the highest priority.
     auto composingVariables = separateComposingVariables(variables, description);
-    loadConfig(mFixedPath.getUserConfigPath(), variables, description);
+    loadConfig(mUserConfigPath, variables, description);
     mergeComposingVariables(variables, composingVariables, description);
     boost::program_options::notify(variables);
 
     // read either local or global config depending on type of installation
     composingVariables = separateComposingVariables(variables, description);
-    bool loaded = loadConfig(mFixedPath.getLocalPath(), variables, description);
+    bool loaded = loadConfig(mLocalPath, variables, description);
     mergeComposingVariables(variables, composingVariables, description);
     boost::program_options::notify(variables);
     if (!loaded)
@@ -182,7 +200,7 @@ void ConfigurationManager::processPaths(Files::PathContainer& dataDirs, bool cre
                 TokensMappingContainer::iterator tokenIt = mTokensMapping.find(path.substr(0, pos + 1));
                 if (tokenIt != mTokensMapping.end())
                 {
-                    boost::filesystem::path tempPath(((mFixedPath).*(tokenIt->second))());
+                    boost::filesystem::path tempPath(((this)->*(tokenIt->second))());
                     if (pos < path.length() - 1)
                     {
                         // There is something after the token, so we should
@@ -262,17 +280,17 @@ const boost::filesystem::path& ConfigurationManager::getGlobalPath() const
 
 const boost::filesystem::path& ConfigurationManager::getUserConfigPath() const
 {
-    return mFixedPath.getUserConfigPath();
+    return mUserConfigPath;
 }
 
 const boost::filesystem::path& ConfigurationManager::getUserDataPath() const
 {
-    return mFixedPath.getUserDataPath();
+    return mUserDataPath;
 }
 
 const boost::filesystem::path& ConfigurationManager::getLocalPath() const
 {
-    return mFixedPath.getLocalPath();
+    return mLocalPath;
 }
 
 const boost::filesystem::path& ConfigurationManager::getGlobalDataPath() const
@@ -283,6 +301,11 @@ const boost::filesystem::path& ConfigurationManager::getGlobalDataPath() const
 const boost::filesystem::path& ConfigurationManager::getCachePath() const
 {
     return mFixedPath.getCachePath();
+}
+
+const boost::filesystem::path& ConfigurationManager::getLocalDataPath() const
+{
+    return mLocalPath;
 }
 
 const boost::filesystem::path& ConfigurationManager::getInstallPath() const
