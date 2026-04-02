@@ -12,7 +12,10 @@ set(SHADER_FILES
     water_vertex.glsl
     water_fragment.glsl
     water_nm.png
+    water_waves.glsl
     alpha.glsl
+    HDR.glsl
+    helpsettings.glsl
     objects_vertex.glsl
     objects_fragment.glsl
     terrain_vertex.glsl
@@ -31,6 +34,12 @@ set(SHADER_FILES
     nv_default_fragment.glsl
     nv_nolighting_vertex.glsl
     nv_nolighting_fragment.glsl
+    openmw_vertex.glsl
+    openmw_vertex.h.glsl
+    openmw_vertex_multiview.glsl
+    openmw_fragment.glsl
+    openmw_fragment.h.glsl
+    openmw_fragment_multiview.glsl
 )
 
 copy_all_resource_files(${CMAKE_CURRENT_SOURCE_DIR} ${OPENMW_SHADERS_ROOT} ${DDIRRELATIVE} "${SHADER_FILES}")

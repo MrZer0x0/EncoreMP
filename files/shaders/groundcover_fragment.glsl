@@ -36,6 +36,7 @@ centroid varying vec3 passLighting;
 centroid varying vec3 shadowDiffuseLighting;
 #endif
 
+#include "helpsettings.glsl"
 #include "shadows_fragment.glsl"
 #include "lighting.glsl"
 #include "alpha.glsl"
@@ -64,6 +65,9 @@ void main()
 
     alphaTest();
 
+    // Convert to linear space for lighting calculations
+    gl_FragData[0].xyz = preLight(gl_FragData[0].xyz);
+
     float shadowing = unshadowedLightRatio(linearDepth);
 
     vec3 lighting;
@@ -77,6 +81,9 @@ void main()
 #endif
 
     gl_FragData[0].xyz *= lighting;
+
+    // Apply tonemapping after all lighting calculations
+    gl_FragData[0].xyz = toneMap(gl_FragData[0].xyz);
 
 #if @radialFog
     float fogValue = clamp((euclideanDepth - gl_Fog.start) * gl_Fog.scale, 0.0, 1.0);

@@ -8,6 +8,8 @@
     #extension GL_EXT_gpu_shader4: require
 #endif
 
+#include "water_waves.glsl"
+
 varying vec2 uv;
 
 uniform sampler2D diffuseMap;
@@ -32,10 +34,21 @@ centroid varying vec3 shadowDiffuseLighting;
 varying vec3 passViewPos;
 varying vec3 passNormal;
 
+uniform float osg_SimulationTime;
+uniform mat4 osg_ViewMatrixInverse;
+
+#include "helpsettings.glsl"
 #include "vertexcolors.glsl"
 #include "shadows_fragment.glsl"
 #include "lighting.glsl"
 #include "parallax.glsl"
+
+// ==========================================================================
+// ПАРАМЕТРЫ ОГРАНИЧЕНИЯ КАУСТИКИ ПО ДИСТАНЦИИ
+// ==========================================================================
+const float MAX_CAUSTICS_DISTANCE = 2500.0;  // Максимальная дистанция для каустики
+const float CAUSTICS_FADE_START = 1500.0;    // Начало плавного затухания
+// ==========================================================================
 
 void main()
 {
@@ -76,10 +89,14 @@ void main()
     gl_FragData[0].a *= texture2D(blendMap, blendMapUV).a;
 #endif
 
+    // Convert to linear space for lighting calculations
+    gl_FragData[0].xyz = preLight(gl_FragData[0].xyz);
+
     vec4 diffuseColor = getDiffuseColor();
     gl_FragData[0].a *= diffuseColor.a;
 
     float shadowing = unshadowedLightRatio(linearDepth);
+    
     vec3 lighting;
 #if !PER_PIXEL_LIGHTING
     lighting = passLighting + shadowDiffuseLighting * shadowing;
@@ -89,7 +106,7 @@ void main()
     lighting = diffuseColor.xyz * diffuseLight + getAmbientColor().xyz * ambientLight + getEmissionColor().xyz;
     clampLightingResult(lighting);
 #endif
-
+    
     gl_FragData[0].xyz *= lighting;
 
 #if @specularMap
@@ -107,6 +124,67 @@ void main()
 #endif
         gl_FragData[0].xyz += getSpecular(normalize(viewNormal), normalize(passViewPos), shininess, matSpec) * shadowing;
     }
+
+    // Apply tonemapping after all lighting calculations
+    gl_FragData[0].xyz = toneMap(gl_FragData[0].xyz);
+
+    // ==========================================================================
+    // OPTIMIZED UNDERWATER WAVE EFFECTS (Caustics and Attenuation)
+    // С ОГРАНИЧЕНИЕМ ПО ДИСТАНЦИИ
+    // ==========================================================================
+    
+    // Проверяем позицию КАМЕРЫ
+    vec3 cameraPos = (osg_ViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+    float cameraWaterH = zDoWaveSimple(cameraPos.xy, osg_SimulationTime);
+    bool cameraUnderwater = cameraPos.z < cameraWaterH;
+    
+    // Check if we're in interior
+    vec3 sunPos = lcalcPosition(0);
+    vec3 sunDir = normalize(sunPos);
+    vec3 sunWDir = (osg_ViewMatrixInverse * vec4(sunDir, 0.0)).xyz;
+    bool isInterior = sunWDir.y > 0.0;
+    
+    vec3 wPos = (osg_ViewMatrixInverse * vec4(passViewPos, 1.0)).xyz;
+    float waterH = zDoWaveSimple(wPos.xy, osg_SimulationTime);
+    float waterDepth = max(-wPos.z + waterH, 0.0);
+
+    // ==========================================================================
+    // ОГРАНИЧЕНИЕ КАУСТИКИ ПО ДИСТАНЦИИ
+    // ==========================================================================
+    // Рассчитываем дистанцию от камеры до фрагмента
+    float distanceToFragment = length(wPos.xy - cameraPos.xy);
+    
+    // Плавное затухание каустики на дальних расстояниях
+    float causticsFade = 1.0;
+    if (distanceToFragment > CAUSTICS_FADE_START) {
+        causticsFade = 1.0 - smoothstep(CAUSTICS_FADE_START, MAX_CAUSTICS_DISTANCE, distanceToFragment);
+    }
+    // ==========================================================================
+
+    // OPTIMIZED: Simplified caustics calculation with depth check and distance fade
+#if (TERRAIN_CAUSTICS == 1)
+    if (!isInterior && wPos.z < waterH && waterDepth > 5.0 && distanceToFragment < MAX_CAUSTICS_DISTANCE) {
+        float causticsIntensity = zcaustics(wPos.xy * 0.01, osg_SimulationTime * 0.5) * 1.8;
+        float causticsBlend = clamp(waterDepth * 0.008, 0.0, 0.9) / (1.0 + waterDepth / 1200.0);
+        
+        // Применяем плавное затухание по дистанции
+        causticsBlend *= causticsFade;
+        
+        gl_FragData[0].xyz *= mix(1.0, 0.5 + causticsIntensity, causticsBlend);
+    }
+#endif
+
+    // Применяем attenuation ТОЛЬКО если камера под водой
+    if (cameraUnderwater && !isInterior && waterDepth > 0.0) {
+#if (ATTENUATION == 1)
+        vec3 attenuation = calculateWaterAttenuation(waterDepth * attenuation_strength, isInterior);
+        gl_FragData[0].xyz *= attenuation;
+#endif
+    }
+
+    // ==========================================================================
+    // END UNDERWATER EFFECTS
+    // ==========================================================================
 
 #if @radialFog
     float fogValue = clamp((euclideanDepth - gl_Fog.start) * gl_Fog.scale, 0.0, 1.0);

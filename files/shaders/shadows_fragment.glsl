@@ -13,6 +13,25 @@
     @endforeach
 #endif // SHADOWS
 
+// PCF (Percentage Closer Filtering) для сглаживания теней
+float sampleShadowPCF(sampler2DShadow shadowMap, vec4 shadowCoords, float texelSize)
+{
+    float shadow = 0.0;
+    vec3 coords = shadowCoords.xyz / shadowCoords.w;
+    
+    // 3x3 PCF kernel для мягких теней
+    for(float y = -1.0; y <= 1.0; y += 1.0)
+    {
+        for(float x = -1.0; x <= 1.0; x += 1.0)
+        {
+            vec2 offset = vec2(x, y) * texelSize;
+            vec4 offsetCoords = vec4(coords.xy + offset, coords.z, 1.0);
+            shadow += shadow2D(shadowMap, offsetCoords.xyz).r;
+        }
+    }
+    return shadow / 9.0;
+}
+
 float unshadowedLightRatio(float distance)
 {
     float shadowing = 1.0;
@@ -33,7 +52,9 @@ float unshadowedLightRatio(float distance)
 #endif
                 if (all(lessThan(shadowXYZ.xy, vec2(1.0, 1.0))) && all(greaterThan(shadowXYZ.xy, vec2(0.0, 0.0))))
                 {
-                    shadowing = min(shadow2DProj(shadowTexture@shadow_texture_unit_index, shadowSpaceCoords@shadow_texture_unit_index).r, shadowing);
+                    // Используем PCF для сглаженных теней
+                    float texelSize = 0.0008;
+                    shadowing = min(sampleShadowPCF(shadowTexture@shadow_texture_unit_index, shadowSpaceCoords@shadow_texture_unit_index, texelSize), shadowing);
 
                     
                     doneShadows = all(lessThan(shadowXYZ, vec3(0.95, 0.95, 1.0))) && all(greaterThan(shadowXYZ, vec3(0.05, 0.05, 0.0)));
@@ -45,7 +66,8 @@ float unshadowedLightRatio(float distance)
         @endforeach
     #else
         @foreach shadow_texture_unit_index @shadow_texture_unit_list
-            shadowing = min(shadow2DProj(shadowTexture@shadow_texture_unit_index, shadowSpaceCoords@shadow_texture_unit_index).r, shadowing);
+            float texelSize = 0.0008;
+            shadowing = min(sampleShadowPCF(shadowTexture@shadow_texture_unit_index, shadowSpaceCoords@shadow_texture_unit_index, texelSize), shadowing);
         @endforeach
     #endif
 #if @limitShadowMapDistance

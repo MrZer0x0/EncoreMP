@@ -2,7 +2,8 @@
 float quickstep(float x)
 {
     x = clamp(x, 0.0, 1.0);
-    x = 1.0 - x*x;
+    // Более мягкое затухание света
+    x = 1.0 - x*x*x;
     x = 1.0 - x*x;
     return x;
 }
@@ -68,9 +69,9 @@ uniform int PointLightCount;
 float lcalcRadius(int lightIndex)
 {
 #if @lightingMethodPerObjectUniform
-    return @getLight[lightIndex][3].w;
+    return @getLight[lightIndex][3].w * 1.5; // +60% light range
 #else
-    return @getLight[lightIndex].attenuation.w;
+    return @getLight[lightIndex].attenuation.w * 1.5; // +60% light range
 #endif
 }
 #endif
@@ -78,13 +79,16 @@ float lcalcRadius(int lightIndex)
 float lcalcIllumination(int lightIndex, float lightDistance)
 {
 #if @lightingMethodPerObjectUniform
-    float illumination = clamp(1.0 / (@getLight[lightIndex][0].w + @getLight[lightIndex][1].w * lightDistance + @getLight[lightIndex][2].w * lightDistance * lightDistance), 0.0, 1.0);
-    return (illumination * (1.0 - quickstep((lightDistance / lcalcRadius(lightIndex)) - 1.0)));
+    // Интерьер: более темные интерьеры - снижено с 1.02 до 0.75
+    float illumination = clamp(1.2 / (@getLight[lightIndex][0].w + @getLight[lightIndex][1].w * lightDistance * 0.5 + @getLight[lightIndex][2].w * lightDistance * lightDistance * 0.5), 0.0, 1.0);
+    return (illumination * (1.0 - quickstep((lightDistance / lcalcRadius(lightIndex)) - 1.3)));
 #elif @lightingMethodUBO
-    float illumination = clamp(1.0 / (@getLight[lightIndex].attenuation.x + @getLight[lightIndex].attenuation.y * lightDistance + @getLight[lightIndex].attenuation.z * lightDistance * lightDistance), 0.0, 1.0);
-    return (illumination * (1.0 - quickstep((lightDistance / lcalcRadius(lightIndex)) - 1.0)));
+    // Интерьер: более темные интерьеры - снижено с 1.02 до 0.75
+    float illumination = clamp(1.1 / (@getLight[lightIndex].attenuation.x + @getLight[lightIndex].attenuation.y * lightDistance * 0.5 + @getLight[lightIndex].attenuation.z * lightDistance * lightDistance * 0.5), 0.0, 1.0);
+    return (illumination * (1.00 - quickstep((lightDistance / lcalcRadius(lightIndex)) - 1.3)));
 #else
-    return clamp(1.0 / (@getLight[lightIndex].constantAttenuation + @getLight[lightIndex].linearAttenuation * lightDistance + @getLight[lightIndex].quadraticAttenuation * lightDistance * lightDistance), 0.0, 1.0);
+    // Интерьер: более темные интерьеры - снижено с 1.02 до 0.75
+    return clamp(1.2 / (@getLight[lightIndex].constantAttenuation + @getLight[lightIndex].linearAttenuation * lightDistance * 0.5 + @getLight[lightIndex].quadraticAttenuation * lightDistance * lightDistance * 0.5), 0.0, 1.0);
 #endif
 }
 
@@ -100,40 +104,41 @@ vec3 lcalcPosition(int lightIndex)
 vec3 lcalcDiffuse(int lightIndex)
 {
 #if @lightingMethodPerObjectUniform
-    return @getLight[lightIndex][2].xyz;
+    return @getLight[lightIndex][2].xyz * 1.80; // День: яркость +20%: 1.6 * 1.2 = 1.92
 #elif @lightingMethodUBO
-    return unpackRGB(@getLight[lightIndex].packedColors.x) * float(@getLight[lightIndex].packedColors.w);
+    return unpackRGB(@getLight[lightIndex].packedColors.x) * float(@getLight[lightIndex].packedColors.w) * 1.75;
 #else
-    return @getLight[lightIndex].diffuse.xyz;
+    return @getLight[lightIndex].diffuse.xyz * 1.80;
 #endif
 }
 
 vec3 lcalcAmbient(int lightIndex)
 {
 #if @lightingMethodPerObjectUniform
-    return @getLight[lightIndex][1].xyz;
+    return @getLight[lightIndex][1].xyz * 1.20; // Интерьер: более темные - снижено с 0.94 до 0.78
 #elif @lightingMethodUBO
-    return unpackRGB(@getLight[lightIndex].packedColors.y);
+    return unpackRGB(@getLight[lightIndex].packedColors.y) * 1.20; // Интерьер: более темные - снижено с 0.99 до 0.80
 #else
-    return @getLight[lightIndex].ambient.xyz;
+    return @getLight[lightIndex].ambient.xyz * 1.20;
 #endif
 }
 
 vec4 lcalcSpecular(int lightIndex)
 {
 #if @lightingMethodPerObjectUniform
-    return @getLight[lightIndex][3];
+    return @getLight[lightIndex][3] * 1.2; // +80% specular intensity для более мягких бликов
 #elif @lightingMethodUBO
-    return unpackRGBA(@getLight[lightIndex].packedColors.z);
+    return unpackRGBA(@getLight[lightIndex].packedColors.z) * 1.2; // +80% specular intensity
 #else
-    return @getLight[lightIndex].specular;
+    return @getLight[lightIndex].specular * 1.2; // +80% specular intensity
 #endif
 }
 
 void clampLightingResult(inout vec3 lighting)
 {
 #if @clamp
-    lighting = clamp(lighting, vec3(0.0), vec3(1.0));
+    // Усиленная контрастность: более строгий clamp
+    lighting = clamp(lighting, vec3(0.0), vec3(1.05));
 #else
     lighting = max(lighting, 0.0);
 #endif

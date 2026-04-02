@@ -1,8 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?tes3mp\ version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Resource" version="1.1">
 
     <!-- The 'box' frame that surrounds various HUD items and other elements -->
+	
+			
+		  <!-- Mr.Zer0 OTF Team -->
 
     <Resource type="ResourceSkin" name="HUD_Box" size="40 40">
 
@@ -57,14 +60,14 @@
     </Resource>
 
     <!-- Defines crosshair color -->
-    <Resource type="AutoSizedResourceSkin" name="HUD_Crosshair" texture="textures\target.dds">
+    <Resource type="AutoSizedResourceSkin" name="HUD_Crosshair" texture="textures\ui\crosshair.dds">
         <BasisSkin type="MainSkin">
             <State name="normal"/>
         </BasisSkin>
     </Resource>
 
     <!-- Defines owned crosshair color -->
-    <Resource type="AutoSizedResourceSkin" name="HUD_Crosshair_Owned" texture="textures\target.dds">
+    <Resource type="AutoSizedResourceSkin" name="HUD_Crosshair_Owned" texture="textures\ui\crosshair.dds">
         <Property key="Colour" value="#{setting=GUI,color crosshair owned}"/>
         <BasisSkin type="MainSkin">
             <State name="normal"/>
