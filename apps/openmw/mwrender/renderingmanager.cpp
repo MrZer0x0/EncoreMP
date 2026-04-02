@@ -69,7 +69,9 @@
 #include "objectpaging.hpp"
 #include "screenshotmanager.hpp"
 #include "groundcover.hpp"
-#include "coarseocclusion.hpp"
+#include "occlusionculling.hpp"
+#include <components/sceneutil/occlusionculling.hpp>
+#include <components/terrain/terrainoccluder.hpp>
 
 namespace MWRender
 {
@@ -199,8 +201,6 @@ namespace MWRender
         , mNightEyeFactor(0.f)
         , mFieldOfViewOverridden(false)
         , mFieldOfViewOverride(0.f)
-        , mLastOcclusionRebuildTime(0.0)
-        , mHaveOcclusionHistory(false)
     {
         auto lightingMethod = SceneUtil::LightManager::getLightingMethodFromString(Settings::Manager::getString("lighting method", "Shaders"));
 
@@ -280,7 +280,10 @@ namespace MWRender
         mRecastMesh.reset(new RecastMesh(mRootNode, Settings::Manager::getBool("enable recast mesh render", "Navigator")));
         mPathgrid.reset(new Pathgrid(mRootNode));
 
-        mObjects.reset(new Objects(mResourceSystem, sceneRoot, mUnrefQueue.get()));
+        if (Settings::Manager::getBool("occlusion culling", "Camera"))
+            mOcclusionCuller = new SceneUtil::OcclusionCuller(Settings::Manager::getInt("occlusion buffer width", "Camera"), Settings::Manager::getInt("occlusion buffer height", "Camera"));
+
+        mObjects.reset(new Objects(mResourceSystem, sceneRoot, mUnrefQueue.get(), mOcclusionCuller.get()));
 
         if (getenv("OPENMW_DONT_PRECOMPILE") == nullptr)
         {
@@ -315,12 +318,10 @@ namespace MWRender
                 compMapResolution, compMapLevel, lodFactor, vertexLodMod, maxCompGeometrySize));
             if (Settings::Manager::getBool("object paging", "Terrain"))
             {
-                mObjectPaging.reset(new ObjectPaging(mResourceSystem->getSceneManager()));
+                mObjectPaging.reset(new ObjectPaging(mResourceSystem->getSceneManager(), mOcclusionCuller.get()));
                 static_cast<Terrain::QuadTreeWorld*>(mTerrain.get())->addChunkManager(mObjectPaging.get());
                 mResourceSystem->addResourceManager(mObjectPaging.get());
 
-                mOcclusionCuller.reset(new CoarseOcclusionCuller);
-                mOcclusionCuller->configureFromSettings();
             }
         }
         else
@@ -328,6 +329,17 @@ namespace MWRender
 
         mTerrain->setTargetFrameRate(Settings::Manager::getFloat("target framerate", "Cells"));
         mTerrain->setWorkQueue(mWorkQueue.get());
+
+        if (mOcclusionCuller.valid())
+        {
+            mTerrainOccluder.reset(new Terrain::TerrainOccluder(mTerrainStorage.get(), ESM::Land::REAL_SIZE));
+            mTerrainOccluder->setLodLevel(std::max(0, Settings::Manager::getInt("occlusion terrain lod", "Camera")));
+            sceneRoot->addCullCallback(new SceneOcclusionCallback(
+                mOcclusionCuller.get(),
+                mTerrainOccluder.get(),
+                std::max(1, Settings::Manager::getInt("occlusion terrain radius", "Camera")),
+                Settings::Manager::getBool("occlusion culling terrain", "Camera")));
+        }
 
         if (Settings::Manager::getBool("enabled", "Groundcover"))
         {
@@ -745,7 +757,6 @@ namespace MWRender
         mCamera->getPosition(focal, cameraPos);
         mCurrentCameraPos = cameraPos;
 
-        rebuildOcclusionBuffer(osg::Vec3f(cameraPos.x(), cameraPos.y(), cameraPos.z()));
 
         bool isUnderwater = mWater->isUnderwater(cameraPos);
         mStateUpdater->setFogStart(mFog->getFogStart(isUnderwater));
@@ -1323,43 +1334,13 @@ namespace MWRender
 
     bool RenderingManager::occlusionVisible(const MWWorld::ConstPtr& ptr) const
     {
-        if (!mOcclusionCuller)
-            return true;
-        if (!ptr.isInCell() || !ptr.getCell()->isExterior())
-            return true;
-        return mOcclusionCuller->isVisible(ptr);
+        (void)ptr;
+        return true;
     }
 
     void RenderingManager::rebuildOcclusionBuffer(const osg::Vec3f& eyePoint)
     {
-        if (!mOcclusionCuller || !mPlayerAnimation.get())
-            return;
-
-        const MWWorld::Ptr& player = mPlayerAnimation->getPtr();
-        if (!player.isInCell() || !player.getCell() || !player.getCell()->isExterior())
-        {
-            mHaveOcclusionHistory = false;
-            return;
-        }
-
-        const double now = osg::Timer::instance()->time_s();
-        if (mHaveOcclusionHistory && (now - mLastOcclusionRebuildTime) < 0.20)
-            return;
-
-        if (mHaveOcclusionHistory && (eyePoint - mLastOcclusionEyePoint).length2() < (128.f * 128.f))
-            return;
-
-        mOcclusionCuller->configureFromSettings();
-
-        osg::Node* occluderRoot = mSceneRoot.get();
-        if (!occluderRoot)
-            return;
-
-        mOcclusionCuller->rebuild(mViewer->getCamera(), occluderRoot, eyePoint);
-
-        mLastOcclusionEyePoint = eyePoint;
-        mLastOcclusionRebuildTime = now;
-        mHaveOcclusionHistory = true;
+        (void)eyePoint;
     }
 
     void RenderingManager::setActiveGrid(const osg::Vec4i &grid)

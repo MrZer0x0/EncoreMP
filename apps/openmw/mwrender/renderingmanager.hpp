@@ -48,6 +48,7 @@ namespace ESM
 namespace Terrain
 {
     class World;
+    class TerrainOccluder;
 }
 
 namespace Fallback
@@ -60,6 +61,7 @@ namespace SceneUtil
     class ShadowManager;
     class WorkQueue;
     class UnrefQueue;
+    class OcclusionCuller;
 }
 
 namespace DetourNavigator
@@ -71,7 +73,6 @@ namespace DetourNavigator
 namespace MWRender
 {
     class GroundcoverUpdater;
-    class CoarseOcclusionCuller;
     class StateUpdater;
 
     class EffectManager;
@@ -285,7 +286,8 @@ namespace MWRender
         std::unique_ptr<Terrain::World> mGroundcoverWorld;
         std::unique_ptr<TerrainStorage> mTerrainStorage;
         std::unique_ptr<ObjectPaging> mObjectPaging;
-        std::unique_ptr<CoarseOcclusionCuller> mOcclusionCuller;
+        osg::ref_ptr<SceneUtil::OcclusionCuller> mOcclusionCuller;
+        std::unique_ptr<Terrain::TerrainOccluder> mTerrainOccluder;
         std::unique_ptr<Groundcover> mGroundcover;
         std::unique_ptr<SkyManager> mSky;
         std::unique_ptr<FogManager> mFog;
@@ -297,9 +299,6 @@ namespace MWRender
         std::unique_ptr<Camera> mCamera;
         std::unique_ptr<ViewOverShoulderController> mViewOverShoulderController;
         osg::Vec3f mCurrentCameraPos;
-        osg::Vec3f mLastOcclusionEyePoint;
-        double mLastOcclusionRebuildTime;
-        bool mHaveOcclusionHistory;
 
         osg::ref_ptr<StateUpdater> mStateUpdater;
 

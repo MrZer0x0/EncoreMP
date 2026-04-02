@@ -6,10 +6,15 @@
 #include <components/esm/loadcell.hpp>
 
 #include <mutex>
+#include <osg/ref_ptr>
 
 namespace Resource
 {
     class SceneManager;
+}
+namespace SceneUtil
+{
+    class OcclusionCuller;
 }
 namespace MWWorld
 {
@@ -24,7 +29,7 @@ namespace MWRender
     class ObjectPaging : public Resource::GenericResourceManager<ChunkId>, public Terrain::QuadTreeWorld::ChunkManager
     {
     public:
-        ObjectPaging(Resource::SceneManager* sceneManager);
+        ObjectPaging(Resource::SceneManager* sceneManager, SceneUtil::OcclusionCuller* occlusionCuller = nullptr);
         ~ObjectPaging() = default;
 
         osg::ref_ptr<osg::Node> getChunk(float size, const osg::Vec2f& center, unsigned char lod, unsigned int lodFlags, bool activeGrid, const osg::Vec3f& viewPoint, bool compile) override;
@@ -51,6 +56,7 @@ namespace MWRender
 
     private:
         Resource::SceneManager* mSceneManager;
+        osg::ref_ptr<SceneUtil::OcclusionCuller> mOcclusionCuller;
         bool mActiveGrid;
         bool mDebugBatches;
         float mMergeFactor;

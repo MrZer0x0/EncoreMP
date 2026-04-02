@@ -57,7 +57,7 @@ add_component_dir (shader
 add_component_dir (sceneutil
     clone attach visitor util statesetupdater controller skeleton riggeometry morphgeometry lightcontroller
     lightmanager lightutil positionattitudetransform workqueue unrefqueue pathgridutil waterutil writescene serialize optimizer
-    actorutil detourdebugdraw navmesh agentpath shadow mwshadowtechnique recastmesh shadowsbin osgacontroller
+    actorutil detourdebugdraw navmesh agentpath shadow mwshadowtechnique recastmesh shadowsbin osgacontroller occlusionculling
     )
 
 add_component_dir (nif
@@ -146,7 +146,7 @@ add_component_dir (translation
 IF (BUILD_OPENMW OR BUILD_OPENCS)
 # End of tes3mp change
 add_component_dir (terrain
-    storage world buffercache defs terraingrid material terraindrawable texturemanager chunkmanager compositemaprenderer quadtreeworld quadtreenode viewdata cellborder
+    storage terrainoccluder world buffercache defs terraingrid material terraindrawable texturemanager chunkmanager compositemaprenderer quadtreeworld quadtreenode viewdata cellborder
     )
 
 add_component_dir (loadinglistener
@@ -390,6 +390,9 @@ IF (BUILD_OPENMW OR BUILD_OPENCS)
             )
 ENDIF (BUILD_OPENMW OR BUILD_OPENCS)
 target_link_libraries(components Base64)
+IF (BUILD_OPENMW OR BUILD_OPENCS)
+    target_link_libraries(components maskedoc)
+ENDIF (BUILD_OPENMW OR BUILD_OPENCS)
 # End of tes3mp change (major)
 
 if (WIN32)

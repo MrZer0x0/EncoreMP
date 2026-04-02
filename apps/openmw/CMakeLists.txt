@@ -21,8 +21,8 @@ source_group(game FILES ${GAME} ${GAME_HEADER})
 add_openmw_dir (mwrender
     actors objects renderingmanager animation rotatecontroller sky npcanimation vismask
     creatureanimation effectmanager util renderinginterface pathgrid rendermode weaponanimation screenshotmanager
-    bulletdebugdraw globalmap characterpreview camera viewovershoulder localmap water terrainstorage ripplesimulation ripples
-    renderbin actoranimation landmanager navmesh actorspaths recastmesh fogmanager objectpaging groundcover coarseocclusion
+    bulletdebugdraw globalmap characterpreview camera viewovershoulder localmap water terrainstorage ripplesimulation
+    renderbin actoranimation landmanager navmesh actorspaths recastmesh fogmanager objectpaging groundcover occlusionculling
     )
 
 add_openmw_dir (mwinput

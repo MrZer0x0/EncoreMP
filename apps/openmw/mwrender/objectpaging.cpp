@@ -1,10 +1,9 @@
 #include "objectpaging.hpp"
+#include "occlusionculling.hpp"
 
 #include <unordered_map>
 
 #include <osg/Version>
-#include <osg/Geode>
-#include <osg/Geometry>
 #include <osg/LOD>
 #include <osg/Switch>
 #include <osg/MatrixTransform>
@@ -52,38 +51,6 @@ namespace MWRender
             return false;
         }
     }
-
-    class GeometryBufferingVisitor : public osg::NodeVisitor
-    {
-    public:
-        GeometryBufferingVisitor(bool enableVbo, bool allowDisplayLists)
-            : osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)
-            , mEnableVbo(enableVbo)
-            , mAllowDisplayLists(allowDisplayLists)
-        {
-        }
-
-        void apply(osg::Geode& geode) override
-        {
-            for (unsigned int i = 0; i < geode.getNumDrawables(); ++i)
-            {
-                osg::Geometry* geometry = geode.getDrawable(i)->asGeometry();
-                if (!geometry || geometry->getDataVariance() == osg::Object::DYNAMIC)
-                    continue;
-
-                if (!mAllowDisplayLists)
-                    geometry->setUseDisplayList(false);
-                if (mEnableVbo)
-                    geometry->setUseVertexBufferObjects(true);
-            }
-
-            traverse(geode);
-        }
-
-    private:
-        bool mEnableVbo;
-        bool mAllowDisplayLists;
-    };
 
     std::string getModel(int type, const std::string& id, const MWWorld::ESMStore& store)
     {
@@ -418,9 +385,10 @@ namespace MWRender
         }
     };
 
-    ObjectPaging::ObjectPaging(Resource::SceneManager* sceneManager)
+    ObjectPaging::ObjectPaging(Resource::SceneManager* sceneManager, SceneUtil::OcclusionCuller* occlusionCuller)
             : GenericResourceManager<ChunkId>(nullptr)
          , mSceneManager(sceneManager)
+         , mOcclusionCuller(occlusionCuller)
          , mRefTrackerLocked(false)
     {
         mActiveGrid = Settings::Manager::getBool("object paging active grid", "Terrain");
@@ -600,6 +568,17 @@ namespace MWRender
         osgUtil::StateToCompile stateToCompile(0, nullptr);
         CopyOp copyop;
         copyop.mCopyMask = copyMask;
+
+        const bool buildOccluders = mOcclusionCuller.valid()
+            && Settings::Manager::getBool("occlusion culling", "Camera")
+            && Settings::Manager::getBool("occlusion culling statics", "Camera");
+        osg::ref_ptr<PagedOccluderData> pagedOccluderData;
+        const float occluderMinRadius = Settings::Manager::getFloat("occlusion occluder min radius", "Camera");
+        const int occluderMeshRes = Settings::Manager::getInt("occlusion occluder mesh resolution", "Camera");
+        const int occluderMaxMeshRes = Settings::Manager::getInt("occlusion occluder max mesh resolution", "Camera");
+        const float occluderShrinkFactor = Settings::Manager::getFloat("occlusion occluder shrink factor", "Camera");
+        if (buildOccluders)
+            pagedOccluderData = new PagedOccluderData;
         for (const auto& pair : nodes)
         {
             const osg::Node* cnode = pair.first;
@@ -642,6 +621,30 @@ namespace MWRender
                 copyop.copy(cnode, trans);
                 copyop.mNodePath.pop_back();
 
+                if (pagedOccluderData.valid() && cnode->getBound().valid())
+                {
+                    const float scaledRadius = cnode->getBound().radius() * ref.mScale;
+                    if (scaledRadius >= occluderMinRadius)
+                    {
+                        int adaptiveRes = occluderMeshRes;
+                        if (occluderMinRadius > 0.f && scaledRadius > occluderMinRadius)
+                        {
+                            const float scale = scaledRadius / occluderMinRadius;
+                            adaptiveRes = std::max(occluderMeshRes, std::min(occluderMaxMeshRes, static_cast<int>(occluderMeshRes * scale)));
+                        }
+                        OccluderMesh occMesh = buildSimplifiedMesh(trans.get(), adaptiveRes, occluderShrinkFactor);
+                        if (!occMesh.indices.empty())
+                        {
+                            for (std::vector<osg::Vec3f>::iterator it = occMesh.vertices.begin(); it != occMesh.vertices.end(); ++it)
+                                *it += worldCenter;
+                            occMesh.aabb = osg::BoundingBox();
+                            for (std::vector<osg::Vec3f>::const_iterator it = occMesh.vertices.begin(); it != occMesh.vertices.end(); ++it)
+                                occMesh.aabb.expandBy(*it);
+                            pagedOccluderData->mOccluderMeshes.push_back(occMesh);
+                        }
+                    }
+                }
+
                 if (activeGrid)
                 {
                     if (merge)
@@ -668,7 +671,7 @@ namespace MWRender
                 if (pair.second.mNeedCompile)
                 {
                     int mode = osgUtil::GLObjectsVisitor::COMPILE_STATE_ATTRIBUTES;
-                    if (!merge && Settings::Manager::getBool("object display lists", "Video"))
+                    if (!merge)
                         mode |= osgUtil::GLObjectsVisitor::COMPILE_DISPLAY_LISTS;
                     stateToCompile._mode = mode;
                     const_cast<osg::Node*>(cnode)->accept(stateToCompile);
@@ -678,9 +681,6 @@ namespace MWRender
 
         if (mergeGroup->getNumChildren())
         {
-            const bool enableObjectVbo = Settings::Manager::getBool("object vbo", "Video");
-            const bool allowObjectDisplayLists = Settings::Manager::getBool("object display lists", "Video");
-
             SceneUtil::Optimizer optimizer;
             if (size > 1/8.f)
             {
@@ -692,12 +692,6 @@ namespace MWRender
             mSceneManager->shareState(mergeGroup);
             optimizer.optimize(mergeGroup, options);
 
-            if (enableObjectVbo || !allowObjectDisplayLists)
-            {
-                GeometryBufferingVisitor bufferingVisitor(enableObjectVbo, allowObjectDisplayLists);
-                mergeGroup->accept(bufferingVisitor);
-            }
-
             group->addChild(mergeGroup);
 
             if (mDebugBatches)
@@ -705,7 +699,7 @@ namespace MWRender
                 DebugVisitor dv;
                 mergeGroup->accept(dv);
             }
-            if (compile && Settings::Manager::getBool("object display lists", "Video"))
+            if (compile)
             {
                 stateToCompile._mode = osgUtil::GLObjectsVisitor::COMPILE_DISPLAY_LISTS;
                 mergeGroup->accept(stateToCompile);
@@ -729,6 +723,12 @@ namespace MWRender
             group->addCullCallback(new SceneUtil::LightListCallback);
         }
         udc->addUserObject(templateRefs);
+        if (pagedOccluderData.valid() && !pagedOccluderData->mOccluderMeshes.empty())
+        {
+            udc->addUserObject(pagedOccluderData);
+            if (mOcclusionCuller.valid())
+                group->addCullCallback(new PagedOccluderCallback(mOcclusionCuller.get(), Settings::Manager::getFloat("occlusion occluder max distance", "Camera")));
+        }
 
         return group;
     }

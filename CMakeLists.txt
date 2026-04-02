@@ -614,6 +614,9 @@ add_subdirectory (extern/oics)
 ENDIF(BUILD_OPENMW OR BUILD_OPENCS)
 # End of tes3mp addition
 add_subdirectory (extern/Base64)
+IF(BUILD_OPENMW OR BUILD_OPENCS)
+add_subdirectory (extern/maskedoc)
+ENDIF(BUILD_OPENMW OR BUILD_OPENCS)
 # Start of tes3mp addition
 #
 # Don't require certain dependencies for the server
