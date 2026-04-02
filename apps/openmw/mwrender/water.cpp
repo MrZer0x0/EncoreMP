@@ -43,6 +43,8 @@
 #include <components/fallback/fallback.hpp>
 
 #include "../mwworld/cellstore.hpp"
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
 
 #include "vismask.hpp"
 #include "ripplesimulation.hpp"
@@ -212,17 +214,13 @@ public:
     }
 };
 
-namespace
-{
-    static const int sMaxShaderRipples = 16;
-}
 
 class WaterStateUpdater : public SceneUtil::StateSetUpdater
 {
 public:
-    explicit WaterStateUpdater(RippleSimulation* simulation)
+    explicit WaterStateUpdater(Water* water)
         : mRainIntensity(0.f)
-        , mSimulation(simulation)
+        , mWater(water)
     {
     }
 
@@ -235,57 +233,33 @@ protected:
     void setDefaults(osg::StateSet* stateset) override
     {
         stateset->addUniform(new osg::Uniform("rainIntensity", 0.0f));
-        stateset->addUniform(new osg::Uniform("rippleSourceCount", 0));
-
-        osg::ref_ptr<osg::Uniform> rippleSources = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "rippleSources", sMaxShaderRipples);
-        osg::ref_ptr<osg::Uniform> rippleData = new osg::Uniform(osg::Uniform::FLOAT_VEC4, "rippleData", sMaxShaderRipples);
-        for (int i = 0; i < sMaxShaderRipples; ++i)
-        {
-            rippleSources->setElement(i, osg::Vec4f(0.f, 0.f, 0.f, 0.f));
-            rippleData->setElement(i, osg::Vec4f(0.f, 0.f, 0.f, 0.f));
-        }
-        stateset->addUniform(rippleSources);
-        stateset->addUniform(rippleData);
+        stateset->addUniform(new osg::Uniform("useRefraction", 0.0f));
+        stateset->addUniform(new osg::Uniform("playerPos", osg::Vec3f(0.f, 0.f, 0.f)));
+        stateset->addUniform(new osg::Uniform("nodePosition", osg::Vec3f(0.f, 0.f, 0.f)));
     }
 
     void apply(osg::StateSet* stateset, osg::NodeVisitor* /*nv*/) override
     {
-        osg::ref_ptr<osg::Uniform> rainIntensityUniform = stateset->getUniform("rainIntensity");
-        if (rainIntensityUniform != nullptr)
+        if (osg::Uniform* rainIntensityUniform = stateset->getUniform("rainIntensity"))
             rainIntensityUniform->set(mRainIntensity);
 
-        osg::ref_ptr<osg::Uniform> rippleSourceCount = stateset->getUniform("rippleSourceCount");
-        osg::ref_ptr<osg::Uniform> rippleSources = stateset->getUniform("rippleSources");
-        osg::ref_ptr<osg::Uniform> rippleData = stateset->getUniform("rippleData");
-        if (!rippleSourceCount || !rippleSources || !rippleData || !mSimulation)
-            return;
+        if (osg::Uniform* useRefractionUniform = stateset->getUniform("useRefraction"))
+            useRefractionUniform->set(Settings::Manager::getBool("refraction", "Water") ? 1.0f : 0.0f);
 
-        const bool enabled = Settings::Manager::getBool("shader water ripples", "Water");
-        const std::vector<ShaderRipple>& ripples = mSimulation->getShaderRipples();
-        int count = enabled ? std::min(static_cast<int>(ripples.size()), sMaxShaderRipples) : 0;
-        rippleSourceCount->set(count);
+        if (osg::Uniform* nodePositionUniform = stateset->getUniform("nodePosition"))
+            nodePositionUniform->set(mWater ? mWater->getPosition() : osg::Vec3f(0.f, 0.f, 0.f));
 
-        for (int i = 0; i < sMaxShaderRipples; ++i)
+        if (osg::Uniform* playerPosUniform = stateset->getUniform("playerPos"))
         {
-            osg::Vec4f source(0.f, 0.f, 0.f, 0.f);
-            osg::Vec4f data(0.f, 0.f, 0.f, 0.f);
-
-            if (i < count)
-            {
-                const ShaderRipple& ripple = ripples[ripples.size() - count + i];
-                const float progress = ripple.mLifetime > 0.f ? std::min(1.f, ripple.mAge / ripple.mLifetime) : 1.f;
-                source.set(ripple.mWorldPos.x(), ripple.mWorldPos.y(), ripple.mRadius, ripple.mStrength);
-                data.set(progress, ripple.mRingScale, 1.f - progress, ripple.mWorldPos.z());
-            }
-
-            rippleSources->setElement(i, source);
-            rippleData->setElement(i, data);
+            const MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
+            const osg::Vec3f playerPos = player.getRefData().getPosition().asVec3();
+            playerPosUniform->set(playerPos);
         }
     }
 
 private:
     float mRainIntensity;
-    RippleSimulation* mSimulation;
+    Water* mWater;
 };
 
 osg::ref_ptr<osg::Image> readPngImage (const std::string& file)
@@ -587,11 +561,15 @@ void Water::updateWaterMaterial()
         mParent->removeChild(mRefraction);
         mRefraction = nullptr;
     }
+    if (mRipples)
+    {
+        mParent->removeChild(mRipples);
+        mRipples = nullptr;
+        mSimulation->setRipples(nullptr);
+    }
 
     const bool shaderWaterEnabled = Settings::Manager::getBool("shader", "Water");
-    mSimulation->setShaderWaterRipplesEnabled(shaderWaterEnabled && Settings::Manager::getBool("shader water ripples", "Water"));
-
-    if (shaderWaterEnabled)
+        if (shaderWaterEnabled)
     {
         mReflection = new Reflection(mInterior);
         mReflection->setWaterLevel(mTop);
@@ -609,6 +587,10 @@ void Water::updateWaterMaterial()
         if (mCullCallback)
             mRefraction->addCullCallback(mCullCallback);
         mParent->addChild(mRefraction);
+
+        mRipples = new Ripples(mResourceSystem);
+        mSimulation->setRipples(mRipples);
+        mParent->addChild(mRipples);
 
         createShaderWaterStateSet(mWaterGeom, mReflection, mRefraction);
     }
@@ -677,6 +659,8 @@ void Water::createShaderWaterStateSet(osg::Node* node, Reflection* reflection, R
     defineMap.insert(std::make_pair(std::string("refraction_enabled"), std::string("1")));
     defineMap.insert(std::make_pair(std::string("rain_ripple_detail"), std::to_string(std::clamp(Settings::Manager::getInt("rain ripple detail", "Water"), 0, 2))));
     defineMap.insert(std::make_pair(std::string("shader_water_ripples"), Settings::Manager::getBool("shader water ripples", "Water") ? "1" : "0"));
+    defineMap.insert(std::make_pair(std::string("rippleMapWorldScale"), std::to_string(RipplesSurface::sWorldScaleFactor)));
+    defineMap.insert(std::make_pair(std::string("rippleMapSize"), std::to_string(static_cast<double>(RipplesSurface::sRTTSize)) + ".0"));
 
     Shader::ShaderManager& shaderMgr = mResourceSystem->getSceneManager()->getShaderManager();
     osg::ref_ptr<osg::Shader> vertexShader (shaderMgr.getShader("water_vertex.glsl", defineMap, osg::Shader::VERTEX));
@@ -703,7 +687,11 @@ void Water::createShaderWaterStateSet(osg::Node* node, Reflection* reflection, R
     shaderStateset->setTextureAttributeAndModes(3, refraction->getRefractionDepthTexture(), osg::StateAttribute::ON);
     shaderStateset->addUniform(new osg::Uniform("refractionMap", 2));
     shaderStateset->addUniform(new osg::Uniform("refractionDepthMap", 3));
-    shaderStateset->addUniform(new osg::Uniform("useRefraction", Settings::Manager::getBool("refraction", "Water") ? 1.0f : 0.0f));
+    if (mRipples)
+    {
+        shaderStateset->setTextureAttributeAndModes(4, mRipples->getColorTexture(), osg::StateAttribute::ON);
+        shaderStateset->addUniform(new osg::Uniform("rippleMap", 4));
+    }
     shaderStateset->setRenderBinDetails(MWRender::RenderBin_Default, "RenderBin");
 
     shaderStateset->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
@@ -718,8 +706,14 @@ void Water::createShaderWaterStateSet(osg::Node* node, Reflection* reflection, R
 
     node->setStateSet(shaderStateset);
 
-    mWaterStateUpdater = new WaterStateUpdater(mSimulation.get());
+    mWaterStateUpdater = new WaterStateUpdater(this);
     node->setUpdateCallback(mWaterStateUpdater);
+}
+
+
+osg::Vec3f Water::getPosition() const
+{
+    return mWaterNode ? mWaterNode->getPosition() : osg::Vec3f(0.f, 0.f, 0.f);
 }
 
 void Water::processChangedSettings(const Settings::CategorySettingVector& settings)
@@ -742,6 +736,12 @@ Water::~Water()
         mRefraction->removeChildren(0, mRefraction->getNumChildren());
         mParent->removeChild(mRefraction);
         mRefraction = nullptr;
+    }
+    if (mRipples)
+    {
+        mParent->removeChild(mRipples);
+        mRipples = nullptr;
+        mSimulation->setRipples(nullptr);
     }
 }
 
@@ -821,6 +821,8 @@ void Water::updateVisible()
         mRefraction->setNodeMask(visible ? Mask_RenderToTexture : 0u);
     if (mReflection)
         mReflection->setNodeMask(visible ? Mask_RenderToTexture : 0u);
+    if (mRipples)
+        mRipples->setNodeMask(visible ? Mask_RenderToTexture : 0u);
 }
 
 bool Water::toggle()

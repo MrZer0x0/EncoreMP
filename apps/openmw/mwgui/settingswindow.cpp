@@ -313,12 +313,14 @@ namespace MWGui
         mTextureFilteringButton->setCaption(textureMipmappingToStr(tmip));
 
         int waterTextureSize = Settings::Manager::getInt("rtt size", "Water");
-        if (waterTextureSize >= 512)
+        if (waterTextureSize >= 256)
             mWaterTextureSize->setIndexSelected(0);
-        if (waterTextureSize >= 1024)
+        if (waterTextureSize >= 512)
             mWaterTextureSize->setIndexSelected(1);
-        if (waterTextureSize >= 2048)
+        if (waterTextureSize >= 1024)
             mWaterTextureSize->setIndexSelected(2);
+        if (waterTextureSize >= 2048)
+            mWaterTextureSize->setIndexSelected(3);
 
         int waterReflectionDetail = Settings::Manager::getInt("reflection detail", "Water");
         waterReflectionDetail = std::min(5, std::max(0, waterReflectionDetail));
@@ -394,12 +396,14 @@ namespace MWGui
 
     void SettingsWindow::onWaterTextureSizeChanged(MyGUI::ComboBox* _sender, size_t pos)
     {
-        int size = 0;
+        int size = 256;
         if (pos == 0)
-            size = 512;
+            size = 256;
         else if (pos == 1)
-            size = 1024;
+            size = 512;
         else if (pos == 2)
+            size = 1024;
+        else if (pos == 3)
             size = 2048;
         Settings::Manager::setInt("rtt size", "Water", size);
         apply();

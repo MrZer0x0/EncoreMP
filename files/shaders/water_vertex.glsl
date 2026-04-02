@@ -6,8 +6,11 @@
 varying vec3  screenCoordsPassthrough;
 varying vec4  position;
 varying float linearDepth;
+varying vec2 rippleMapUV;
 uniform float osg_SimulationTime;
 uniform mat4 osg_ViewMatrixInverse;
+uniform vec3 nodePosition;
+uniform vec3 playerPos;
 
 #include "shadows_vertex.glsl"
 
@@ -69,6 +72,9 @@ void main(void)
         vec3(0.0,0.0,0.0);
 
     position = glvertice;
+
+    vec3 worldPos = glvertice.xyz + nodePosition.xyz;
+    rippleMapUV = (worldPos.xy - playerPos.xy + (@rippleMapSize * @rippleMapWorldScale / 2.0)) / @rippleMapSize / @rippleMapWorldScale;
 
     linearDepth = gl_Position.z;
 

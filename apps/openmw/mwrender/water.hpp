@@ -120,6 +120,7 @@ namespace MWRender
 
         osg::Camera *getReflectionCamera();
         osg::Camera *getRefractionCamera();
+        osg::Vec3f getPosition() const;
 
         void processChangedSettings(const Settings::CategorySettingVector& settings);
     };

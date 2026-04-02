@@ -3,6 +3,15 @@
 <MyGUI type="Layout">
     <Widget type="Widget" layer="HUD" position="0 0 300 200" name="_Main" align="Stretch">
 	
+        <Widget type="TextBox" skin="SandBrightText" position="8 6 72 22" name="FpsText" align="Left Top">
+            <Property key="NeedMouse" value="false"/>
+            <Property key="TextAlign" value="Left"/>
+            <Property key="TextShadow" value="true"/>
+            <Property key="TextShadowColour" value="0 0 0"/>
+            <Property key="FontName" value="Russo"/>
+            <Property key="Caption" value="0"/>
+        </Widget>
+
         <!-- Energy bars -->
         <Widget type="ProgressBar" skin="MW_EnergyBar_Yellow" position="62 157 190 10" align="Bottom Center" name="EnemyHealth">
             <Property key="Visible" value="false"/>
@@ -19,6 +28,13 @@
             <UserString key="ImageTexture_HealthImage" value="icons\k\magicka.dds"/>
             <Widget type="ProgressBar" skin="MW_EnergyBar_Blue" position="0 0 170 16" align="Rigth Bottom" name="Magicka">
                 <Property key="NeedMouse" value="false"/>
+            </Widget>
+            <Widget type="TextBox" skin="SandBrightText" position="0 0 170 16" align="Right Bottom" name="MagickaText">
+                <Property key="NeedMouse" value="false"/>
+                <Property key="TextAlign" value="Center"/>
+                <Property key="TextShadow" value="true"/>
+                <Property key="TextShadowColour" value="0 0 0"/>
+                <Property key="Caption" value="0/0"/>
             </Widget>
 			<Widget type="ProgressBar" skin="MW_EnergyBar_Magic" position="0 14 170 7" align="Right Bottom" name="SpellStatus">
                 <Property key="NeedMouse" value="false"/>
@@ -43,6 +59,13 @@
             <Widget type="ProgressBar" skin="MW_EnergyBar_Red" position="0 0 190 16" align="Center Bottom" name="Health">
                 <Property key="NeedMouse" value="false"/>
                         </Widget>
+            <Widget type="TextBox" skin="SandBrightText" position="0 0 190 16" align="Center Bottom" name="HealthText">
+                <Property key="NeedMouse" value="false"/>
+                <Property key="TextAlign" value="Center"/>
+                <Property key="TextShadow" value="true"/>
+                <Property key="TextShadowColour" value="0 0 0"/>
+                <Property key="Caption" value="0/0"/>
+            </Widget>
 					
         </Widget>
 		
@@ -64,6 +87,13 @@
             <UserString key="ImageTexture_HealthImage" value="icons\k\fatigue.dds"/>
             <Widget type="ProgressBar" skin="MW_EnergyBar_Green" position="30 0 170 16" align="Left Bottom" name="Stamina">
                 <Property key="NeedMouse" value="false"/>
+            </Widget>
+            <Widget type="TextBox" skin="SandBrightText" position="30 0 170 16" align="Left Bottom" name="StaminaText">
+                <Property key="NeedMouse" value="false"/>
+                <Property key="TextAlign" value="Center"/>
+                <Property key="TextShadow" value="true"/>
+                <Property key="TextShadowColour" value="0 0 0"/>
+                <Property key="Caption" value="0/0"/>
             </Widget>
 							<Widget type="ProgressBar" skin="MW_EnergyBar_Weapon" position="30 14 170 7" align="Center Bottom" name="WeapStatus">
                 <Property key="NeedMouse" value="false"/>
@@ -127,6 +157,8 @@
 
             </Widget>
         </Widget>
+		
+		
         <Widget type="TextBox" skin="SandText" position="200 132 90 18" name="GameTime" align="Right Top">
             <Property key="TextAlign" value="Center"/>
             <Property key="TextShadow" value="true"/>
@@ -134,8 +166,8 @@
             <Property key="NeedMouse" value="false"/>
             <Property key="Caption" value="00:00"/>
         </Widget>
-		
-		
+
+
   <!-- Mr.Zer0 OTF Team -->
 
 

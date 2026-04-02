@@ -258,7 +258,7 @@ namespace MWInput
         std::map<int, SDL_Scancode> defaultKeyBindings;
 
         //Gets the Keyvalue from the Scancode; gives the button in the same place reguardless of keyboard format
-        defaultKeyBindings[A_Activate] = SDL_SCANCODE_SPACE;
+        defaultKeyBindings[A_Activate] = SDL_SCANCODE_E;
         defaultKeyBindings[A_MoveBackward] = SDL_SCANCODE_S;
         defaultKeyBindings[A_MoveForward] = SDL_SCANCODE_W;
         defaultKeyBindings[A_MoveLeft] = SDL_SCANCODE_A;
@@ -275,9 +275,9 @@ namespace MWInput
         defaultKeyBindings[A_Run] = SDL_SCANCODE_LSHIFT;
         defaultKeyBindings[A_Sneak] = SDL_SCANCODE_LCTRL;
         defaultKeyBindings[A_AutoMove] = SDL_SCANCODE_Q;
-        defaultKeyBindings[A_Jump] = SDL_SCANCODE_E;
+        defaultKeyBindings[A_Jump] = SDL_SCANCODE_SPACE;
         defaultKeyBindings[A_Journal] = SDL_SCANCODE_J;
-        defaultKeyBindings[A_Rest] = SDL_SCANCODE_T;
+        defaultKeyBindings[A_Rest] = SDL_SCANCODE_UNKNOWN;
         defaultKeyBindings[A_GameMenu] = SDL_SCANCODE_ESCAPE;
         defaultKeyBindings[A_TogglePOV] = SDL_SCANCODE_TAB;
         defaultKeyBindings[A_QuickKey1] = SDL_SCANCODE_1;

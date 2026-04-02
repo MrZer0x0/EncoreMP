@@ -4,6 +4,7 @@
 #include "water_waves.glsl"
 
 #define REFRACTION @refraction_enabled
+#define SHADER_WATER_RIPPLES @shader_water_ripples
 
 // ========================================================================
 // ОПТИМИЗИРОВАННЫЙ ШЕЙДЕР ВОДЫ v2.1 by MrZer0
@@ -325,9 +326,11 @@ vec3 surfaceTension(vec3 viewDir, vec3 normal, float depth, float time) {
 varying vec3 screenCoordsPassthrough;
 varying vec4 position;
 varying float linearDepth;
+varying vec2 rippleMapUV;
 
 uniform sampler2D normalMap;
 uniform sampler2D reflectionMap;
+uniform sampler2D rippleMap;
 #if REFRACTION
 uniform sampler2D refractionMap;
 uniform sampler2D refractionDepthMap;
@@ -427,6 +430,13 @@ void main(void) {
     if (lodFar < 0.5) waterN += n3 * smallW.x;
     
     vec3 ripple = rain.xyz * rain.w * bump * 5.0;
+#if SHADER_WATER_RIPPLES
+    float distToCenter = length(rippleMapUV - vec2(0.5));
+    float blendClose = smoothstep(0.001, 0.02, distToCenter);
+    float blendFar = 1.0 - smoothstep(0.3, 0.4, distToCenter);
+    float distortionLevel = 2.0;
+    ripple += distortionLevel * vec3(texture2D(rippleMap, rippleMapUV).ba * blendFar * blendClose, 0.0);
+#endif
     
     // ✅ ОПТИМИЗАЦИЯ 3: Векторная операция вместо покомпонентной
     vec3 normal = vec3(-(waterN.xy + ripple.xy) * bump, waterN.z);
