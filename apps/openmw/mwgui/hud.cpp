@@ -7,6 +7,10 @@
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ScrollView.h>
 
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+
 /*
     Start of tes3mp addition
 
@@ -120,6 +124,7 @@ namespace MWGui
         , mMinimap(nullptr)
         , mCrosshair(nullptr)
         , mCellNameBox(nullptr)
+        , mGameTimeBox(nullptr)
         , mDrowningFrame(nullptr)
         , mDrowningFlash(nullptr)
         , mHealthManaStaminaBaseLeft(0)
@@ -130,6 +135,7 @@ namespace MWGui
         , mDragAndDrop(dragAndDrop)
         , mCellNameTimer(0.0f)
         , mWeaponSpellTimer(0.f)
+        , mGameTimeUpdateTimer(0.f)
         , mMapVisible(true)
         , mWeaponVisible(true)
         , mSpellVisible(true)
@@ -193,6 +199,7 @@ namespace MWGui
 
         getWidget(mCellNameBox, "CellName");
         getWidget(mWeaponSpellBox, "WeaponSpellName");
+        getWidget(mGameTimeBox, "GameTime");
 
         getWidget(mCrosshair, "Crosshair");
 
@@ -411,6 +418,29 @@ namespace MWGui
     void HUD::onFrame(float dt)
     {
         LocalMapBase::onFrame(dt);
+
+        if (mGameTimeBox)
+        {
+            mGameTimeUpdateTimer -= dt;
+            if (mGameTimeUpdateTimer <= 0.f)
+            {
+                const float gameHour = MWBase::Environment::get().getWorld()->getTimeStamp().getHour();
+                int hours = static_cast<int>(std::floor(gameHour)) % 24;
+                int minutes = static_cast<int>(std::floor((gameHour - std::floor(gameHour)) * 60.f + 0.5f));
+                if (minutes >= 60)
+                {
+                    minutes = 0;
+                    hours = (hours + 1) % 24;
+                }
+
+                std::ostringstream stream;
+                stream << std::setfill('0') << std::setw(2) << hours << ':'
+                       << std::setfill('0') << std::setw(2) << minutes;
+                mGameTimeBox->setCaption(stream.str());
+
+                mGameTimeUpdateTimer = 0.2f;
+            }
+        }
 
         mCellNameTimer -= dt;
         mWeaponSpellTimer -= dt;

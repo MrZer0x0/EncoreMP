@@ -13,6 +13,8 @@
 // ========================================================================
 
 const float VISIBILITY = 1300.0;
+const float RIPPLE_MAP_SIZE = 1024.0;
+const float RIPPLE_MAP_WORLD_SCALE = 2.5;
 
 // ----------------------- ПАРАМЕТРЫ ВОЛН (упаковано для кэша) -----------------------
 const vec4 BIG_WAVES = vec4(0.25, 0.3, 0.0, 0.0);
@@ -366,7 +368,7 @@ void main(void) {
     UV.y = -UV.y;
 
 #if ACTOR_RIPPLE_MAP
-    vec2 rippleMapUV = (worldPos.xy - playerPos.xy + (@rippleMapSize * @rippleMapWorldScale / 2.0)) / @rippleMapSize / @rippleMapWorldScale;
+    vec2 rippleMapUV = (worldPos.xy - playerPos.xy + (RIPPLE_MAP_SIZE * RIPPLE_MAP_WORLD_SCALE * 0.5)) / RIPPLE_MAP_SIZE / RIPPLE_MAP_WORLD_SCALE;
     float distToRippleCenter = length(rippleMapUV - vec2(0.5));
     float rippleBlendClose = smoothstep(0.001, 0.02, distToRippleCenter);
     float rippleBlendFar = 1.0 - smoothstep(0.3, 0.4, distToRippleCenter);

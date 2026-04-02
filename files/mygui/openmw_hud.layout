@@ -1,4 +1,4 @@
-<?tes3mp\ version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
     <Widget type="Widget" layer="HUD" position="0 0 300 200" name="_Main" align="Stretch">
@@ -126,6 +126,13 @@
                 </Widget>
 
             </Widget>
+        </Widget>
+        <Widget type="TextBox" skin="SandText" position="200 132 90 18" name="GameTime" align="Right Top">
+            <Property key="TextAlign" value="Center"/>
+            <Property key="TextShadow" value="true"/>
+            <Property key="TextShadowColour" value="0 0 0"/>
+            <Property key="NeedMouse" value="false"/>
+            <Property key="Caption" value="00:00"/>
         </Widget>
 		
 		

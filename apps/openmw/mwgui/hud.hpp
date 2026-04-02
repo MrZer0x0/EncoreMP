@@ -73,6 +73,7 @@ namespace MWGui
         MyGUI::ImageBox* mCrosshair;
         MyGUI::TextBox* mCellNameBox;
         MyGUI::TextBox* mWeaponSpellBox;
+        MyGUI::TextBox* mGameTimeBox;
         MyGUI::Widget *mDrowningFrame, *mDrowningFlash;
 
         // bottom left elements
@@ -88,6 +89,7 @@ namespace MWGui
         std::string mWeaponName;
         std::string mSpellName;
         float mWeaponSpellTimer;
+        float mGameTimeUpdateTimer;
 
         bool mMapVisible;
         bool mWeaponVisible;
