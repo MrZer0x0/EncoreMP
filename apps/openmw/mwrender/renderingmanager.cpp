@@ -11,6 +11,7 @@
 #include <osg/Group>
 #include <osg/UserDataContainer>
 #include <osg/ComputeBoundsVisitor>
+#include <osg/Timer>
 
 #include <osgUtil/LineSegmentIntersector>
 
@@ -198,6 +199,8 @@ namespace MWRender
         , mNightEyeFactor(0.f)
         , mFieldOfViewOverridden(false)
         , mFieldOfViewOverride(0.f)
+        , mLastOcclusionRebuildTime(0.0)
+        , mHaveOcclusionHistory(false)
     {
         auto lightingMethod = SceneUtil::LightManager::getLightingMethodFromString(Settings::Manager::getString("lighting method", "Shaders"));
 
@@ -315,13 +318,13 @@ namespace MWRender
                 mObjectPaging.reset(new ObjectPaging(mResourceSystem->getSceneManager()));
                 static_cast<Terrain::QuadTreeWorld*>(mTerrain.get())->addChunkManager(mObjectPaging.get());
                 mResourceSystem->addResourceManager(mObjectPaging.get());
+
+                mOcclusionCuller.reset(new CoarseOcclusionCuller);
+                mOcclusionCuller->configureFromSettings();
             }
         }
         else
             mTerrain.reset(new Terrain::TerrainGrid(sceneRoot, mRootNode, mResourceSystem, mTerrainStorage.get(), Mask_Terrain, Mask_PreCompile, Mask_Debug));
-
-        mOcclusionCuller.reset(new CoarseOcclusionCuller);
-        mOcclusionCuller->configureFromSettings();
 
         mTerrain->setTargetFrameRate(Settings::Manager::getFloat("target framerate", "Cells"));
         mTerrain->setWorkQueue(mWorkQueue.get());
@@ -731,13 +734,6 @@ namespace MWRender
             }
         }
 
-        if (mPlayerAnimation)
-        {
-            const MWWorld::Ptr& player = mPlayerAnimation->getPtr();
-            osg::Vec3f eyePoint(player.getRefData().getPosition().asVec3());
-            rebuildOcclusionBuffer(eyePoint);
-        }
-
         updateNavMesh();
         updateRecastMesh();
 
@@ -748,6 +744,8 @@ namespace MWRender
         osg::Vec3d focal, cameraPos;
         mCamera->getPosition(focal, cameraPos);
         mCurrentCameraPos = cameraPos;
+
+        rebuildOcclusionBuffer(osg::Vec3f(cameraPos.x(), cameraPos.y(), cameraPos.z()));
 
         bool isUnderwater = mWater->isUnderwater(cameraPos);
         mStateUpdater->setFogStart(mFog->getFogStart(isUnderwater));
@@ -1167,10 +1165,6 @@ namespace MWRender
             {
                 mWater->processChangedSettings(changed);
             }
-            else if (it->first == "Camera" && it->second.find("occlusion ") == 0 && mOcclusionCuller)
-            {
-                mOcclusionCuller->configureFromSettings();
-            }
             else if (it->first == "Shaders" && it->second == "minimum interior brightness")
             {
                 mMinimumAmbientLuminance = std::clamp(Settings::Manager::getFloat("minimum interior brightness", "Shaders"), 0.f, 1.f);
@@ -1327,32 +1321,57 @@ namespace MWRender
         mRecastMesh->update(mNavigator.getRecastMeshTiles(), mNavigator.getSettings());
     }
 
-    void RenderingManager::setActiveGrid(const osg::Vec4i &grid)
-    {
-        mTerrain->setActiveGrid(grid);
-    }
-    void RenderingManager::rebuildOcclusionBuffer(const osg::Vec3f& eyePoint)
-    {
-        if (!mOcclusionCuller)
-            return;
-
-        mOcclusionCuller->configureFromSettings();
-        mOcclusionCuller->rebuild(mViewer->getCamera(), mSceneRoot.get(), eyePoint);
-    }
-
     bool RenderingManager::occlusionVisible(const MWWorld::ConstPtr& ptr) const
     {
         if (!mOcclusionCuller)
             return true;
+        if (!ptr.isInCell() || !ptr.getCell()->isExterior())
+            return true;
         return mOcclusionCuller->isVisible(ptr);
     }
 
+    void RenderingManager::rebuildOcclusionBuffer(const osg::Vec3f& eyePoint)
+    {
+        if (!mOcclusionCuller || !mPlayerAnimation.get())
+            return;
+
+        const MWWorld::Ptr& player = mPlayerAnimation->getPtr();
+        if (!player.isInCell() || !player.getCell() || !player.getCell()->isExterior())
+        {
+            mHaveOcclusionHistory = false;
+            return;
+        }
+
+        const double now = osg::Timer::instance()->time_s();
+        if (mHaveOcclusionHistory && (now - mLastOcclusionRebuildTime) < 0.20)
+            return;
+
+        if (mHaveOcclusionHistory && (eyePoint - mLastOcclusionEyePoint).length2() < (128.f * 128.f))
+            return;
+
+        mOcclusionCuller->configureFromSettings();
+
+        osg::Node* occluderRoot = mSceneRoot.get();
+        if (!occluderRoot)
+            return;
+
+        mOcclusionCuller->rebuild(mViewer->getCamera(), occluderRoot, eyePoint);
+
+        mLastOcclusionEyePoint = eyePoint;
+        mLastOcclusionRebuildTime = now;
+        mHaveOcclusionHistory = true;
+    }
+
+    void RenderingManager::setActiveGrid(const osg::Vec4i &grid)
+    {
+        mTerrain->setActiveGrid(grid);
+    }
     bool RenderingManager::pagingEnableObject(int type, const MWWorld::ConstPtr& ptr, bool enabled)
     {
         if (!ptr.isInCell() || !ptr.getCell()->isExterior() || !mObjectPaging)
             return false;
 
-        if (enabled && !ptr.getClass().isActor() && !occlusionVisible(ptr))
+        if (enabled && !occlusionVisible(ptr))
             enabled = false;
 
         if (mObjectPaging->enableObject(type, ptr.getCellRef().getRefNum(), ptr.getCellRef().getPosition().asVec3(), osg::Vec2i(ptr.getCell()->getCell()->getGridX(), ptr.getCell()->getCell()->getGridY()), enabled))

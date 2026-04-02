@@ -71,6 +71,7 @@ namespace DetourNavigator
 namespace MWRender
 {
     class GroundcoverUpdater;
+    class CoarseOcclusionCuller;
     class StateUpdater;
 
     class EffectManager;
@@ -88,7 +89,6 @@ namespace MWRender
     class ActorsPaths;
     class RecastMesh;
     class ObjectPaging;
-    class CoarseOcclusionCuller;
     class Groundcover;
 
     class RenderingManager : public MWRender::RenderingInterface
@@ -237,6 +237,9 @@ namespace MWRender
         void setActiveGrid(const osg::Vec4i &grid);
 
         bool pagingEnableObject(int type, const MWWorld::ConstPtr& ptr, bool enabled);
+
+        bool occlusionVisible(const MWWorld::ConstPtr& ptr) const;
+        void rebuildOcclusionBuffer(const osg::Vec3f& eyePoint);
         void pagingBlacklistObject(int type, const MWWorld::ConstPtr &ptr);
         bool pagingUnlockCache();
         void getPagedRefnums(const osg::Vec4i &activeGrid, std::set<ESM::RefNum> &out);
@@ -247,9 +250,6 @@ namespace MWRender
         void updateAmbient();
         void setFogColor(const osg::Vec4f& color);
         void updateThirdPersonViewMode();
-
-        bool occlusionVisible(const MWWorld::ConstPtr& ptr) const;
-        void rebuildOcclusionBuffer(const osg::Vec3f& eyePoint);
 
         void reportStats() const;
 
@@ -297,6 +297,9 @@ namespace MWRender
         std::unique_ptr<Camera> mCamera;
         std::unique_ptr<ViewOverShoulderController> mViewOverShoulderController;
         osg::Vec3f mCurrentCameraPos;
+        osg::Vec3f mLastOcclusionEyePoint;
+        double mLastOcclusionRebuildTime;
+        bool mHaveOcclusionHistory;
 
         osg::ref_ptr<StateUpdater> mStateUpdater;
 
