@@ -255,7 +255,7 @@ namespace MWRender
         if (!mEnabled || !mCamera)
             return true;
 
-        const osg::Node* node = ptr.getRefData().getBaseNode();
+        const SceneUtil::PositionAttitudeTransform* node = ptr.getRefData().getBaseNode();
         if (!node)
             return true;
 
