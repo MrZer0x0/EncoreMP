@@ -714,7 +714,18 @@ void Water::createShaderWaterStateSet(osg::Node* node, Reflection* reflection, R
         shaderStateset->setTextureAttributeAndModes(4, mRipples->getColorTexture(), osg::StateAttribute::ON);
         shaderStateset->addUniform(new osg::Uniform("rippleMap", 4));
     }
-    shaderStateset->setRenderBinDetails(MWRender::RenderBin_Default, "RenderBin");
+
+    // Keep one stable shader-water pipeline for both refraction modes.
+    // We always render shader water in the transparent water bin, with blending
+    // enabled and depth writes disabled. This preserves the old transparent
+    // no-refraction look while avoiding the runtime freeze caused by switching
+    // between two different water state setups.
+    shaderStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+    shaderStateset->setRenderBinDetails(MWRender::RenderBin_Water, "RenderBin");
+
+    osg::ref_ptr<osg::Depth> depth (new osg::Depth);
+    depth->setWriteMask(false);
+    shaderStateset->setAttributeAndModes(depth, osg::StateAttribute::ON);
 
     shaderStateset->setMode(GL_CULL_FACE, osg::StateAttribute::OFF);
 

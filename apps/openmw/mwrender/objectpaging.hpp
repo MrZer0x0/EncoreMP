@@ -30,7 +30,7 @@ namespace MWRender
     {
     public:
         ObjectPaging(Resource::SceneManager* sceneManager, SceneUtil::OcclusionCuller* occlusionCuller = nullptr);
-        ~ObjectPaging() = default;
+        ~ObjectPaging();
 
         osg::ref_ptr<osg::Node> getChunk(float size, const osg::Vec2f& center, unsigned char lod, unsigned int lodFlags, bool activeGrid, const osg::Vec3f& viewPoint, bool compile) override;
 

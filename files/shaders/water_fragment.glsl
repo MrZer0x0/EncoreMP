@@ -441,7 +441,7 @@ if (useActorRipples > 0.5)
     if (lodMid < 0.95) waterN += n2 * midW.x;
     if (lodFar < 0.5) waterN += n3 * smallW.x;
     
-    vec3 ripple = rain.xyz * rain.w * bump * 5.0 + vec3(actorRipple, 0.0) * bump * 2.0;
+    vec3 ripple = rain.xyz * rain.w * bump * 5.45 + vec3(actorRipple, 0.0) * bump * 2.55;
     
     // ✅ ОПТИМИЗАЦИЯ 3: Векторная операция вместо покомпонентной
     vec3 normal = vec3(-(waterN.xy + ripple.xy) * bump, waterN.z);
@@ -594,12 +594,12 @@ if (useActorRipples > 0.5)
     float fFinal = mix(fresnel, fresnel * 0.85, isNight);
     vec3 nightReflBoost = refl * isNight * 0.25;
     
-    // УВЕЛИЧЕННАЯ НЕПРОЗРАЧНОСТЬ ДЛЯ РЕЖИМА БЕЗ РЕФРАКЦИИ (+60% менее прозрачная)
-    // Вода значительно менее прозрачная при взгляде сверху
-    float opacityBoost = 0.85; // Увеличено с 0.65 (еще +60% непрозрачнее)
-    float viewAngle = abs(dot(V, vec3(0.0, 0.0, 1.0))); // Угол взгляда к вертикали
-    opacityBoost += viewAngle * 0.1; // Дополнительная непрозрачность сверху
-    opacityBoost = min(opacityBoost, 0.98); // Ограничиваем максимум
+    // БОЛЕЕ ПРОЗРАЧНЫЙ РЕЖИМ БЕЗ РЕФРАКЦИИ
+    // Возвращаем более лёгкий, "старый" внешний вид воды без белых полос.
+    float opacityBoost = 0.46;
+    float viewAngle = abs(dot(V, vec3(0.0, 0.0, 1.0)));
+    opacityBoost += viewAngle * 0.04;
+    opacityBoost = min(opacityBoost, 0.60);
     
     vec3 finalCol = mix(refl * 0.8 + AMBIENT_NIGHT * NIGHT_BOOST * isNight + nightReflBoost,
                    waterCol + AMBIENT_NIGHT * NIGHT_BOOST * isNight,
@@ -625,19 +625,17 @@ if (useActorRipples > 0.5)
     gl_FragData[0].xyz = clamp(mix(finalCol, finalCol * tint, 0.06), 0.0, 1.0);
     
     // ДИНАМИЧЕСКАЯ ПРОЗРАЧНОСТЬ:
-    // - Значительно меньше прозрачности (на 60% менее прозрачная)
-    // - Предотвращаем белые полосы через ограничение max альфы
+    // Более прозрачная вода, ближе к старому виду без рефракции.
     float viewAngleVertical = abs(dot(V, vec3(0.0, 0.0, 1.0)));
-    float baseAlpha = 0.55; // Увеличено с 0.35 (еще +57% непрозрачнее)
-    float minAlpha = baseAlpha + viewAngleVertical * 0.25;
+    float baseAlpha = 0.12;
+    float minAlpha = baseAlpha + viewAngleVertical * 0.08;
     
-    // Устраняем белые полосы: ограничиваем максимальную альфу
-    // Френель на дальних расстояниях может давать очень высокие значения
-    float maxAlphaLimit = 0.92; // Было 0.85, но нужен запас для устранения артефактов
-    float distanceFade = clamp(distCam / 1500.0, 0.0, 1.0); // Затухание на дальних дистанциях
-    maxAlphaLimit = mix(maxAlphaLimit, 0.88, distanceFade); // Снижаем альфу вдали
+    // Сохраняем ограничение от белых полос, но делаем верхний предел ниже.
+    float maxAlphaLimit = 0.58;
+    float distanceFade = clamp(distCam / 1500.0, 0.0, 1.0);
+    maxAlphaLimit = mix(maxAlphaLimit, 0.50, distanceFade);
     
-    float alpha = clamp(1.0 - fFinal * 0.65, minAlpha, maxAlphaLimit);
+    float alpha = clamp(1.0 - fFinal * 0.82, minAlpha, maxAlphaLimit);
     gl_FragData[0].w = alpha;
     }
 
