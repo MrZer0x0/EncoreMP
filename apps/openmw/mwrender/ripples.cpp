@@ -20,6 +20,14 @@
 #include "vismask.hpp"
 #include "../mwmechanics/actorutil.hpp"
 
+#ifndef GL_RGBA16F
+#  ifdef GL_RGBA16F_ARB
+#    define GL_RGBA16F GL_RGBA16F_ARB
+#  else
+#    define GL_RGBA16F 0x881A
+#  endif
+#endif
+
 namespace MWRender
 {
     RipplesSurface::RipplesSurface(Resource::ResourceSystem* resourceSystem)
