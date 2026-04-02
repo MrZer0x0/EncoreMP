@@ -1,6 +1,8 @@
 #include "objectpaging.hpp"
 #include "occlusionculling.hpp"
 
+#include <components/sceneutil/occlusionculling.hpp>
+
 #include <unordered_map>
 
 #include <osg/Version>
