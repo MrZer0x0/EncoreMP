@@ -81,7 +81,7 @@ namespace MWRender
         void createSimpleWaterStateSet(osg::Node* node, float alpha);
 
         /// @param reflection the reflection camera (required)
-        /// @param refraction the refraction camera (optional)
+        /// @param refraction the refraction camera (kept alive in shader-water mode for runtime toggling)
         void createShaderWaterStateSet(osg::Node* node, Reflection* reflection, Refraction* refraction);
 
         void updateWaterMaterial();
@@ -120,7 +120,6 @@ namespace MWRender
 
         osg::Camera *getReflectionCamera();
         osg::Camera *getRefractionCamera();
-        osg::Vec3f getPosition() const;
 
         void processChangedSettings(const Settings::CategorySettingVector& settings);
     };

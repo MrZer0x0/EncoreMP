@@ -313,14 +313,14 @@ namespace MWGui
         mTextureFilteringButton->setCaption(textureMipmappingToStr(tmip));
 
         int waterTextureSize = Settings::Manager::getInt("rtt size", "Water");
-        if (waterTextureSize >= 256)
-            mWaterTextureSize->setIndexSelected(0);
-        if (waterTextureSize >= 512)
-            mWaterTextureSize->setIndexSelected(1);
-        if (waterTextureSize >= 1024)
-            mWaterTextureSize->setIndexSelected(2);
         if (waterTextureSize >= 2048)
             mWaterTextureSize->setIndexSelected(3);
+        else if (waterTextureSize >= 1024)
+            mWaterTextureSize->setIndexSelected(2);
+        else if (waterTextureSize >= 512)
+            mWaterTextureSize->setIndexSelected(1);
+        else
+            mWaterTextureSize->setIndexSelected(0);
 
         int waterReflectionDetail = Settings::Manager::getInt("reflection detail", "Water");
         waterReflectionDetail = std::min(5, std::max(0, waterReflectionDetail));
