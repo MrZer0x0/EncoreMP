@@ -46,6 +46,7 @@ namespace MWRender
     class Reflection;
     class RippleSimulation;
     class WaterStateUpdater;
+    class Ripples;
 
     /// Water rendering
     class Water
@@ -63,6 +64,7 @@ namespace MWRender
 
         osg::ref_ptr<Refraction> mRefraction;
         osg::ref_ptr<Reflection> mReflection;
+        osg::ref_ptr<Ripples> mRipples;
 
         const std::string mResourcePath;
 

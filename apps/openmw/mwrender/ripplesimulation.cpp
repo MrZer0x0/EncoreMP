@@ -1,34 +1,32 @@
 #include "ripplesimulation.hpp"
 
-#include <algorithm>
 #include <iomanip>
+#include <sstream>
 
-#include <osg/PolygonOffset>
-#include <osg/Texture2D>
-#include <osg/Material>
 #include <osg/Depth>
+#include <osg/Material>
+#include <osg/PolygonOffset>
 #include <osg/PositionAttitudeTransform>
+#include <osg/Texture2D>
 #include <osgParticle/ParticleSystem>
 #include <osgParticle/ParticleSystemUpdater>
 
+#include <components/fallback/fallback.hpp>
 #include <components/misc/rng.hpp>
 #include <components/nifosg/controller.hpp>
 #include <components/resource/imagemanager.hpp>
 #include <components/resource/resourcesystem.hpp>
 #include <components/resource/scenemanager.hpp>
-#include <components/fallback/fallback.hpp>
-#include <components/settings/settings.hpp>
 
 #include "vismask.hpp"
 
-#include "../mwbase/world.hpp"
 #include "../mwbase/environment.hpp"
-
+#include "../mwbase/world.hpp"
 #include "../mwmechanics/actorutil.hpp"
 
 namespace
 {
-    void createWaterRippleStateSet(Resource::ResourceSystem* resourceSystem,osg::Node* node)
+    void createWaterRippleStateSet(Resource::ResourceSystem* resourceSystem, osg::Node* node)
     {
         int rippleFrameCount = Fallback::Map::getInt("Water_RippleFrameCount");
         if (rippleFrameCount <= 0)
@@ -48,7 +46,7 @@ namespace
             textures.push_back(tex2);
         }
 
-        osg::ref_ptr<NifOsg::FlipController> controller (new NifOsg::FlipController(0, 0.3f/rippleFrameCount, textures));
+        osg::ref_ptr<NifOsg::FlipController> controller(new NifOsg::FlipController(0, 0.3f/rippleFrameCount, textures));
         controller->setSource(std::shared_ptr<SceneUtil::ControllerSource>(new SceneUtil::FrameTimeSource));
         node->addUpdateCallback(controller);
 
@@ -78,6 +76,25 @@ namespace
 
         node->setStateSet(stateset);
     }
+
+    int findOldestParticleAlive(const osgParticle::ParticleSystem* partsys)
+    {
+        int oldest = -1;
+        double oldestAge = 0.f;
+        for (int i = 0; i < partsys->numParticles(); ++i)
+        {
+            const osgParticle::Particle* particle = partsys->getParticle(i);
+            if (!particle->isAlive())
+                continue;
+            const double age = particle->getAge();
+            if (oldest == -1 || age > oldestAge)
+            {
+                oldest = i;
+                oldestAge = age;
+            }
+        }
+        return oldest;
+    }
 }
 
 namespace MWRender
@@ -85,13 +102,13 @@ namespace MWRender
 
 RippleSimulation::RippleSimulation(osg::Group *parent, Resource::ResourceSystem* resourceSystem)
     : mParent(parent)
-    , mShaderWaterRipplesEnabled(true)
+    , mMaxNumberRipples(Fallback::Map::getInt("Water_MaxNumberRipples"))
 {
     mParticleSystem = new osgParticle::ParticleSystem;
 
     mParticleSystem->setParticleAlignment(osgParticle::ParticleSystem::FIXED);
     mParticleSystem->setAlignVectorX(osg::Vec3f(1,0,0));
-    mParticleSystem->setAlignVectorY(osg::Vec3f(0,1,0));
+    mParticleSystem->setAlignVectorY(osg::Vec3f(0,-1,0));
 
     osgParticle::Particle& particleTemplate = mParticleSystem->getDefaultParticleTemplate();
     particleTemplate.setSizeRange(osgParticle::rangef(15, 180));
@@ -110,9 +127,7 @@ RippleSimulation::RippleSimulation(osg::Group *parent, Resource::ResourceSystem*
     mParticleNode->setNodeMask(Mask_Water);
 
     createWaterRippleStateSet(resourceSystem, mParticleNode);
-
     resourceSystem->getSceneManager()->recreateShaders(mParticleNode);
-
     mParent->addChild(mParticleNode);
 }
 
@@ -125,26 +140,15 @@ void RippleSimulation::update(float dt)
 {
     const MWBase::World* world = MWBase::Environment::get().getWorld();
 
-    for (std::vector<ShaderRipple>::iterator it = mShaderRipples.begin(); it != mShaderRipples.end(); )
-    {
-        it->mAge += dt;
-        if (it->mAge >= it->mLifetime)
-            it = mShaderRipples.erase(it);
-        else
-            ++it;
-    }
-
     for (Emitter& emitter : mEmitters)
     {
         MWWorld::ConstPtr& ptr = emitter.mPtr;
-        if (ptr == MWBase::Environment::get().getWorld ()->getPlayerPtr())
-        {
-            ptr = MWBase::Environment::get().getWorld ()->getPlayerPtr();
-        }
+        if (ptr == MWBase::Environment::get().getWorld()->getPlayerPtr())
+            ptr = MWBase::Environment::get().getWorld()->getPlayerPtr();
 
-        osg::Vec3f currentPos (ptr.getRefData().getPosition().asVec3());
-
+        osg::Vec3f currentPos(ptr.getRefData().getPosition().asVec3());
         bool shouldEmit = (world->isUnderwater(ptr.getCell(), currentPos) && !world->isSubmerged(ptr)) || world->isWalkingOnWater(ptr);
+
         if (!shouldEmit)
         {
             emitter.mLastEmitPosition = currentPos;
@@ -152,7 +156,15 @@ void RippleSimulation::update(float dt)
             continue;
         }
 
-        currentPos.z() = mParticleNode->getPosition().z();
+        currentPos.z() = static_cast<float>(mParticleNode->getPosition().z());
+
+        if (mRipples)
+        {
+            emitRipple(currentPos);
+            emitter.mLastEmitPosition = currentPos;
+            emitter.mIdleTimer = 0.f;
+            continue;
+        }
 
         const float travelled = (currentPos - emitter.mLastEmitPosition).length();
         const float step = std::max(8.f, 18.f * emitter.mScale);
@@ -165,17 +177,16 @@ void RippleSimulation::update(float dt)
             for (int i = 1; i <= emitCount; ++i)
             {
                 osg::Vec3f emitPos = emitter.mLastEmitPosition + direction * (step * i);
-                emitPos.z() = mParticleNode->getPosition().z();
+                emitPos.z() = static_cast<float>(mParticleNode->getPosition().z());
                 emitRipple(emitPos);
             }
             emitter.mLastEmitPosition = currentPos;
             emitter.mIdleTimer = 0.f;
         }
-        else if (Settings::Manager::getBool("idle actor ripples", "Water"))
+        else
         {
             emitter.mIdleTimer += dt;
-            const float idleInterval = 0.9f;
-            if (emitter.mIdleTimer >= idleInterval)
+            if (emitter.mIdleTimer >= 0.9f)
             {
                 emitter.mIdleTimer = 0.f;
                 emitRipple(currentPos);
@@ -183,7 +194,6 @@ void RippleSimulation::update(float dt)
         }
     }
 }
-
 
 void RippleSimulation::addEmitter(const MWWorld::ConstPtr& ptr, float scale, float force)
 {
@@ -193,7 +203,7 @@ void RippleSimulation::addEmitter(const MWWorld::ConstPtr& ptr, float scale, flo
     newEmitter.mForce = force;
     newEmitter.mLastEmitPosition = ptr.getRefData().getPosition().asVec3();
     newEmitter.mIdleTimer = 0.f;
-    mEmitters.push_back (newEmitter);
+    mEmitters.push_back(newEmitter);
 }
 
 void RippleSimulation::removeEmitter (const MWWorld::ConstPtr& ptr)
@@ -225,9 +235,7 @@ void RippleSimulation::removeCell(const MWWorld::CellStore *store)
     for (std::vector<Emitter>::iterator it = mEmitters.begin(); it != mEmitters.end();)
     {
         if ((it->mPtr.isInCell() && it->mPtr.getCell() == store) && it->mPtr != MWMechanics::getPlayer())
-        {
             it = mEmitters.erase(it);
-        }
         else
             ++it;
     }
@@ -238,26 +246,27 @@ void RippleSimulation::emitRipple(const osg::Vec3f &pos)
     if (std::abs(pos.z() - mParticleNode->getPosition().z()) >= 20)
         return;
 
-    ShaderRipple shaderRipple;
-    shaderRipple.mWorldPos = pos;
-    shaderRipple.mRadius = 110.f;
-    shaderRipple.mStrength = 1.f;
-    shaderRipple.mAge = 0.f;
-    shaderRipple.mLifetime = 1.35f;
-    shaderRipple.mRingScale = 2.4f;
-    mShaderRipples.push_back(shaderRipple);
-
-    const int maxShaderRipples = std::max(4, std::min(Settings::Manager::getInt("max shader ripples", "Water"), 32));
-    if (static_cast<int>(mShaderRipples.size()) > maxShaderRipples)
-        mShaderRipples.erase(mShaderRipples.begin(), mShaderRipples.begin() + (mShaderRipples.size() - maxShaderRipples));
-
-    if (!mShaderWaterRipplesEnabled)
+    if (mRipples)
     {
-        osgParticle::ParticleSystem::ScopedWriteLock lock(*mParticleSystem->getReadWriteMutex());
-        osgParticle::Particle* p = mParticleSystem->createParticle(nullptr);
-        p->setPosition(osg::Vec3f(pos.x(), pos.y(), 0.f));
-        p->setAngle(osg::Vec3f(0,0, Misc::Rng::rollProbability() * osg::PI * 2 - osg::PI));
+        const float particleRippleSizeInUnits = 12.f;
+        mRipples->emit(osg::Vec3f(pos.x(), pos.y(), 0.f), particleRippleSizeInUnits);
+        return;
     }
+
+    if (mMaxNumberRipples <= 0)
+        return;
+
+    osgParticle::ParticleSystem::ScopedWriteLock lock(*mParticleSystem->getReadWriteMutex());
+    if (mParticleSystem->numParticles() - mParticleSystem->numDeadParticles() > mMaxNumberRipples)
+    {
+        const int oldest = findOldestParticleAlive(mParticleSystem);
+        if (oldest != -1)
+            mParticleSystem->reuseParticle(oldest);
+    }
+
+    osgParticle::Particle* p = mParticleSystem->createParticle(nullptr);
+    p->setPosition(osg::Vec3f(pos.x(), pos.y(), 0.f));
+    p->setAngle(osg::Vec3f(0,0, Misc::Rng::rollProbability() * osg::PI * 2 - osg::PI));
 }
 
 void RippleSimulation::setWaterHeight(float height)
@@ -269,20 +278,6 @@ void RippleSimulation::clear()
 {
     for (int i=0; i<mParticleSystem->numParticles(); ++i)
         mParticleSystem->destroyParticle(i);
-    mShaderRipples.clear();
 }
-
-void RippleSimulation::setShaderWaterRipplesEnabled(bool enabled)
-{
-    mShaderWaterRipplesEnabled = enabled;
-    mParticleNode->setNodeMask(enabled ? 0u : Mask_Water);
-}
-
-const std::vector<ShaderRipple>& RippleSimulation::getShaderRipples() const
-{
-    return mShaderRipples;
-}
-
-
 
 }

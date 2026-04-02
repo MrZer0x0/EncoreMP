@@ -7,6 +7,10 @@ set(SDIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(DDIRRELATIVE resources/shaders)
 
 set(SHADER_FILES
+    lib/water/ripples.glsl
+    fullscreen_tri.vert
+    ripples_blobber.frag
+    ripples_simulate.frag
     groundcover_vertex.glsl
     groundcover_fragment.glsl
     water_vertex.glsl

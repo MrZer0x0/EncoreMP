@@ -8,6 +8,8 @@
 
 #include "../mwworld/ptr.hpp"
 
+#include "ripples.hpp"
+
 namespace osg
 {
     class Group;
@@ -41,16 +43,6 @@ namespace MWRender
         float mIdleTimer;
     };
 
-    struct ShaderRipple
-    {
-        osg::Vec3f mWorldPos;
-        float mRadius;
-        float mStrength;
-        float mAge;
-        float mLifetime;
-        float mRingScale;
-    };
-
     class RippleSimulation
     {
     public:
@@ -74,8 +66,7 @@ namespace MWRender
         /// Remove all active ripples
         void clear();
 
-        void setShaderWaterRipplesEnabled(bool enabled);
-        const std::vector<ShaderRipple>& getShaderRipples() const;
+        void setRipples(Ripples* ripples) { mRipples = ripples; }
 
     private:
         osg::ref_ptr<osg::Group> mParent;
@@ -84,8 +75,10 @@ namespace MWRender
         osg::ref_ptr<osg::PositionAttitudeTransform> mParticleNode;
 
         std::vector<Emitter> mEmitters;
-        std::vector<ShaderRipple> mShaderRipples;
-        bool mShaderWaterRipplesEnabled;
+
+        Ripples* mRipples = nullptr;
+
+        int mMaxNumberRipples;
     };
 
 }
