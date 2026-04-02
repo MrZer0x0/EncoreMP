@@ -4,6 +4,10 @@
 
 #include <osg/Node>
 #include <osg/UserDataContainer>
+#include <osg/Geode>
+#include <osg/Geometry>
+
+#include <components/settings/settings.hpp>
 
 #include <osgParticle/ParticleSystem>
 
@@ -106,6 +110,38 @@ namespace
 
     private:
         unsigned int mMask;
+    };
+
+    class GeometryBufferingVisitor : public osg::NodeVisitor
+    {
+    public:
+        GeometryBufferingVisitor(bool enableVbo, bool allowDisplayLists)
+            : osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)
+            , mEnableVbo(enableVbo)
+            , mAllowDisplayLists(allowDisplayLists)
+        {
+        }
+
+        void apply(osg::Geode& geode) override
+        {
+            for (unsigned int i = 0; i < geode.getNumDrawables(); ++i)
+            {
+                osg::Geometry* geometry = geode.getDrawable(i)->asGeometry();
+                if (!geometry || geometry->getDataVariance() == osg::Object::DYNAMIC)
+                    continue;
+
+                if (!mAllowDisplayLists)
+                    geometry->setUseDisplayList(false);
+                if (mEnableVbo)
+                    geometry->setUseVertexBufferObjects(true);
+            }
+
+            traverse(geode);
+        }
+
+    private:
+        bool mEnableVbo;
+        bool mAllowDisplayLists;
     };
 }
 
@@ -578,6 +614,14 @@ namespace Resource
                 static const unsigned int options = getOptimizationOptions();
 
                 optimizer.optimize(loaded, options);
+            }
+
+            const bool enableObjectVbo = Settings::Manager::getBool("object vbo", "Video");
+            const bool allowObjectDisplayLists = Settings::Manager::getBool("object display lists", "Video");
+            if (enableObjectVbo || !allowObjectDisplayLists)
+            {
+                GeometryBufferingVisitor bufferingVisitor(enableObjectVbo, allowObjectDisplayLists);
+                loaded->accept(bufferingVisitor);
             }
 
             if (compile && mIncrementalCompileOperation)

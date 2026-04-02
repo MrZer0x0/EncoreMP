@@ -4,7 +4,6 @@
 #include "water_waves.glsl"
 
 #define REFRACTION @refraction_enabled
-#define ACTOR_RIPPLE_MAP @actor_ripple_map
 
 // ========================================================================
 // ОПТИМИЗИРОВАННЫЙ ШЕЙДЕР ВОДЫ v2.1 by MrZer0
@@ -13,8 +12,6 @@
 // ========================================================================
 
 const float VISIBILITY = 1300.0;
-const float RIPPLE_MAP_SIZE = 1024.0;
-const float RIPPLE_MAP_WORLD_SCALE = 2.5;
 
 // ----------------------- ПАРАМЕТРЫ ВОЛН (упаковано для кэша) -----------------------
 const vec4 BIG_WAVES = vec4(0.25, 0.3, 0.0, 0.0);
@@ -331,10 +328,6 @@ varying float linearDepth;
 
 uniform sampler2D normalMap;
 uniform sampler2D reflectionMap;
-#if ACTOR_RIPPLE_MAP
-uniform sampler2D rippleMap;
-uniform vec3 playerPos;
-#endif
 #if REFRACTION
 uniform sampler2D refractionMap;
 uniform sampler2D refractionDepthMap;
@@ -346,6 +339,7 @@ uniform float far;
 uniform vec3 nodePosition;
 uniform float rainIntensity;
 uniform float timeOfDay;
+uniform float useRefraction;
 
 #include "shadows_fragment.glsl"
 
@@ -366,16 +360,6 @@ void main(void) {
     vec3 worldPos = position.xyz + nodePosition.xyz;
     vec2 UV = worldPos.xy * (3.0 / 40960.0); // Оптимизировано: одна операция
     UV.y = -UV.y;
-
-#if ACTOR_RIPPLE_MAP
-    vec2 rippleMapUV = (worldPos.xy - playerPos.xy + (RIPPLE_MAP_SIZE * RIPPLE_MAP_WORLD_SCALE * 0.5)) / RIPPLE_MAP_SIZE / RIPPLE_MAP_WORLD_SCALE;
-    float distToRippleCenter = length(rippleMapUV - vec2(0.5));
-    float rippleBlendClose = smoothstep(0.001, 0.02, distToRippleCenter);
-    float rippleBlendFar = 1.0 - smoothstep(0.3, 0.4, distToRippleCenter);
-    vec2 actorRipple = texture2D(rippleMap, rippleMapUV).ba * rippleBlendFar * rippleBlendClose;
-#else
-    vec2 actorRipple = vec2(0.0);
-#endif
 
     vec3 camPos = (gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     float shadow = unshadowedLightRatio(linearDepth);
@@ -443,9 +427,6 @@ void main(void) {
     if (lodFar < 0.5) waterN += n3 * smallW.x;
     
     vec3 ripple = rain.xyz * rain.w * bump * 5.0;
-#if ACTOR_RIPPLE_MAP
-    ripple.xy += actorRipple * 2.0;
-#endif
     
     // ✅ ОПТИМИЗАЦИЯ 3: Векторная операция вместо покомпонентной
     vec3 normal = vec3(-(waterN.xy + ripple.xy) * bump, waterN.z);
@@ -491,7 +472,8 @@ void main(void) {
     // REFRACTION MODE
     // ========================================================================
     
-#if REFRACTION
+    if (useRefraction > 0.5)
+    {
     float surfDepth = linearizeDepth(gl_FragCoord.z);
     float depthUndist = linearizeDepth(texture2D(refractionDepthMap, screenCoords).x);
     float waterDepthUndist = depthUndist - surfDepth;
@@ -575,7 +557,9 @@ void main(void) {
     gl_FragData[0].xyz = clamp(mix(finalCol, finalCol * tint, 0.06), 0.0, 1.0);
     gl_FragData[0].w = 1.0;
     
-#else
+    }
+    else
+    {
     // ========================================================================
     // NO REFRACTION + ПОВЕРХНОСТНОЕ НАТЯЖЕНИЕ
     // ========================================================================
@@ -640,7 +624,7 @@ void main(void) {
     
     float alpha = clamp(1.0 - fFinal * 0.65, minAlpha, maxAlphaLimit);
     gl_FragData[0].w = alpha;
-#endif
+    }
 
     // ========================================================================
     // FOG

@@ -3,6 +3,8 @@
 #include <unordered_map>
 
 #include <osg/Version>
+#include <osg/Geode>
+#include <osg/Geometry>
 #include <osg/LOD>
 #include <osg/Switch>
 #include <osg/MatrixTransform>
@@ -50,6 +52,38 @@ namespace MWRender
             return false;
         }
     }
+
+    class GeometryBufferingVisitor : public osg::NodeVisitor
+    {
+    public:
+        GeometryBufferingVisitor(bool enableVbo, bool allowDisplayLists)
+            : osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)
+            , mEnableVbo(enableVbo)
+            , mAllowDisplayLists(allowDisplayLists)
+        {
+        }
+
+        void apply(osg::Geode& geode) override
+        {
+            for (unsigned int i = 0; i < geode.getNumDrawables(); ++i)
+            {
+                osg::Geometry* geometry = geode.getDrawable(i)->asGeometry();
+                if (!geometry || geometry->getDataVariance() == osg::Object::DYNAMIC)
+                    continue;
+
+                if (!mAllowDisplayLists)
+                    geometry->setUseDisplayList(false);
+                if (mEnableVbo)
+                    geometry->setUseVertexBufferObjects(true);
+            }
+
+            traverse(geode);
+        }
+
+    private:
+        bool mEnableVbo;
+        bool mAllowDisplayLists;
+    };
 
     std::string getModel(int type, const std::string& id, const MWWorld::ESMStore& store)
     {
@@ -634,7 +668,7 @@ namespace MWRender
                 if (pair.second.mNeedCompile)
                 {
                     int mode = osgUtil::GLObjectsVisitor::COMPILE_STATE_ATTRIBUTES;
-                    if (!merge)
+                    if (!merge && Settings::Manager::getBool("object display lists", "Video"))
                         mode |= osgUtil::GLObjectsVisitor::COMPILE_DISPLAY_LISTS;
                     stateToCompile._mode = mode;
                     const_cast<osg::Node*>(cnode)->accept(stateToCompile);
@@ -644,6 +678,9 @@ namespace MWRender
 
         if (mergeGroup->getNumChildren())
         {
+            const bool enableObjectVbo = Settings::Manager::getBool("object vbo", "Video");
+            const bool allowObjectDisplayLists = Settings::Manager::getBool("object display lists", "Video");
+
             SceneUtil::Optimizer optimizer;
             if (size > 1/8.f)
             {
@@ -655,6 +692,12 @@ namespace MWRender
             mSceneManager->shareState(mergeGroup);
             optimizer.optimize(mergeGroup, options);
 
+            if (enableObjectVbo || !allowObjectDisplayLists)
+            {
+                GeometryBufferingVisitor bufferingVisitor(enableObjectVbo, allowObjectDisplayLists);
+                mergeGroup->accept(bufferingVisitor);
+            }
+
             group->addChild(mergeGroup);
 
             if (mDebugBatches)
@@ -662,7 +705,7 @@ namespace MWRender
                 DebugVisitor dv;
                 mergeGroup->accept(dv);
             }
-            if (compile)
+            if (compile && Settings::Manager::getBool("object display lists", "Video"))
             {
                 stateToCompile._mode = osgUtil::GLObjectsVisitor::COMPILE_DISPLAY_LISTS;
                 mergeGroup->accept(stateToCompile);
