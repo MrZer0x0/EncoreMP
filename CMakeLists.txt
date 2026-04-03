@@ -1144,7 +1144,6 @@ endif(OPENMW_OSX_DEPLOYMENT AND APPLE)
 # Doxygen Target -- simply run 'make doc' or 'make doc_pages'
 # output directory for 'make doc'       is "${OpenMW_BINARY_DIR}/docs/Doxygen"
 # output directory for 'make doc_pages' is "${DOXYGEN_PAGES_OUTPUT_DIR}" if defined
-#                                       or "${OpenMW_BINARY_DIR}/docs/Pages" otherwise
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
     # determine output directory for doc_pages
