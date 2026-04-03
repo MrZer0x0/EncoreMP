@@ -97,7 +97,7 @@ set(MYGUI_FILES
     # End of tes3mp addition
     OpenMWResourcePlugin.xml
     skins.xml
-
+    Ayembedt.ttf
     tes3mp_login.layout
     tes3mp_login.skin.xml
     tes3mp_dialog_list.layout
