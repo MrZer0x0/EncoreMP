@@ -17,55 +17,60 @@
         <Widget type="ScrollBar" skin="MW_HScroll" position="8 270 241 14" name="HeadRotate"/>
 
         <!-- Gender choice -->
+        
+       
+            <Widget type="AutoSizedButton" skin="MW_Button" position="8 300 40 30" name="PrevGenderButton">
+                <Property key="Caption" value=" < "/>
+         </Widget>
+         
+            <Widget type="AutoSizedButton" skin="MW_Button" position="214 300 40 30" name="NextGenderButton">
+                <Property key="Caption" value=" > "/>
+         </Widget>
+         
+          
+        <Widget type="TextBox" skin="HeaderText" position="48 300 160 18" name="GenderChoiceT"/>
 
-        <Widget type="Widget" skin="MW_Box" position="8 298 15 14">
-            <Widget type="Button" skin="MW_ArrowLeft" position="2 2 10 10" align="Left VStretch" name="PrevGenderButton"/>
-        </Widget>
-
-        <Widget type="TextBox" skin="HeaderText" position="25 294 205 18" name="GenderChoiceT"/>
-
-        <Widget type="Widget" skin="MW_Box" position="234 298 15 14">
-            <Widget type="Button" skin="MW_ArrowRight" position="2 2 10 10" align="Right VStretch" name="NextGenderButton"/>
-        </Widget>
 
         <!-- Face choice -->
 
-        <Widget type="Widget" skin="MW_Box" position="8 320 15 14">
-            <Widget type="Button" skin="MW_ArrowLeft" position="2 2 10 10" align="Left VStretch" name="PrevFaceButton"/>
-        </Widget>
+       <Widget type="AutoSizedButton" skin="MW_Button" position="8 340 40 30" name="PrevFaceButton">
+                <Property key="Caption" value=" < "/>
+         </Widget>
+         
+            <Widget type="AutoSizedButton" skin="MW_Button" position="214 340 40 30" name="NextFaceButton">
+                <Property key="Caption" value=" > "/>
+         </Widget>
 
-        <Widget type="TextBox" skin="HeaderText" position="25 316 205 18" name="FaceChoiceT"/>
-
-        <Widget type="Widget" skin="MW_Box" position="234 320 15 14">
-            <Widget type="Button" skin="MW_ArrowRight" position="2 2 10 10" align="Right VStretch" name="NextFaceButton"/>
-        </Widget>
+        <Widget type="TextBox" skin="HeaderText" position="48 340 160 18" name="FaceChoiceT"/>
+    
 
         <!-- Hair choice -->
 
-        <Widget type="Widget" skin="MW_Box" position="8 342 15 14">
-            <Widget type="Button" skin="MW_ArrowLeft" position="2 2 10 10" align="Left VStretch" name="PrevHairButton"/>
-        </Widget>
+             <Widget type="AutoSizedButton" skin="MW_Button" position="8 380 40 30" name="PrevHairButton">
+                <Property key="Caption" value=" < "/>
+         </Widget>
+         
+            <Widget type="AutoSizedButton" skin="MW_Button" position="214 380 40 30" name="NextHairButton">
+                <Property key="Caption" value=" > "/>
+         </Widget>
 
-        <Widget type="TextBox" skin="HeaderText" position="25 338 205 18" name="HairChoiceT"/>
+        <Widget type="TextBox" skin="HeaderText" position="48 380 160 18" name="HairChoiceT"/>
 
-        <Widget type="Widget" skin="MW_Box" position="234 342 15 14">
-            <Widget type="Button" skin="MW_ArrowRight" position="2 2 10 10" align="Right VStretch" name="NextHairButton"/>
-        </Widget>
 
         <!-- Race -->
 
         <Widget type="TextBox" skin="HeaderText" position="261 16 160 18" name="RaceT" align="Left Top">
             <Property key="TextAlign" value="Left Top"/>
         </Widget>
-        <Widget type="ListBox" skin="MW_List" position="264 39 160 150" name="RaceList">
+        <Widget type="ListBox" skin="MW_List" position="264 39 160 220" name="RaceList">
         </Widget>
 
         <!-- Spell powers -->
-        <Widget type="TextBox" skin="HeaderText" position="261 210 160 18" name="SpellPowerT" align="Left Top">
+        <Widget type="TextBox" skin="HeaderText" position="274 270 160 18" name="SpellPowerT" align="Left Top">
             <Property key="TextAlign" value="Left Top"/>
         </Widget>
         <!-- Spell power sub-widgets will be placed here, no skin to make it invisible -->
-        <Widget type="Widget" skin="" position="261 230 350 140" name="SpellPowerList"/>
+        <Widget type="Widget" skin="" position="270 290 350 140" name="SpellPowerList"/>
 
         <!-- Skill bonus -->
         <Widget type="TextBox" skin="HeaderText" position="432 39 190 18" name="SkillsT" align="Left Top">

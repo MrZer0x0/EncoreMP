@@ -3,7 +3,7 @@
 
 #include "water_waves.glsl"
 
-#define REFRACTION 1
+// runtime refraction toggle via uniform useRefraction
 
 // ========================================================================
 // ОПТИМИЗИРОВАННЫЙ ШЕЙДЕР ВОДЫ v2.1 by MrZer0
@@ -23,7 +23,7 @@ const float WAVE_SCALE = 160.0;
 const float BUMP = 0.45;
 const float BUMP_RAIN = 1.5;
 
-const float REFL_BUMP = 0.25;
+const float REFL_BUMP = 0.18;
 const float BUMP_SUPPRESS_DEPTH = 25.0;
 
 // Specular (упаковано: day, night)
@@ -328,10 +328,8 @@ varying float linearDepth;
 
 uniform sampler2D normalMap;
 uniform sampler2D reflectionMap;
-#if REFRACTION
 uniform sampler2D refractionMap;
 uniform sampler2D refractionDepthMap;
-#endif
 
 uniform float osg_SimulationTime;
 uniform float near;
@@ -342,9 +340,10 @@ uniform float timeOfDay;
 uniform float useRefraction;
 uniform sampler2D rippleMap;
 uniform vec3 playerPos;
-uniform float rippleMapWorldScale;
 uniform float rippleMapHalfWorldSize;
 uniform float useActorRipples;
+
+#include "shadows_fragment.glsl"
 
 float frustumDepth;
 
@@ -365,22 +364,21 @@ void main(void) {
     UV.y = -UV.y;
 
     vec3 camPos = (gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-    float shadow = 1.0;
+    float shadow = unshadowedLightRatio(linearDepth);
 
     vec2 screenCoords = screenCoordsPassthrough.xy / screenCoordsPassthrough.z;
     screenCoords.y = 1.0 - screenCoords.y;
 
-
-vec2 actorRipple = vec2(0.0);
-if (useActorRipples > 0.5)
-{
-    float rippleMapWorldSize = rippleMapHalfWorldSize * 2.0;
-    vec2 rippleMapUV = (worldPos.xy - playerPos.xy + vec2(rippleMapHalfWorldSize)) / rippleMapWorldSize;
-    float distToRippleCenter = length(rippleMapUV - vec2(0.5));
-    float rippleBlendClose = smoothstep(0.001, 0.02, distToRippleCenter);
-    float rippleBlendFar = 1.0 - smoothstep(0.3, 0.4, distToRippleCenter);
-    actorRipple = texture2D(rippleMap, rippleMapUV).ba * rippleBlendFar * rippleBlendClose;
-}
+    vec2 actorRipple = vec2(0.0);
+    if (useActorRipples > 0.5)
+    {
+        float rippleMapWorldSize = rippleMapHalfWorldSize * 2.0;
+        vec2 rippleMapUV = (worldPos.xy - playerPos.xy + vec2(rippleMapHalfWorldSize)) / rippleMapWorldSize;
+        float distToRippleCenter = length(rippleMapUV - vec2(0.5));
+        float rippleBlendClose = smoothstep(0.001, 0.02, distToRippleCenter);
+        float rippleBlendFar = 1.0 - smoothstep(0.30, 0.40, distToRippleCenter);
+        actorRipple = texture2D(rippleMap, rippleMapUV).ba * rippleBlendFar * rippleBlendClose;
+    }
     
     float wTime = osg_SimulationTime * 3.14;
     
@@ -441,10 +439,14 @@ if (useActorRipples > 0.5)
     if (lodMid < 0.95) waterN += n2 * midW.x;
     if (lodFar < 0.5) waterN += n3 * smallW.x;
     
-    vec3 ripple = rain.xyz * rain.w * bump * 5.45 + vec3(actorRipple, 0.0) * bump * 2.55;
-    
-    // ✅ ОПТИМИЗАЦИЯ 3: Векторная операция вместо покомпонентной
-    vec3 normal = vec3(-(waterN.xy + ripple.xy) * bump, waterN.z);
+    vec2 rippleXY = rain.xy * rain.w * bump * 5.35 + actorRipple * bump * 3.40;
+    float rippleEnergy = clamp(abs(rain.w) * 1.25 + length(actorRipple) * 2.40, 0.0, 1.0);
+
+    vec3 baseNormal = vec3(-waterN.xy * bump, waterN.z);
+    baseNormal = fastNormalize(baseNormal);
+
+    // Рябь делаем заметнее, но не даём ей слишком сильно дёргать отражение
+    vec3 normal = vec3(-(waterN.xy + rippleXY) * bump, waterN.z);
     normal = fastNormalize(normal);
     
     // ========================================================================
@@ -481,162 +483,146 @@ if (useActorRipples > 0.5)
     float fBias = (camPos.z > 0.0) ? 1.0 : 0.0;
     float fresnel = clamp(fresnelDielectric(V, normal, ior) + fBias * 0.2, 0.0, 1.0);
     
-    vec2 screenOff = normal.xy * REFL_BUMP;
+    vec2 screenOff = (baseNormal.xy * 0.82 + rippleXY * 0.18) * REFL_BUMP;
     
     // ========================================================================
     // REFRACTION MODE
     // ========================================================================
-    
+
     if (useRefraction > 0.5)
     {
-    float surfDepth = linearizeDepth(gl_FragCoord.z);
-    float depthUndist = linearizeDepth(texture2D(refractionDepthMap, screenCoords).x);
-    float waterDepthUndist = depthUndist - surfDepth;
-    
-    screenOff *= clamp(waterDepthUndist / BUMP_SUPPRESS_DEPTH, 0.0, 1.0);
-    
-    float depthDist = linearizeDepth(texture2D(refractionDepthMap, 
-                      screenCoords - screenOff).x);
-    float waterDepth = depthDist - surfDepth;
-    
-    // Shore breakers (только для мелководья) - ОПТИМИЗИРОВАНО
-    if (waterDepth < 10.0 && sunDir.y <= 0.0) {
-        float shore = clamp(waterDepth * 0.1, 0.0, 1.0);
-        float breaker = (1.0 - shore) * 0.6;
-        
-        float turb = sin(worldPos.x * 0.02 + wTime * 0.15) * 
-                    cos(worldPos.y * 0.02 + wTime * 0.15) * breaker;
-        
-        vec2 wave = vec2(
-            sin(worldPos.x * 0.05 + wTime + turb),
-            cos(worldPos.y * 0.05 + wTime + turb)
-        ) * breaker * 0.25;
-        
-        normal.xy += wave * (1.0 - shore);
-        normal = fastNormalize(normal);
-    }
-    
-    vec3 refl = texture2D(reflectionMap, screenCoords + screenOff).rgb;
-    vec3 refr = texture2D(refractionMap, screenCoords - screenOff).rgb;
-    
-    if (camPos.z < 0.0) {
-        refr = clamp(refr * 1.3, 0.0, 1.0);
-    } else {
-        refr = mix(refr, waterColorDepth(waterDepth, lightCol, isNight),
-               clamp(depthDist / VISIBILITY, 0.0, 1.0));
-    }
-    
-    // Scatter (упрощен для LOD)
-    vec3 lN = n0 * bigW.x * 0.5 + n1 * bigW.y * 0.5;
-    if (lodMid < 0.95) lN += n2 * midW.x * 0.2;
-    lN = fastNormalize(vec3(-lN.x * bump, -lN.y * bump, lN.z));
-    
-    float sunH = L.z;
-    vec3 scatCol = mix(SCATTER_COLOUR * vec3(1.0, 0.4, 0.0), SCATTER_COLOUR,
-                   clamp(1.0 - exp(-sunH * SUN_EXT), 0.0, 1.0)) *
-                   clamp(lightCol, 0.0, 1.0);
-    
-    vec3 lR = reflect(L, lN);
-    float scatter = clamp(dot(L, lN) * 0.7 + 0.3, 0.0, 1.0) *
-                   clamp(dot(lR, V) * 2.0 - 1.2, 0.0, 1.0) *
-                   SCATTER_AMOUNT * sunFade * clamp(1.0 - exp(-sunH), 0.0, 1.0);
-    
-    float fFinal = mix(fresnel, fresnel * 0.85, isNight);
-    vec3 reflTog = mix(vec3(1.0), refl, fBias);
-    
-    float waterDif = dot(normal, L);
-    vec3 a = mix(refr * clamp(waterDif + 0.3, 0.0, 1.0),
-            refr * scatCol * SCATTER_AMOUNT, scatter);
-    
-    vec3 nightReflBoost = refl * isNight * 0.2;
-    vec3 b = mix(refr * fFinal, refl + nightReflBoost,
-            clamp(reflTog * 1.66, 0.0, 1.0));
-    
-    // Specular
-    vec3 R = reflect(V, normal);
-    float specDot = max(dot(R, L), 0.0);
-    float specH = mix(SPEC_PARAMS.x, SPEC_PARAMS.y, isNight);
-    float spec = pow(specDot, specH) * SPEC_INTENSITY * max(shadow, 0.25);
-    spec *= fresnel * mix(0.5, 0.7, isNight) + (1.0 - mix(0.5, 0.7, isNight));
-    spec = clamp(spec, 0.0, 2.0);
-    
-    vec3 finalCol = mix(a, b, fFinal) +
-                   clamp(spec * gl_LightSource[0].diffuse.xyz * 
-                         gl_LightSource[0].diffuse.xyz, 0.0, 1.0) +
-                   clamp(vec3(rain.w) * 0.1, 0.0, 0.1);
-    
-    finalCol += vec3(isNight * 0.15 * max(dot(normal, L), 0.0));
-    finalCol += AMBIENT_DIST * distF * DIST_BOOST * 0.3;
-    
-    vec3 tint = dayTint(timeOfDay);
-    gl_FragData[0].xyz = clamp(mix(finalCol, finalCol * tint, 0.06), 0.0, 1.0);
-    gl_FragData[0].w = 1.0;
-    
+        float surfDepth = linearizeDepth(gl_FragCoord.z);
+        float depthUndist = linearizeDepth(texture2D(refractionDepthMap, screenCoords).x);
+        float waterDepthUndist = depthUndist - surfDepth;
+
+        screenOff *= clamp(waterDepthUndist / BUMP_SUPPRESS_DEPTH, 0.0, 1.0);
+
+        float depthDist = linearizeDepth(texture2D(refractionDepthMap,
+                          screenCoords - screenOff).x);
+        float waterDepth = depthDist - surfDepth;
+
+        if (waterDepth < 10.0 && sunDir.y <= 0.0) {
+            float shore = clamp(waterDepth * 0.1, 0.0, 1.0);
+            float breaker = (1.0 - shore) * 0.6;
+
+            float turb = sin(worldPos.x * 0.02 + wTime * 0.15) *
+                        cos(worldPos.y * 0.02 + wTime * 0.15) * breaker;
+
+            vec2 wave = vec2(
+                sin(worldPos.x * 0.05 + wTime + turb),
+                cos(worldPos.y * 0.05 + wTime + turb)
+            ) * breaker * 0.25;
+
+            normal.xy += wave * (1.0 - shore);
+            normal = fastNormalize(normal);
+        }
+
+        vec3 refl = texture2D(reflectionMap, screenCoords + screenOff).rgb;
+        vec3 refr = texture2D(refractionMap, screenCoords - screenOff).rgb;
+
+        if (camPos.z < 0.0) {
+            refr = clamp(refr * 1.3, 0.0, 1.0);
+        } else {
+            refr = mix(refr, waterColorDepth(waterDepth, lightCol, isNight),
+                   clamp(depthDist / VISIBILITY, 0.0, 1.0));
+        }
+
+        vec3 lN = n0 * bigW.x * 0.5 + n1 * bigW.y * 0.5;
+        if (lodMid < 0.95) lN += n2 * midW.x * 0.2;
+        lN = fastNormalize(vec3(-lN.x * bump, -lN.y * bump, lN.z));
+
+        float sunH = L.z;
+        vec3 scatCol = mix(SCATTER_COLOUR * vec3(1.0, 0.4, 0.0), SCATTER_COLOUR,
+                       clamp(1.0 - exp(-sunH * SUN_EXT), 0.0, 1.0)) *
+                       clamp(lightCol, 0.0, 1.0);
+
+        vec3 lR = reflect(L, lN);
+        float scatter = clamp(dot(L, lN) * 0.7 + 0.3, 0.0, 1.0) *
+                       clamp(dot(lR, V) * 2.0 - 1.2, 0.0, 1.0) *
+                       SCATTER_AMOUNT * sunFade * clamp(1.0 - exp(-sunH), 0.0, 1.0);
+
+        float fFinal = mix(fresnel, fresnel * 0.85, isNight);
+        vec3 reflTog = mix(vec3(1.0), refl, fBias);
+
+        float waterDif = dot(normal, L);
+        vec3 a = mix(refr * clamp(waterDif + 0.3, 0.0, 1.0),
+                refr * scatCol * SCATTER_AMOUNT, scatter);
+
+        vec3 nightReflBoost = refl * isNight * 0.2;
+        vec3 b = mix(refr * fFinal, refl + nightReflBoost,
+                clamp(reflTog * 1.66, 0.0, 1.0));
+
+        vec3 R = reflect(V, normal);
+        float specDot = max(dot(R, L), 0.0);
+        float specH = mix(SPEC_PARAMS.x, SPEC_PARAMS.y, isNight);
+        float spec = pow(specDot, specH) * SPEC_INTENSITY * max(shadow, 0.25);
+        spec *= fresnel * mix(0.5, 0.7, isNight) + (1.0 - mix(0.5, 0.7, isNight));
+        spec = clamp(spec, 0.0, 2.0);
+
+        float rippleHighlight = clamp(rippleEnergy * (0.06 + 0.08 * fresnel), 0.0, 0.18);
+
+        vec3 finalCol = mix(a, b, fFinal) +
+                       clamp(spec * gl_LightSource[0].diffuse.xyz *
+                             gl_LightSource[0].diffuse.xyz, 0.0, 1.0) +
+                       clamp(vec3(rain.w) * 0.1, 0.0, 0.1) +
+                       vec3(rippleHighlight);
+
+        finalCol += vec3(isNight * 0.15 * max(dot(normal, L), 0.0));
+        finalCol += AMBIENT_DIST * distF * DIST_BOOST * 0.3;
+
+        vec3 tint = dayTint(timeOfDay);
+        gl_FragData[0].xyz = clamp(mix(finalCol, finalCol * tint, 0.06), 0.0, 1.0);
+        gl_FragData[0].w = 1.0;
     }
     else
     {
-    // ========================================================================
-    // NO REFRACTION + ПОВЕРХНОСТНОЕ НАТЯЖЕНИЕ
-    // ========================================================================
-    
-    vec3 refl = texture2D(reflectionMap, screenCoords + screenOff).rgb;
-    
-    vec3 waterCol = waterColorDepth(10.0, lightCol, isNight);
-    
-// ========== ПОВЕРХНОСТНОЕ НАТЯЖЕНИЕ ==========
-    // Имитирует рефракцию когда камера под водой
-    vec3 tension = vec3(0.0);
-    if (camPos.z < 0.0) {
-        tension = surfaceTension(V, normal, linearDepth, wTime);
-    }
-    // ============================================
-    
-    float fFinal = mix(fresnel, fresnel * 0.85, isNight);
-    vec3 nightReflBoost = refl * isNight * 0.25;
-    
-    // БОЛЕЕ ПРОЗРАЧНЫЙ РЕЖИМ БЕЗ РЕФРАКЦИИ
-    // Возвращаем более лёгкий, "старый" внешний вид воды без белых полос.
-    float opacityBoost = 0.46;
-    float viewAngle = abs(dot(V, vec3(0.0, 0.0, 1.0)));
-    opacityBoost += viewAngle * 0.04;
-    opacityBoost = min(opacityBoost, 0.60);
-    
-    vec3 finalCol = mix(refl * 0.8 + AMBIENT_NIGHT * NIGHT_BOOST * isNight + nightReflBoost,
-                   waterCol + AMBIENT_NIGHT * NIGHT_BOOST * isNight,
-                   (1.0 - fFinal) * opacityBoost);
-    
-    // Добавляем эффект поверхностного натяжения
-    finalCol += tension;
-    
-    // Specular
-    vec3 R = reflect(V, normal);
-    float specDot = max(dot(R, L), 0.0);
-    float specH = mix(SPEC_PARAMS.x, SPEC_PARAMS.y, isNight);
-    float spec = pow(specDot, specH) * SPEC_INTENSITY * max(shadow, 0.25);
-    spec *= fresnel * mix(0.5, 0.7, isNight) + (1.0 - mix(0.5, 0.7, isNight));
-    spec = clamp(spec, 0.0, 2.0);
-    
-    finalCol += clamp(spec * gl_LightSource[0].specular.xyz, 0.0, 0.9);
-    finalCol += clamp(vec3(rain.w) * 0.1, 0.0, 0.12);
-    finalCol += vec3(isNight * 0.15 * max(dot(normal, L), 0.0));
-    finalCol += AMBIENT_DIST * distF * DIST_BOOST * 0.3;
-    
-    vec3 tint = dayTint(timeOfDay);
-    gl_FragData[0].xyz = clamp(mix(finalCol, finalCol * tint, 0.06), 0.0, 1.0);
-    
-    // ДИНАМИЧЕСКАЯ ПРОЗРАЧНОСТЬ:
-    // Более прозрачная вода, ближе к старому виду без рефракции.
-    float viewAngleVertical = abs(dot(V, vec3(0.0, 0.0, 1.0)));
-    float baseAlpha = 0.12;
-    float minAlpha = baseAlpha + viewAngleVertical * 0.08;
-    
-    // Сохраняем ограничение от белых полос, но делаем верхний предел ниже.
-    float maxAlphaLimit = 0.58;
-    float distanceFade = clamp(distCam / 1500.0, 0.0, 1.0);
-    maxAlphaLimit = mix(maxAlphaLimit, 0.50, distanceFade);
-    
-    float alpha = clamp(1.0 - fFinal * 0.82, minAlpha, maxAlphaLimit);
-    gl_FragData[0].w = alpha;
+        vec3 refl = texture2D(reflectionMap, screenCoords + screenOff).rgb;
+        vec3 waterCol = waterColorDepth(10.0, lightCol, isNight);
+
+        vec3 tension = vec3(0.0);
+        if (camPos.z < 0.0)
+            tension = surfaceTension(V, normal, linearDepth, wTime) * 0.50;
+
+        float fFinal = mix(fresnel, fresnel * 0.85, isNight);
+        vec3 nightReflBoost = refl * isNight * 0.25;
+
+        float opacityBoost = 0.56;
+        float viewAngle = abs(dot(V, vec3(0.0, 0.0, 1.0)));
+        opacityBoost += viewAngle * 0.05;
+        opacityBoost = min(opacityBoost, 0.70);
+
+        vec3 finalCol = mix(refl * 0.78 + AMBIENT_NIGHT * NIGHT_BOOST * isNight + nightReflBoost,
+                       waterCol + AMBIENT_NIGHT * NIGHT_BOOST * isNight,
+                       (1.0 - fFinal) * opacityBoost);
+
+        finalCol += tension;
+
+        vec3 R = reflect(V, normal);
+        float specDot = max(dot(R, L), 0.0);
+        float specH = mix(SPEC_PARAMS.x, SPEC_PARAMS.y, isNight);
+        float spec = pow(specDot, specH) * SPEC_INTENSITY * max(shadow, 0.25);
+        spec *= fresnel * mix(0.5, 0.7, isNight) + (1.0 - mix(0.5, 0.7, isNight));
+        spec = clamp(spec, 0.0, 2.0);
+
+        float rippleHighlight = clamp(rippleEnergy * (0.07 + 0.09 * fresnel), 0.0, 0.22);
+
+        finalCol += clamp(spec * gl_LightSource[0].specular.xyz, 0.0, 0.9);
+        finalCol += clamp(vec3(rain.w) * 0.1, 0.0, 0.12);
+        finalCol += vec3(rippleHighlight);
+        finalCol += vec3(isNight * 0.15 * max(dot(normal, L), 0.0));
+        finalCol += AMBIENT_DIST * distF * DIST_BOOST * 0.3;
+
+        vec3 tint = dayTint(timeOfDay);
+        gl_FragData[0].xyz = clamp(mix(finalCol, finalCol * tint, 0.06), 0.0, 1.0);
+
+        float viewAngleVertical = abs(dot(V, vec3(0.0, 0.0, 1.0)));
+        float baseAlpha = 0.20;
+        float minAlpha = baseAlpha + viewAngleVertical * 0.14;
+        float distanceFade = clamp(distCam / 1500.0, 0.0, 1.0);
+        float maxAlphaLimit = mix(0.72, 0.66, distanceFade);
+
+        float alpha = clamp(1.0 - fFinal * 0.72, minAlpha, maxAlphaLimit);
+        gl_FragData[0].w = alpha;
     }
 
     // ========================================================================
@@ -652,5 +638,6 @@ if (useActorRipples > 0.5)
     
     gl_FragData[0].xyz = mix(gl_FragData[0].xyz, gl_Fog.color.xyz, fogVal);
 
+    applyShadowDebugOverlay();
 }
     

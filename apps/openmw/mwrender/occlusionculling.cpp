@@ -88,6 +88,23 @@ namespace
     {
         return dynamic_cast<osgUtil::CullVisitor*>(nv);
     }
+
+    static bool shouldUseOcclusionForCamera(osg::Camera* cam)
+    {
+        if (!cam)
+            return false;
+
+        const std::string name = cam->getName();
+        if (name == "ShadowCamera" || name == "ReflectionCamera" || name == "RefractionCamera")
+            return false;
+
+        // PRE_RENDER cameras are commonly used for RTT passes such as water and shadows.
+        // Keep occlusion culling restricted to the main scene camera.
+        if (cam->getRenderOrder() != osg::Camera::NESTED_RENDER)
+            return false;
+
+        return true;
+    }
 }
 
 namespace MWRender
@@ -172,10 +189,7 @@ namespace MWRender
         if (!cv || !mCuller.valid() || !mTerrainOccluder)
         { traverse(node, nv); return; }
         osg::Camera* cam = cv->getCurrentCamera();
-        if (!cam)
-        { traverse(node, nv); return; }
-        const std::string name = cam->getName();
-        if (name == "ShadowCamera" || name == "ReflectionCamera" || name == "RefractionCamera")
+        if (!shouldUseOcclusionForCamera(cam))
         { traverse(node, nv); return; }
         const osg::FrameStamp* fs = cv->getFrameStamp();
         const unsigned int frame = fs ? fs->getFrameNumber() : 0u;
@@ -202,7 +216,7 @@ namespace MWRender
     void PagedOccluderCallback::operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
         osgUtil::CullVisitor* cv = asCull(nv);
-        if (!cv || !mCuller.valid() || !mCuller->isFrameActive())
+        if (!cv || !mCuller.valid() || !mCuller->isFrameActive() || !shouldUseOcclusionForCamera(cv->getCurrentCamera()))
         { traverse(node, nv); return; }
         const osg::BoundingSphere& bs = node->getBound();
         if (bs.valid())
@@ -265,7 +279,7 @@ namespace MWRender
     {
         osgUtil::CullVisitor* cv = asCull(nv);
         osg::Group* group = node ? node->asGroup() : nullptr;
-        if (!cv || !group || !mCuller.valid() || !mCuller->isFrameActive())
+        if (!cv || !group || !mCuller.valid() || !mCuller->isFrameActive() || !shouldUseOcclusionForCamera(cv->getCurrentCamera()))
         { traverse(node, nv); return; }
 
         const osg::BoundingSphere& cellBS = group->getBound();
