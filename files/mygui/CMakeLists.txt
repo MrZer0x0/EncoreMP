@@ -98,6 +98,7 @@ set(MYGUI_FILES
     OpenMWResourcePlugin.xml
     skins.xml
     Ayembedt.ttf
+	Pelagiad.ttf
     tes3mp_login.layout
     tes3mp_login.skin.xml
     tes3mp_dialog_list.layout
