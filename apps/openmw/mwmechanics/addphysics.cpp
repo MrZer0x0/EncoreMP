@@ -1,11 +1,7 @@
 /*
     addphysics.cpp
     Author: MrZer0
-    EncoreMP C++ port of OpenMWLuaPhysics (original by MaxYari)
-*/
-/*
-    addphysics.cpp  —  EncoreMP C++ port of OpenMWAddPhysics (by MaxYari)
-    Original Lua mod: https://github.com/MaxYari/OpenMWAddPhysics
+    EncoreMP — C++ port of OpenMWLuaPhysics (original by MaxYari)
 */
 
 #include "addphysics.hpp"
@@ -19,10 +15,10 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/class.hpp"
-#include "../mwphysics/raycasting.hpp"
+#include "../mwphysics/raycasting.hpp"      // getRayCasting() — доступен в MWBase::World
 #include "../mwphysics/collisiontype.hpp"
 
-// TES3MP networking — same pattern used in spellcasting.cpp / repair.cpp
+// TES3MP networking
 #include "../mwmp/Main.hpp"
 #include "../mwmp/Networking.hpp"
 #include "../mwmp/ObjectList.hpp"
@@ -30,20 +26,12 @@
 namespace MWMechanics
 {
 
-// -----------------------------------------------------------------------
-// makeKey
-// -----------------------------------------------------------------------
 std::string AddPhysicsSystem::makeKey(const std::string& refId,
                                        const std::string& cellId)
 {
     return refId + "@" + cellId;
 }
 
-// -----------------------------------------------------------------------
-// registerObject
-// Call this when the player drops an item (World::placeObject).
-// mirrors: PhysicsEngineLocal.lua  onActive / initialise
-// -----------------------------------------------------------------------
 void AddPhysicsSystem::registerObject(const MWWorld::Ptr& ptr,
                                        const osg::Vec3f& initialVelocity)
 {
@@ -53,7 +41,7 @@ void AddPhysicsSystem::registerObject(const MWWorld::Ptr& ptr,
     const std::string cellId = ptr.getCell()->getCell()->getDescription();
     const std::string key    = makeKey(refId, cellId);
 
-    if (mObjects.count(key)) return; // already tracked
+    if (mObjects.count(key)) return;
 
     PhysicsObject obj;
     obj.refId    = refId;
@@ -61,7 +49,6 @@ void AddPhysicsSystem::registerObject(const MWWorld::Ptr& ptr,
     obj.position = ptr.getRefData().getPosition().asVec3();
     obj.velocity = initialVelocity;
 
-    // auto-detect weight from encumbrance (mirrors Lua weight detection)
     if (ptr.getClass().hasToolTip(ptr))
     {
         float w = ptr.getClass().getWeight(ptr);
@@ -69,13 +56,9 @@ void AddPhysicsSystem::registerObject(const MWWorld::Ptr& ptr,
     }
 
     obj.sleeping = (initialVelocity.length() < obj.sleepThreshold);
-
     mObjects[key] = obj;
 }
 
-// -----------------------------------------------------------------------
-// removeObject
-// -----------------------------------------------------------------------
 void AddPhysicsSystem::removeObject(const MWWorld::Ptr& ptr)
 {
     if (ptr.isEmpty()) return;
@@ -83,10 +66,6 @@ void AddPhysicsSystem::removeObject(const MWWorld::Ptr& ptr)
                             ptr.getCell()->getCell()->getDescription()));
 }
 
-// -----------------------------------------------------------------------
-// applyImpulse
-// mirrors: physObject:applyImpulse(impulse)
-// -----------------------------------------------------------------------
 void AddPhysicsSystem::applyImpulse(const MWWorld::Ptr& ptr,
                                      const osg::Vec3f& impulse)
 {
@@ -95,15 +74,11 @@ void AddPhysicsSystem::applyImpulse(const MWWorld::Ptr& ptr,
                                      ptr.getCell()->getCell()->getDescription());
     auto it = mObjects.find(key);
     if (it == mObjects.end()) return;
-
     it->second.velocity  += impulse;
     it->second.sleeping   = false;
     it->second.timeAsleep = 0.f;
 }
 
-// -----------------------------------------------------------------------
-// clearCell  — called on cell unload
-// -----------------------------------------------------------------------
 void AddPhysicsSystem::clearCell(const std::string& cellId)
 {
     for (auto it = mObjects.begin(); it != mObjects.end(); )
@@ -115,9 +90,6 @@ void AddPhysicsSystem::clearCell(const std::string& cellId)
     }
 }
 
-// -----------------------------------------------------------------------
-// isRegistered
-// -----------------------------------------------------------------------
 bool AddPhysicsSystem::isRegistered(const MWWorld::Ptr& ptr) const
 {
     if (ptr.isEmpty()) return false;
@@ -125,53 +97,39 @@ bool AddPhysicsSystem::isRegistered(const MWWorld::Ptr& ptr) const
                                    ptr.getCell()->getCell()->getDescription())) > 0;
 }
 
-// -----------------------------------------------------------------------
-// getGroundZ
-// Uses the same PhysicsSystem::castRay available in OpenMW 0.47.
-// Returns FLT_MIN if no ground found within 2000 units below.
-// -----------------------------------------------------------------------
+// Используем getRayCasting() — единственный корректный путь к физике через MWBase::World
 float AddPhysicsSystem::getGroundZ(const osg::Vec3f& pos) const
 {
-    // getRayCasting() is available on MWBase::World (unlike getPhysicsSystem())
-    const MWPhysics::RayCastingInterface* rayCasting =
+    const MWPhysics::RayCastingInterface* rc =
         MWBase::Environment::get().getWorld()->getRayCasting();
-    if (!rayCasting) return FLT_MIN;
+    if (!rc) return FLT_MIN;
 
     const osg::Vec3f from = pos + osg::Vec3f(0, 0, 4.f);
     const osg::Vec3f to   = pos + osg::Vec3f(0, 0, -2000.f);
 
-    // World + HeightMap only — не задеваем акторов и двери
-    auto result = rayCasting->castRay(from, to, MWWorld::ConstPtr(),
-                                      std::vector<MWWorld::Ptr>(),
-                                      MWPhysics::CollisionType_World |
-                                      MWPhysics::CollisionType_HeightMap);
+    auto result = rc->castRay(from, to, MWWorld::ConstPtr(),
+                               std::vector<MWWorld::Ptr>(),
+                               MWPhysics::CollisionType_World |
+                               MWPhysics::CollisionType_HeightMap);
 
     if (!result.mHit) return FLT_MIN;
     return result.mHitPos.z();
 }
 
-// -----------------------------------------------------------------------
-// syncPosition
-// Moves the actual game object and sends a TES3MP ObjectPlace packet.
-// Pattern taken from EncoreMP spellcasting.cpp / repair.cpp networking.
-// -----------------------------------------------------------------------
 void AddPhysicsSystem::syncPosition(const PhysicsObject& obj) const
 {
-    // searchPtr(name, activeOnly=false) searches by refId across all loaded cells.
-    // searchPtrViaRefId does not exist on MWBase::World — use searchPtr instead.
+    // searchPtr(name, activeOnly=false) — есть в MWBase::World
     MWWorld::Ptr ptr =
         MWBase::Environment::get().getWorld()->searchPtr(obj.refId, false, false);
     if (ptr.isEmpty()) return;
 
-    // Move the renderer / physics representation
     MWBase::Environment::get().getWorld()->moveObject(
         ptr, obj.position.x(), obj.position.y(), obj.position.z());
 
     /*
         Start of tes3mp addition
-
-        Send an ID_OBJECT_PLACE packet so all clients see the moved object.
-        Same pattern as objectList->sendObjectSound() in spellcasting.cpp.
+        Send ObjectPlace so all clients see the moved object.
+        Same pattern as sendObjectSound() in spellcasting.cpp.
     */
     mwmp::ObjectList* objectList =
         mwmp::Main::get().getNetworking()->getObjectList();
@@ -184,26 +142,20 @@ void AddPhysicsSystem::syncPosition(const PhysicsObject& obj) const
     */
 }
 
-// -----------------------------------------------------------------------
-// stepObject
-// Single-frame integration. Returns true if object moved.
-// mirrors: PhysicsObject:step() in PhysicsObject.lua
-// -----------------------------------------------------------------------
 bool AddPhysicsSystem::stepObject(PhysicsObject& obj, float dt)
 {
     if (obj.sleeping) return false;
 
-    // --- Air resistance (linear damping) ---
-    float damping = std::max(0.f, 1.f - obj.linearDamping * dt);
-    obj.velocity *= damping;
+    // Затухание (сопротивление воздуха)
+    obj.velocity *= std::max(0.f, 1.f - obj.linearDamping * dt);
 
-    // --- Gravity ---
+    // Гравитация
     obj.velocity.z() += GRAVITY * dt;
 
-    // --- Integrate ---
+    // Интегрирование позиции
     osg::Vec3f newPos = obj.position + obj.velocity * dt;
 
-    // --- Ground collision ---
+    // Коллизия с землёй
     float gz = getGroundZ(newPos);
     bool onGround = false;
 
@@ -211,17 +163,13 @@ bool AddPhysicsSystem::stepObject(PhysicsObject& obj, float dt)
     {
         onGround = true;
         newPos.z() = gz + obj.radius;
-
-        // Reflect vertical velocity with bounce attenuation
         if (obj.velocity.z() < 0.f)
             obj.velocity.z() = -obj.velocity.z() * obj.bounce;
-
-        // Horizontal friction
         obj.velocity.x() *= obj.friction;
         obj.velocity.y() *= obj.friction;
     }
 
-    // --- Sleep logic (mirrors PhysicsObject.lua sleep detection) ---
+    // Засыпание
     if (obj.velocity.length() < obj.sleepThreshold && onGround)
     {
         obj.timeAsleep += dt;
@@ -243,27 +191,19 @@ bool AddPhysicsSystem::stepObject(PhysicsObject& obj, float dt)
     return moved;
 }
 
-// -----------------------------------------------------------------------
-// update  — called every frame from World::update()
-// -----------------------------------------------------------------------
 void AddPhysicsSystem::update(float dt)
 {
-    dt = std::min(dt, 0.1f); // guard against lag spikes
-
-    const int substeps = std::min(MAX_SUBSTEPS,
-                                   std::max(1, static_cast<int>(dt / 0.016f)));
-    const float subDt = dt / static_cast<float>(substeps);
+    dt = std::min(dt, 0.1f);
+    const int substeps = std::min(MAX_SUBSTEPS, std::max(1, static_cast<int>(dt / 0.016f)));
+    const float subDt  = dt / static_cast<float>(substeps);
 
     for (auto& kv : mObjects)
     {
-        PhysicsObject& obj = kv.second;
         bool moved = false;
-
         for (int s = 0; s < substeps; ++s)
-            moved |= stepObject(obj, subDt);
-
+            moved |= stepObject(kv.second, subDt);
         if (moved)
-            syncPosition(obj);
+            syncPosition(kv.second);
     }
 }
 

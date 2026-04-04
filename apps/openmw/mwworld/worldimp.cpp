@@ -2114,7 +2114,7 @@ namespace MWWorld
             preloadSpells();
         }
 
-        // EncoreMP AddPhysics: step physics simulation every frame
+        // EncoreMP AddPhysics: step simulation every frame
         if (!paused && mAddPhysics)
             mAddPhysics->update(duration);
     }
@@ -2521,13 +2521,9 @@ namespace MWWorld
         // copy the object and set its count
         Ptr dropped = copyObjectToCell(object, cell, pos, amount, true);
 
-        // EncoreMP AddPhysics: register the dropped item for physics simulation
+        // EncoreMP AddPhysics: register dropped item for physics simulation
         if (mAddPhysics && !dropped.isEmpty())
-        {
-            // Give a small downward velocity so it falls naturally from hand height
-            osg::Vec3f dropVelocity(0.f, 0.f, -40.f);
-            mAddPhysics->registerObject(dropped, dropVelocity);
-        }
+            mAddPhysics->registerObject(dropped, osg::Vec3f(0.f, 0.f, -40.f));
 
         // only the player place items in the world, so no need to check actor
         PCDropped(dropped);
@@ -3022,7 +3018,7 @@ namespace MWWorld
     {
         if (isCellActive(cell))
         {
-            // EncoreMP AddPhysics: remove all physics objects in this cell
+            // EncoreMP AddPhysics: remove physics objects in unloading cell
             if (mAddPhysics)
                 mAddPhysics->clearCell(cell.getDescription());
 

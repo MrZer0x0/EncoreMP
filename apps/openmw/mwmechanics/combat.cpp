@@ -487,33 +487,18 @@ namespace MWMechanics
                                     victimStats.getMagicEffects().get(ESM::MagicEffect::Invisibility).getMagnitude());
         }
 
-        /// start of EncoreMP hitchance changes
-
-        float attackTerm = 0.0f;
-
-        if (attacker == getPlayer())
-        {
-            attackTerm += (skillValue * 0.8) +
-                (stats.getAttribute(ESM::Attribute::Agility).getModified() / 5.0f) +
-                (stats.getAttribute(ESM::Attribute::Luck).getModified() / 10.0f);
-            attackTerm *= stats.getFatigueTerm();
-            attackTerm += mageffects.get(ESM::MagicEffect::FortifyAttack).getMagnitude() -
-                mageffects.get(ESM::MagicEffect::Blind).getMagnitude();
-            attackTerm += 10;
-        }
-        else {
-            attackTerm += skillValue +
-                (stats.getAttribute(ESM::Attribute::Agility).getModified() / 5.0f) +
-                (stats.getAttribute(ESM::Attribute::Luck).getModified() / 10.0f);
-            attackTerm *= stats.getFatigueTerm();
-            attackTerm += mageffects.get(ESM::MagicEffect::FortifyAttack).getMagnitude() -
-                mageffects.get(ESM::MagicEffect::Blind).getMagnitude();
-        }
-
-
+        /// start of EncoreMP hitchance changes (AlwaysHit v3.0)
+        // Навык оружия больше не определяет промах — удар всегда засчитывается.
+        // Навык уходит в adjustWeaponDamage как множитель урона.
+        // Blind и Chameleon/Invisibility по-прежнему снижают шанс.
+        // Возвращаем 101 минус defenseTerm; минимум 1, чтобы при полном Chameleon
+        // была хоть крошечная возможность уклонения.
+        float attackTerm = 101.0f;
+        attackTerm += mageffects.get(ESM::MagicEffect::FortifyAttack).getMagnitude();
+        attackTerm -= mageffects.get(ESM::MagicEffect::Blind).getMagnitude();
         /// end of EncoreMP hitchance changes
 
-        return round(attackTerm - defenseTerm);
+        return std::max(1.0f, round(attackTerm - defenseTerm));
     }
 
     void applyElementalShields(const MWWorld::Ptr &attacker, const MWWorld::Ptr &victim)
@@ -815,8 +800,28 @@ namespace MWMechanics
         }
         else
         {
+            // EncoreMP v3.0 AlwaysHit: навык НПС — множитель урона.
+            // damage *= (0.5 + skill/200)  →  навык 0=50%, 100=100%, 200=150%
+            // Усталость расходуется обратно пропорционально навыку:
+            //   cost = max(2, 12*(1 - skill/150))
+            int npcWeaponSkill = ESM::Skill::HandToHand;
+            if (!weapon.isEmpty())
+                npcWeaponSkill = weapon.getClass().getEquipmentSkill(weapon);
+            float npcSkill = static_cast<float>(attacker.getClass().getSkill(attacker, npcWeaponSkill));
+
+            float skillMult = std::max(0.5f, std::min(1.5f, 0.5f + npcSkill / 200.0f));
+
             damage *= fDamageStrengthBase +
-                (attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Strength).getModified() * fDamageStrengthMult * 0.1f);
+                (attacker.getClass().getCreatureStats(attacker).getAttribute(ESM::Attribute::Strength).getModified()
+                 * fDamageStrengthMult * 0.1f);
+            damage *= skillMult;
+
+            // Расход усталости НПС при ударе
+            float fatigueCost = std::max(2.0f, 12.0f * (1.0f - npcSkill / 150.0f));
+            MWMechanics::DynamicStat<float> npcFatigue =
+                attacker.getClass().getCreatureStats(attacker).getFatigue();
+            npcFatigue.setCurrent(std::max(0.0f, npcFatigue.getCurrent() - fatigueCost));
+            attacker.getClass().getCreatureStats(attacker).setFatigue(npcFatigue);
         }
 
         // end of EncoreMP damage changes

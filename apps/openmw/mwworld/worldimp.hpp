@@ -545,9 +545,7 @@ namespace MWWorld
             const MWPhysics::RayCastingInterface* getRayCasting() const override;
 
             bool castRay (float x1, float y1, float z1, float x2, float y2, float z2, int mask) override;
-
-            // EncoreMP AddPhysics accessor
-            MWMechanics::AddPhysicsSystem* getAddPhysics() { return mAddPhysics.get(); }
+            MWMechanics::AddPhysicsSystem* getAddPhysics() { return mAddPhysics.get(); } // EncoreMP
             ///< cast a Ray and return true if there is an object in the ray path.
 
             bool castRay (float x1, float y1, float z1, float x2, float y2, float z2) override;

@@ -24,6 +24,7 @@
 #include "../mwmp/ObjectList.hpp"
 #include "../mwmp/CellController.hpp"
 #include "../mwmp/MechanicsHelper.hpp"
+// EncoreMP AddPhysics + concrete World for copyObjectToCell
 #include "../mwmechanics/addphysics.hpp"
 #include "../mwworld/worldimp.hpp"
 /*
@@ -619,40 +620,22 @@ namespace MWClass
             objectList->addObjectHit(victim, ptr);
             objectList->sendObjectHit();
 
-            /*
-                Start of EncoreMP AddPhysics addition
-
-                Apply an impulse to the hit object so it flies away.
-                Mirrors physObject:applyImpulse() from OpenMWAddPhysics.
-            */
+            // EncoreMP v3.0 AddPhysics: предмет улетает при ударе
             {
-                MWMechanics::AddPhysicsSystem* lp =
+                MWMechanics::AddPhysicsSystem* ap =
                     static_cast<MWWorld::World*>(MWBase::Environment::get().getWorld())
                     ->getAddPhysics();
-
-                if (lp && lp->isRegistered(victim))
+                if (ap && ap->isRegistered(victim))
                 {
-                    // Direction: from attacker toward victim, with upward kick
-                    osg::Vec3f attackerPos = ptr.getRefData().getPosition().asVec3();
-                    osg::Vec3f victimPos   = victim.getRefData().getPosition().asVec3();
-                    osg::Vec3f dir = victimPos - attackerPos;
+                    osg::Vec3f aPos = ptr.getRefData().getPosition().asVec3();
+                    osg::Vec3f vPos = victim.getRefData().getPosition().asVec3();
+                    osg::Vec3f dir  = vPos - aPos;
                     float len = dir.length();
                     if (len > 0.1f) dir /= len;
-
-                    // Impulse scales with weapon skill — heavier hits send objects further
-                    // Capped so objects don't teleport through walls
-                    float impulseMag = std::min(attackStrength * 1200.f, 3500.f);
-
-                    osg::Vec3f impulse = dir * impulseMag;
-                    impulse.z() += impulseMag * 0.25f; // slight upward kick
-
-                    lp->applyImpulse(victim, impulse);
+                    float mag = std::min(attackStrength * 1200.f, 3500.f);
+                    ap->applyImpulse(victim, dir * mag + osg::Vec3f(0,0, mag * 0.25f));
                 }
             }
-            /*
-                End of EncoreMP AddPhysics addition
-            */
-
             return;
         }
         /*
@@ -796,6 +779,17 @@ namespace MWClass
         if(ptr == MWMechanics::getPlayer())
         {
             skillUsageSucceeded(ptr, weapskill, 0);
+
+            // EncoreMP v3.0 AlwaysHit: расход усталости игрока при ударе,
+            // обратно пропорционально навыку: cost = max(2, 12*(1-skill/150))
+            {
+                float pSkill = static_cast<float>(getSkill(ptr, weapskill));
+                float pFatCost = std::max(2.0f, 12.0f * (1.0f - pSkill / 150.0f));
+                MWMechanics::DynamicStat<float> pFat =
+                    ptr.getClass().getCreatureStats(ptr).getFatigue();
+                pFat.setCurrent(std::max(0.0f, pFat.getCurrent() - pFatCost));
+                ptr.getClass().getCreatureStats(ptr).setFatigue(pFat);
+            }
 
             const MWMechanics::AiSequence& seq = victim.getClass().getCreatureStats(victim).getAiSequence();
 
@@ -1166,6 +1160,78 @@ namespace MWClass
             }
 
             MWBase::Environment::get().getMechanicsManager()->actorKilled(ptr, attacker);
+
+            /*
+                Start of EncoreMP v3.0 addition — DeathEquipDrop
+
+                При гибели НПС с шансом роняет оружие (40%) и шлем (25%).
+                Предмет снимается с экипировки и кладётся рядом с телом.
+                Если AddPhysics активна — предмет получает импульс (подлетает).
+                Только НПС (не игрок), не квестовые.
+            */
+            if (ptr != MWMechanics::getPlayer())
+            {
+                MWWorld::InventoryStore& deathInv = getInventoryStore(ptr);
+                MWBase::World* deathWorld = MWBase::Environment::get().getWorld();
+                ESM::Position deathPos = ptr.getRefData().getPosition();
+
+                // Вспомогательная лямбда-подобная функция через struct
+                struct DropHelper
+                {
+                    MWWorld::InventoryStore& inv;
+                    MWBase::World* world;
+                    const MWWorld::Ptr& npc;
+                    const ESM::Position& basePos;
+
+                    void tryDrop(int slot, float chance)
+                    {
+                        if (Misc::Rng::rollProbability() > chance) return;
+
+                        MWWorld::ContainerStoreIterator it = inv.getSlot(slot);
+                        if (it == inv.end() || it->isEmpty()) return;
+
+                        MWWorld::Ptr item = *it;
+                        inv.unequipItem(item, npc);
+
+                        // Позиция с разбросом 60 единиц
+                        ESM::Position dropPos = basePos;
+                        dropPos.pos[0] += (Misc::Rng::rollClosedProbability() - 0.5f) * 80.f;
+                        dropPos.pos[1] += (Misc::Rng::rollClosedProbability() - 0.5f) * 80.f;
+                        dropPos.pos[2] += 12.f;
+
+                        MWWorld::CellStore* cell = npc.getCell();
+                        if (!cell) return;
+
+                        // copyObjectToCell есть только на конкретном MWWorld::World
+                        MWWorld::World* concreteWorld = static_cast<MWWorld::World*>(world);
+                        MWWorld::Ptr dropped = concreteWorld->copyObjectToCell(
+                            item, cell, dropPos, 1, false);
+
+                        if (!dropped.isEmpty())
+                        {
+                            // AddPhysics импульс — предмет "вылетает" из рук
+                            MWMechanics::AddPhysicsSystem* ap =
+                                concreteWorld->getAddPhysics();
+                            if (ap)
+                            {
+                                osg::Vec3f impulse(
+                                    (Misc::Rng::rollClosedProbability() - 0.5f) * 220.f,
+                                    (Misc::Rng::rollClosedProbability() - 0.5f) * 220.f,
+                                    60.f + Misc::Rng::rollClosedProbability() * 140.f
+                                );
+                                ap->registerObject(dropped, impulse);
+                            }
+                        }
+                    }
+                };
+
+                DropHelper helper{deathInv, deathWorld, ptr, deathPos};
+                helper.tryDrop(MWWorld::InventoryStore::Slot_CarriedRight, 0.40f); // оружие
+                helper.tryDrop(MWWorld::InventoryStore::Slot_Helmet,       0.25f); // шлем
+            }
+            /*
+                End of EncoreMP v3.0 addition — DeathEquipDrop
+            */
         }
 
         /*

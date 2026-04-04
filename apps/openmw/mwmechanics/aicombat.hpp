@@ -47,7 +47,8 @@ namespace MWMechanics
             FleeState_None,
             FleeState_Idle,
             FleeState_RunBlindly,
-            FleeState_RunToDestination
+            FleeState_RunToDestination,
+            FleeState_Hide           // EncoreMP v3.1: прячется (ForceSneak к укрытию)
         };
         FleeState mFleeState;
         bool mLOS;
@@ -57,6 +58,12 @@ namespace MWMechanics
 
         bool mUseCustomDestination;
         osg::Vec3f mCustomDestination;
+
+        // EncoreMP v3.1 CrossCellPursuit / StuckBehavior
+        float mJumpTimer;           // кулдаун между прыжками при застревании
+        int   mStuckJumpCount;      // счётчик прыжков в текущем эпизоде
+        float mHideTimer;           // сколько секунд прячемся
+        bool  mIsCrossCellPursuer;  // может преследовать через ячейки
 
         AiCombatStorage():
         mAttackCooldown(0.0f),
@@ -78,7 +85,11 @@ namespace MWMechanics
         mUpdateLOSTimer(0.0f),
         mFleeBlindRunTimer(0.0f),
         mUseCustomDestination(false),
-        mCustomDestination()
+        mCustomDestination(),
+        mJumpTimer(0.0f),
+        mStuckJumpCount(0),
+        mHideTimer(0.0f),
+        mIsCrossCellPursuer(false)
         {}
 
         void startCombatMove(bool isDistantCombat, float distToTarget, float rangeAttack, const MWWorld::Ptr& actor, const MWWorld::Ptr& target);
