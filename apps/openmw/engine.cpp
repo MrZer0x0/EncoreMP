@@ -1173,6 +1173,16 @@ void OMW::Engine::go()
     mViewer = new osgViewer::Viewer;
     mViewer->setReleaseContextAtEndOfFrameHint(false);
 
+    /*
+        EncoreMP performance: переключаем на CullDrawThreadPerContext.
+        DrawThreadPerContext (OSG default) — один поток Draw блокирует Cull.
+        CullDrawThreadPerContext — Cull и Draw работают параллельно,
+        что снижает Draw ms и GPU idle time при одном контексте.
+        Включаем thread-safe счётчики ссылок чтобы избежать гонок.
+    */
+    osg::Referenced::setThreadSafeReferenceCounting(true);
+    mViewer->setThreadingModel(osgViewer::ViewerBase::CullDrawThreadPerContext);
+
 #if OSG_VERSION_GREATER_OR_EQUAL(3,5,5)
     // Do not try to outsmart the OS thread scheduler (see bug #4785).
     mViewer->setUseConfigureAffinity(false);
