@@ -891,7 +891,7 @@ printf "Qt ${QT_VER}... "
 
 	QT_SDK="$(real_pwd)/Qt/${QT_VER}/msvc${QT_MSVC_YEAR}${SUFFIX}"
 
-		if [ -d "Qt/${QT_VER}" ]; then
+		if [ -d "$QT_SDK" ]; then
 		printf "Exists. "
 	elif [ -z $SKIP_EXTRACT ]; then
 		if [ $MISSINGPYTHON -ne 0 ]; then
@@ -913,16 +913,11 @@ printf "Qt ${QT_VER}... "
 			wrappedExit 1
 		fi
 
-				# Fix missing setuptools and pkg_resources
-		echo "  Ensuring setuptools is installed in virtualenv..."
+				echo "  Ensuring pip/setuptools/wheel are installed in virtualenv..."
 		run_cmd "aqt-venv/${VENV_BIN_DIR}/python" -m pip install --upgrade pip setuptools wheel
 
-		# Check version
-		aqt-venv/${VENV_BIN_DIR}/pip list | grep 'aqtinstall\s*1.1.3' || [ $? -ne 0 ]
-		if [ $? -eq 0 ]; then
-			echo "  Installing aqt wheel into virtualenv..."
-			run_cmd "aqt-venv/${VENV_BIN_DIR}/pip" install aqtinstall==1.1.3
-		fi
+		echo "  Installing/upgrading aqtinstall in virtualenv..."
+		run_cmd "aqt-venv/${VENV_BIN_DIR}/python" -m pip install --upgrade aqtinstall
 		popd > /dev/null
 
 		rm -rf Qt
@@ -930,10 +925,10 @@ printf "Qt ${QT_VER}... "
 		mkdir Qt
 		cd Qt
 
-		run_cmd "${DEPS}/aqt-venv/${VENV_BIN_DIR}/aqt" install ${QT_VER} windows desktop "win${BITS}_msvc${QT_MSVC_YEAR}${SUFFIX}"
+		run_cmd "${DEPS}/aqt-venv/${VENV_BIN_DIR}/aqt" install-qt windows desktop ${QT_VER} "win${BITS}_msvc${QT_MSVC_YEAR}${SUFFIX}"
 
 		printf "  Cleaning up extraneous data... "
-		rm -rf Qt/{aqtinstall.log,Tools}
+		rm -rf aqtinstall.log Tools
 
 		echo Done.
 	fi
