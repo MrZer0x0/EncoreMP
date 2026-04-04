@@ -96,7 +96,6 @@
 
 #include "contentloader.hpp"
 #include "esmloader.hpp"
-#include <SDL.h>  // EncoreMP drag: SDL_GetKeyboardState
 
 namespace
 {
@@ -208,7 +207,6 @@ namespace MWWorld
         mSwimHeightScale = mStore.get<ESM::GameSetting>().find("fSwimHeightScale")->mValue.getFloat();
 
         mPhysics.reset(new MWPhysics::PhysicsSystem(resourceSystem, rootNode));
-        mAddPhysics.reset(new MWMechanics::AddPhysicsSystem()); // EncoreMP AddPhysics
 
         if (auto navigatorSettings = DetourNavigator::makeSettingsFromSettingsManager())
         {
@@ -1245,10 +1243,6 @@ namespace MWWorld
             if (ptr == getPlayerPtr())
                 throw std::runtime_error("can not delete player object");
 
-            // EncoreMP AddPhysics: stop simulating this object
-            if (mAddPhysics)
-                mAddPhysics->removeObject(ptr);
-
             ptr.getRefData().setCount(0);
 
             if (ptr.isInCell()
@@ -2114,60 +2108,6 @@ namespace MWWorld
             mSpellPreloadTimer = 0.1f;
             preloadSpells();
         }
-
-        // EncoreMP AddPhysics: step simulation every frame
-        if (!paused && mAddPhysics)
-        {
-            // ── Drag logic: E зажата → тянем предмет к точке перед камерой ──
-            // Проверяем через InputManager: actionIsActive(A_Activate)
-            // A_Activate == 3 (enum value in actions.hpp)
-            const int A_ACTIVATE_ID = 3;
-            // SDL scancode E — надёжная проверка зажатой клавиши
-            const Uint8* sdlKeys = SDL_GetKeyboardState(nullptr);
-            bool eHeld = sdlKeys && sdlKeys[SDL_SCANCODE_E];
-
-            if (eHeld && !paused)
-            {
-                // Точка назначения: центр экрана на дистанции drag
-                const float DRAG_DIST = 150.f;
-                auto rayResult = mRendering->castCameraToViewportRay(
-                    0.5f, 0.5f, DRAG_DIST, true, false);
-                osg::Vec3f dragTarget = rayResult.mHit
-                    ? rayResult.mHitPointWorld
-                    : mRendering->getCameraPosition() +
-                      osg::Vec3f(0, DRAG_DIST, 0); // fallback
-
-                if (!mDragActive)
-                {
-                    // E только что зажата — ищем предмет под прицелом
-                    MWWorld::Ptr faced = getFacedObject();
-                    if (!faced.isEmpty() && !faced.getClass().isActor()
-                        && faced.getClass().hasToolTip(faced))
-                    {
-                        mDragTarget = faced;
-                        mDragActive = true;
-                        // Авто-регистрируем если нужно
-                        if (!mAddPhysics->isRegistered(faced))
-                            mAddPhysics->registerObject(faced, osg::Vec3f(0,0,0));
-                    }
-                }
-
-                if (mDragActive && !mDragTarget.isEmpty())
-                    mAddPhysics->startOrContinueDrag(mDragTarget, dragTarget, duration);
-            }
-            else
-            {
-                // E отпущена — отпускаем предмет
-                if (mDragActive)
-                {
-                    mAddPhysics->releaseDrag();
-                    mDragActive = false;
-                    mDragTarget = MWWorld::Ptr();
-                }
-            }
-
-            mAddPhysics->update(duration);
-        }
     }
 
     void World::updatePhysics (float duration, bool paused, osg::Timer_t frameStart, unsigned int frameNumber, osg::Stats& stats)
@@ -2571,10 +2511,6 @@ namespace MWWorld
 
         // copy the object and set its count
         Ptr dropped = copyObjectToCell(object, cell, pos, amount, true);
-
-        // EncoreMP AddPhysics: register dropped item for physics simulation
-        if (mAddPhysics && !dropped.isEmpty())
-            mAddPhysics->registerObject(dropped, osg::Vec3f(0.f, 0.f, -40.f));
 
         // only the player place items in the world, so no need to check actor
         PCDropped(dropped);
@@ -3069,10 +3005,6 @@ namespace MWWorld
     {
         if (isCellActive(cell))
         {
-            // EncoreMP AddPhysics: remove physics objects in unloading cell
-            if (mAddPhysics)
-                mAddPhysics->clearCell(cell.getDescription());
-
             const Scene::CellStoreCollection& activeCells = mWorldScene->getActiveCells();
             mwmp::CellController *cellController = mwmp::Main::get().getCellController();
             mWorldScene->unloadCell(activeCells.find(cellController->getCellStore(cell)));

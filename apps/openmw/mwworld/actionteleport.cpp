@@ -21,7 +21,6 @@
 #include "../mwbase/mechanicsmanager.hpp"
 
 #include "../mwmechanics/creaturestats.hpp"
-#include "../mwmechanics/aicombat.hpp"  // EncoreMP CrossCellPursuit
 
 #include "../mwworld/class.hpp"
 
@@ -45,52 +44,6 @@ namespace MWWorld
 
             for (std::set<MWWorld::Ptr>::iterator it = followers.begin(); it != followers.end(); ++it)
                 teleport(*it);
-        }
-
-        // EncoreMP v3.1 CrossCellPursuit:
-        // Когда игрок проходит через телепорт-дверь, ближайшие враждебные
-        // НПС и гуманоидные существа телепортируются следом (максимум 3).
-        // После телепорта им восстанавливается боевая цель.
-        if (actor == MWBase::Environment::get().getWorld()->getPlayerPtr())
-        {
-            const osg::Vec3f playerPos = actor.getRefData().getPosition().asVec3();
-            std::vector<MWWorld::Ptr> nearby;
-            MWBase::Environment::get().getMechanicsManager()
-                ->getActorsInRange(playerPos, 650.f, nearby);
-
-            int pursuitCount = 0;
-            for (MWWorld::Ptr& pursuer : nearby)
-            {
-                if (pursuitCount >= 3) break;
-                if (pursuer == actor) continue;
-                if (!pursuer.getRefData().isEnabled()) continue;
-                if (pursuer.getClass().getCreatureStats(pursuer).isDead()) continue;
-
-                // Только НПС и гуманоидные существа
-                const bool eligible = pursuer.getClass().isNpc() ||
-                    (pursuer.getClass().isBipedal(pursuer) &&
-                     !pursuer.getClass().isPureWaterCreature(pursuer));
-                if (!eligible) continue;
-
-                // Должны быть в бою именно с игроком
-                if (!pursuer.getClass().getCreatureStats(pursuer)
-                        .getAiSequence().isInCombat(actor)) continue;
-
-                // Телепортируем
-                teleport(pursuer);
-
-                // Восстанавливаем AiCombat с игроком как целью
-                MWWorld::Ptr newPlayer = MWBase::Environment::get().getWorld()->getPlayerPtr();
-                if (!newPlayer.isEmpty())
-                {
-                    pursuer.getClass().getCreatureStats(pursuer)
-                        .getAiSequence().stack(MWMechanics::AiCombat(newPlayer), pursuer);
-                    pursuer.getClass().getCreatureStats(pursuer)
-                        .setMovementFlag(MWMechanics::CreatureStats::Flag_Run, true);
-                }
-
-                pursuitCount++;
-            }
         }
 
         teleport(actor);

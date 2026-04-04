@@ -41,7 +41,6 @@
 #include "character.hpp"
 #include "aicombataction.hpp"
 #include "actorutil.hpp"
-#include "obstacle.hpp"  // EncoreMP: door iteration
 
 namespace
 {
@@ -137,60 +136,6 @@ namespace MWMechanics
 
         if (actor == target) // This should never happen.
             return true;
-
-        // EncoreMP v3.1 CrossCellPursuit:
-        // НПС и гуманоидные существа преследуют игрока через телепорт-двери.
-        // Только isNpc() || (isBipedal && !isPureWater).
-        // Если цель в другой ячейке — ищем ближайшую телепорт-дверь и идём к ней.
-        {
-            const bool eligible = actor.getClass().isNpc() ||
-                (actor.getClass().isBipedal(actor) && !actor.getClass().isPureWaterCreature(actor));
-            storage.mIsCrossCellPursuer = eligible;
-
-            if (eligible && actor.getCell() != target.getCell())
-            {
-                MWBase::World* w = MWBase::Environment::get().getWorld();
-                // getNearbyDoor ищет только в направлении актора — используем напрямую
-                const osg::Vec3f aPos = actor.getRefData().getPosition().asVec3();
-                static const float doorDist = w->getMaxActivationDistance() * 2.5f;
-
-                // Итерируем двери ячейки актора
-                MWWorld::CellStore* actCell = actor.getCell();
-                MWWorld::Ptr nearDoor;
-                float nearDist2 = doorDist * doorDist;
-                if (actCell)
-                {
-                    const MWWorld::CellRefList<ESM::Door>& doorList = actCell->getReadOnlyDoors();
-                    for (const auto& ref : doorList.mList)
-                    {
-                        if (!ref.mRef.getTeleport()) continue;
-                        osg::Vec3f dPos = ref.mData.getPosition().asVec3();
-                        float d2 = (aPos - dPos).length2();
-                        if (d2 < nearDist2)
-                        {
-                            nearDist2 = d2;
-                            // FIXME cast — same pattern as getNearbyDoor in obstacle.cpp
-                            nearDoor = MWWorld::Ptr(
-                                &const_cast<MWWorld::LiveCellRef<ESM::Door>&>(ref), actCell);
-                        }
-                    }
-                }
-
-                actor.getClass().getCreatureStats(actor)
-                    .setMovementFlag(MWMechanics::CreatureStats::Flag_Run, true);
-
-                if (!nearDoor.isEmpty())
-                {
-                    const osg::Vec3f dPos = nearDoor.getRefData().getPosition().asVec3();
-                    const float activeDist = w->getMaxActivationDistance();
-                    if ((aPos - dPos).length() <= activeDist)
-                        w->activate(nearDoor, actor);   // телепортируемся
-                    else
-                        pathTo(actor, dPos, duration, activeDist * 0.8f);  // идём к двери
-                }
-                return false;  // не завершаем combat package
-            }
-        }
 
         if (!storage.isFleeing())
         {
@@ -416,69 +361,12 @@ namespace MWMechanics
                 if (!mPathFinder.isPathConstructed())
                 {
                     storage.mUseCustomDestination = false;
-
-                    // EncoreMP v3.1 StuckBehavior:
-                    // Фаза 1 (до 4 попыток): прыжки через препятствие
-                    // Фаза 2: прятаться (снек 3 сек)
-                    // Фаза 3: стандартное бегство
-                    const bool smartActor = actor.getClass().isNpc() ||
-                        (actor.getClass().isBipedal(actor) && !actor.getClass().isPureWaterCreature(actor));
-
-                    if (smartActor && storage.mStuckJumpCount < 4)
-                    {
-                        storage.mJumpTimer -= 0.016f; // EncoreMP: attack() has no duration param
-                        if (storage.mJumpTimer <= 0.f &&
-                            MWBase::Environment::get().getWorld()->isOnGround(actor))
-                        {
-                            MWMechanics::Movement& mv = actor.getClass().getMovementSettings(actor);
-                            mv.mPosition[2] = 1;   // прыжок
-                            mv.mPosition[1] = 1;   // вперёд
-                            storage.mJumpTimer = 1.8f;
-                            storage.mStuckJumpCount++;
-                        }
-                        actor.getClass().getCreatureStats(actor)
-                            .setMovementFlag(MWMechanics::CreatureStats::Flag_Run, true);
-                    }
-                    else if (smartActor &&
-                             storage.mFleeState == AiCombatStorage::FleeState_None &&
-                             storage.mHideTimer <= 0.f)
-                    {
-                        // Прячемся: стрейф в сторону + ForceSneak
-                        const osg::Vec3f aP = actor.getRefData().getPosition().asVec3();
-                        const osg::Vec3f tP = target.getRefData().getPosition().asVec3();
-                        osg::Vec3f toT = tP - aP; toT.normalize();
-                        float side = (Misc::Rng::rollProbability() < 0.5f) ? 1.f : -1.f;
-                        MWMechanics::Movement& mv = actor.getClass().getMovementSettings(actor);
-                        mv.mPosition[0] = side;
-                        mv.mPosition[1] = 0.f;
-                        actor.getClass().getCreatureStats(actor)
-                            .setMovementFlag(MWMechanics::CreatureStats::Flag_Sneak, true);
-                        storage.mHideTimer = 3.0f;
-                        storage.mFleeState = AiCombatStorage::FleeState_Hide;
-                        storage.mStuckJumpCount = 0;
-                    }
-                    else if (smartActor &&
-                             storage.mFleeState == AiCombatStorage::FleeState_Hide)
-                    {
-                        storage.mHideTimer -= 0.016f; // EncoreMP: attack() has no duration param
-                        actor.getClass().getCreatureStats(actor)
-                            .setMovementFlag(MWMechanics::CreatureStats::Flag_Sneak, true);
-                        if (storage.mHideTimer <= 0.f || storage.mLOS)
-                        {
-                            actor.getClass().getCreatureStats(actor)
-                                .setMovementFlag(MWMechanics::CreatureStats::Flag_Sneak, false);
-                            storage.mFleeState = AiCombatStorage::FleeState_None;
-                        }
-                    }
-                    else
-                    {
-                        storage.stopAttack();
-                        characterController.setAttackingOrSpell(false);
-                        currentAction.reset(new ActionFlee());
-                        actionCooldown = currentAction->getActionCooldown();
-                        storage.startFleeing();
-                        MWBase::Environment::get().getDialogueManager()->say(actor, "flee");
-                    }
+                    storage.stopAttack();
+                    characterController.setAttackingOrSpell(false);
+                    currentAction.reset(new ActionFlee());
+                    actionCooldown = currentAction->getActionCooldown();
+                    storage.startFleeing();
+                    MWBase::Environment::get().getDialogueManager()->say(actor, "flee");
                 }
             }
             else
@@ -590,22 +478,6 @@ namespace MWMechanics
                             || pathTo(actor, PathFinder::makeOsgVec3(storage.mFleeDest), duration))
                     {
                         state = AiCombatStorage::FleeState_Idle;
-                    }
-                }
-                break;
-
-            // EncoreMP v3.1: актор прячется, ждёт пока цель не уйдёт из LOS
-            case AiCombatStorage::FleeState_Hide:
-                {
-                    storage.mHideTimer -= duration;
-                    actor.getClass().getCreatureStats(actor)
-                        .setMovementFlag(MWMechanics::CreatureStats::Flag_Sneak, true);
-                    if (storage.mHideTimer <= 0.f || storage.mLOS)
-                    {
-                        actor.getClass().getCreatureStats(actor)
-                            .setMovementFlag(MWMechanics::CreatureStats::Flag_Sneak, false);
-                        state = AiCombatStorage::FleeState_Idle;
-                        storage.stopFleeing();
                     }
                 }
                 break;

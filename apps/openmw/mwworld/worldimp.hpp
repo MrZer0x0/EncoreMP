@@ -6,7 +6,6 @@
 #include <components/settings/settings.hpp>
 
 #include "../mwbase/world.hpp"
-#include "../mwmechanics/addphysics.hpp"
 
 #include "ptr.hpp"
 #include "scene.hpp"
@@ -90,9 +89,6 @@ namespace MWWorld
 
             std::unique_ptr<MWWorld::Player> mPlayer;
             std::unique_ptr<MWPhysics::PhysicsSystem> mPhysics;
-            std::unique_ptr<MWMechanics::AddPhysicsSystem> mAddPhysics; // EncoreMP AddPhysics
-            bool        mDragActive  = false;   // EncoreMP drag: E key held
-            MWWorld::Ptr mDragTarget;            // EncoreMP drag: currently held object
             std::unique_ptr<DetourNavigator::Navigator> mNavigator;
             std::unique_ptr<MWRender::RenderingManager> mRendering;
             std::unique_ptr<MWWorld::Scene> mWorldScene;
@@ -547,7 +543,6 @@ namespace MWWorld
             const MWPhysics::RayCastingInterface* getRayCasting() const override;
 
             bool castRay (float x1, float y1, float z1, float x2, float y2, float z2, int mask) override;
-            MWMechanics::AddPhysicsSystem* getAddPhysics() { return mAddPhysics.get(); } // EncoreMP
             ///< cast a Ray and return true if there is an object in the ray path.
 
             bool castRay (float x1, float y1, float z1, float x2, float y2, float z2) override;
