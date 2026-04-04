@@ -1178,9 +1178,11 @@ void OMW::Engine::go()
         DrawThreadPerContext (OSG default) — один поток Draw блокирует Cull.
         CullDrawThreadPerContext — Cull и Draw работают параллельно,
         что снижает Draw ms и GPU idle time при одном контексте.
-        Включаем thread-safe счётчики ссылок чтобы избежать гонок.
+
+        В некоторых сборках OSG (включая часть Windows/MSVC пакетов)
+        osg::Referenced::setThreadSafeReferenceCounting(...) отсутствует,
+        поэтому не вызываем его здесь ради совместимости заголовков.
     */
-    osg::Referenced::setThreadSafeReferenceCounting(true);
     mViewer->setThreadingModel(osgViewer::ViewerBase::CullDrawThreadPerContext);
 
 #if OSG_VERSION_GREATER_OR_EQUAL(3,5,5)

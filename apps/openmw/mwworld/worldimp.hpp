@@ -91,6 +91,8 @@ namespace MWWorld
             std::unique_ptr<MWWorld::Player> mPlayer;
             std::unique_ptr<MWPhysics::PhysicsSystem> mPhysics;
             std::unique_ptr<MWMechanics::AddPhysicsSystem> mAddPhysics; // EncoreMP AddPhysics
+            bool        mDragActive  = false;   // EncoreMP drag: E key held
+            MWWorld::Ptr mDragTarget;            // EncoreMP drag: currently held object
             std::unique_ptr<DetourNavigator::Navigator> mNavigator;
             std::unique_ptr<MWRender::RenderingManager> mRendering;
             std::unique_ptr<MWWorld::Scene> mWorldScene;

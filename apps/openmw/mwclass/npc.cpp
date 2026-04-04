@@ -620,13 +620,20 @@ namespace MWClass
             objectList->addObjectHit(victim, ptr);
             objectList->sendObjectHit();
 
-            // EncoreMP v3.0 AddPhysics: предмет улетает при ударе
+            // EncoreMP v3.0 AddPhysics: предмет улетает при ударе.
+            // Авто-регистрируем предмет в физике если ещё не зарегистрирован —
+            // это позволяет применять физику к ЛЮБЫМ предметам в мире, не только
+            // к тем что игрок сам выложил через лаунчер.
             {
                 MWMechanics::AddPhysicsSystem* ap =
                     static_cast<MWWorld::World*>(MWBase::Environment::get().getWorld())
                     ->getAddPhysics();
-                if (ap && ap->isRegistered(victim))
+                if (ap)
                 {
+                    // Авто-регистрация при первом ударе
+                    if (!ap->isRegistered(victim))
+                        ap->registerObject(victim, osg::Vec3f(0,0,0));
+
                     osg::Vec3f aPos = ptr.getRefData().getPosition().asVec3();
                     osg::Vec3f vPos = victim.getRefData().getPosition().asVec3();
                     osg::Vec3f dir  = vPos - aPos;

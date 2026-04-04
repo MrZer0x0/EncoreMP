@@ -2,8 +2,8 @@
     addphysics.cpp
     Author: MrZer0
     EncoreMP — C++ port of OpenMWLuaPhysics (original by MaxYari)
+    Физика предметов + перетаскивание (E зажать).
 */
-
 #include "addphysics.hpp"
 
 #include <algorithm>
@@ -15,10 +15,8 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/class.hpp"
-#include "../mwphysics/raycasting.hpp"      // getRayCasting() — доступен в MWBase::World
+#include "../mwphysics/raycasting.hpp"
 #include "../mwphysics/collisiontype.hpp"
-
-// TES3MP networking
 #include "../mwmp/Main.hpp"
 #include "../mwmp/Networking.hpp"
 #include "../mwmp/ObjectList.hpp"
@@ -41,7 +39,16 @@ void AddPhysicsSystem::registerObject(const MWWorld::Ptr& ptr,
     const std::string cellId = ptr.getCell()->getCell()->getDescription();
     const std::string key    = makeKey(refId, cellId);
 
-    if (mObjects.count(key)) return;
+    if (mObjects.count(key)) {
+        // уже зарегистрирован — если дан импульс, разбудим объект
+        if (initialVelocity.length() > 0.1f) {
+            auto& obj = mObjects[key];
+            obj.velocity  += initialVelocity;
+            obj.sleeping   = false;
+            obj.timeAsleep = 0.f;
+        }
+        return;
+    }
 
     PhysicsObject obj;
     obj.refId    = refId;
@@ -62,8 +69,10 @@ void AddPhysicsSystem::registerObject(const MWWorld::Ptr& ptr,
 void AddPhysicsSystem::removeObject(const MWWorld::Ptr& ptr)
 {
     if (ptr.isEmpty()) return;
-    mObjects.erase(makeKey(ptr.getCellRef().getRefId(),
-                            ptr.getCell()->getCell()->getDescription()));
+    const std::string key = makeKey(ptr.getCellRef().getRefId(),
+                                     ptr.getCell()->getCell()->getDescription());
+    if (mDragKey == key) mDragKey.clear();
+    mObjects.erase(key);
 }
 
 void AddPhysicsSystem::applyImpulse(const MWWorld::Ptr& ptr,
@@ -83,10 +92,10 @@ void AddPhysicsSystem::clearCell(const std::string& cellId)
 {
     for (auto it = mObjects.begin(); it != mObjects.end(); )
     {
-        if (it->second.cellId == cellId)
+        if (it->second.cellId == cellId) {
+            if (mDragKey == it->first) mDragKey.clear();
             it = mObjects.erase(it);
-        else
-            ++it;
+        } else ++it;
     }
 }
 
@@ -97,7 +106,50 @@ bool AddPhysicsSystem::isRegistered(const MWWorld::Ptr& ptr) const
                                    ptr.getCell()->getCell()->getDescription())) > 0;
 }
 
-// Используем getRayCasting() — единственный корректный путь к физике через MWBase::World
+// ── Drag ─────────────────────────────────────────────────────────────────
+
+void AddPhysicsSystem::startOrContinueDrag(const MWWorld::Ptr& ptr,
+                                            const osg::Vec3f& target,
+                                            float dt)
+{
+    if (ptr.isEmpty()) return;
+
+    const std::string refId  = ptr.getCellRef().getRefId();
+    const std::string cellId = ptr.getCell()->getCell()->getDescription();
+    const std::string key    = makeKey(refId, cellId);
+
+    // Авто-регистрируем если не было
+    if (!mObjects.count(key))
+        registerObject(ptr, osg::Vec3f(0,0,0));
+
+    mDragKey = key;
+    auto& obj = mObjects[key];
+    obj.sleeping = false;
+
+    // Пружинное притяжение к target (spring-damper)
+    osg::Vec3f delta = target - obj.position;
+    float dist = delta.length();
+    if (dist < 0.5f) return;
+
+    // k=300 (жёсткость), d=15 (демпфирование)
+    osg::Vec3f spring = delta * (300.f / dist) * std::min(dist, 250.f);
+    osg::Vec3f damp   = obj.velocity * (-15.f);
+    obj.velocity += (spring + damp) * dt;
+
+    // Ограничение скорости перетаскивания
+    const float maxSpeed = 800.f;
+    float spd = obj.velocity.length();
+    if (spd > maxSpeed)
+        obj.velocity *= maxSpeed / spd;
+}
+
+void AddPhysicsSystem::releaseDrag()
+{
+    mDragKey.clear();
+}
+
+// ── Raycast / Ground ─────────────────────────────────────────────────────
+
 float AddPhysicsSystem::getGroundZ(const osg::Vec3f& pos) const
 {
     const MWPhysics::RayCastingInterface* rc =
@@ -118,7 +170,6 @@ float AddPhysicsSystem::getGroundZ(const osg::Vec3f& pos) const
 
 void AddPhysicsSystem::syncPosition(const PhysicsObject& obj) const
 {
-    // searchPtr(name, activeOnly=false) — есть в MWBase::World
     MWWorld::Ptr ptr =
         MWBase::Environment::get().getWorld()->searchPtr(obj.refId, false, false);
     if (ptr.isEmpty()) return;
@@ -126,33 +177,35 @@ void AddPhysicsSystem::syncPosition(const PhysicsObject& obj) const
     MWBase::Environment::get().getWorld()->moveObject(
         ptr, obj.position.x(), obj.position.y(), obj.position.z());
 
-    /*
-        Start of tes3mp addition
-        Send ObjectPlace so all clients see the moved object.
-        Same pattern as sendObjectSound() in spellcasting.cpp.
-    */
     mwmp::ObjectList* objectList =
         mwmp::Main::get().getNetworking()->getObjectList();
     objectList->reset();
     objectList->packetOrigin = mwmp::CLIENT_GAMEPLAY;
     objectList->addObjectPlace(ptr, true);
     objectList->sendObjectPlace();
-    /*
-        End of tes3mp addition
-    */
 }
+
+// ── Step ─────────────────────────────────────────────────────────────────
 
 bool AddPhysicsSystem::stepObject(PhysicsObject& obj, float dt)
 {
     if (obj.sleeping) return false;
 
-    // Затухание (сопротивление воздуха)
+    // Drag — не применяем гравитацию и трение, только spring update выше
+    if (!mDragKey.empty() && makeKey(obj.refId, obj.cellId) == mDragKey)
+    {
+        osg::Vec3f newPos = obj.position + obj.velocity * dt;
+        bool moved = (newPos - obj.position).length() > 0.05f;
+        obj.position = newPos;
+        return moved;
+    }
+
+    // Воздушное сопротивление
     obj.velocity *= std::max(0.f, 1.f - obj.linearDamping * dt);
 
     // Гравитация
     obj.velocity.z() += GRAVITY * dt;
 
-    // Интегрирование позиции
     osg::Vec3f newPos = obj.position + obj.velocity * dt;
 
     // Коллизия с землёй
@@ -177,25 +230,24 @@ bool AddPhysicsSystem::stepObject(PhysicsObject& obj, float dt)
         {
             obj.velocity   = osg::Vec3f(0, 0, 0);
             obj.sleeping   = true;
-            if (gz != FLT_MIN)
-                newPos.z() = gz + obj.radius;
+            if (gz != FLT_MIN) newPos.z() = gz + obj.radius;
         }
     }
-    else
-    {
-        obj.timeAsleep = 0.f;
-    }
+    else obj.timeAsleep = 0.f;
 
     bool moved = (newPos - obj.position).length() > 0.05f;
     obj.position = newPos;
     return moved;
 }
 
+// ── Main update ───────────────────────────────────────────────────────────
+
 void AddPhysicsSystem::update(float dt)
 {
     dt = std::min(dt, 0.1f);
-    const int substeps = std::min(MAX_SUBSTEPS, std::max(1, static_cast<int>(dt / 0.016f)));
-    const float subDt  = dt / static_cast<float>(substeps);
+    const int substeps = std::min(MAX_SUBSTEPS,
+                                   std::max(1, static_cast<int>(dt / 0.016f)));
+    const float subDt = dt / static_cast<float>(substeps);
 
     for (auto& kv : mObjects)
     {

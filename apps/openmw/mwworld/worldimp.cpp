@@ -96,6 +96,7 @@
 
 #include "contentloader.hpp"
 #include "esmloader.hpp"
+#include <SDL2/SDL.h>  // EncoreMP drag: SDL_GetKeyboardState
 
 namespace
 {
@@ -2116,7 +2117,57 @@ namespace MWWorld
 
         // EncoreMP AddPhysics: step simulation every frame
         if (!paused && mAddPhysics)
+        {
+            // ── Drag logic: E зажата → тянем предмет к точке перед камерой ──
+            // Проверяем через InputManager: actionIsActive(A_Activate)
+            // A_Activate == 3 (enum value in actions.hpp)
+            const int A_ACTIVATE_ID = 3;
+            // SDL scancode E — надёжная проверка зажатой клавиши
+            const Uint8* sdlKeys = SDL_GetKeyboardState(nullptr);
+            bool eHeld = sdlKeys && sdlKeys[SDL_SCANCODE_E];
+
+            if (eHeld && !paused)
+            {
+                // Точка назначения: центр экрана на дистанции drag
+                const float DRAG_DIST = 150.f;
+                auto rayResult = mRendering->castCameraToViewportRay(
+                    0.5f, 0.5f, DRAG_DIST, true, false);
+                osg::Vec3f dragTarget = rayResult.mHit
+                    ? rayResult.mHitPointWorld
+                    : mRendering->getCameraPosition() +
+                      osg::Vec3f(0, DRAG_DIST, 0); // fallback
+
+                if (!mDragActive)
+                {
+                    // E только что зажата — ищем предмет под прицелом
+                    MWWorld::Ptr faced = getFacedObject();
+                    if (!faced.isEmpty() && !faced.getClass().isActor()
+                        && faced.getClass().hasToolTip(faced))
+                    {
+                        mDragTarget = faced;
+                        mDragActive = true;
+                        // Авто-регистрируем если нужно
+                        if (!mAddPhysics->isRegistered(faced))
+                            mAddPhysics->registerObject(faced, osg::Vec3f(0,0,0));
+                    }
+                }
+
+                if (mDragActive && !mDragTarget.isEmpty())
+                    mAddPhysics->startOrContinueDrag(mDragTarget, dragTarget, duration);
+            }
+            else
+            {
+                // E отпущена — отпускаем предмет
+                if (mDragActive)
+                {
+                    mAddPhysics->releaseDrag();
+                    mDragActive = false;
+                    mDragTarget = MWWorld::Ptr();
+                }
+            }
+
             mAddPhysics->update(duration);
+        }
     }
 
     void World::updatePhysics (float duration, bool paused, osg::Timer_t frameStart, unsigned int frameNumber, osg::Stats& stats)
