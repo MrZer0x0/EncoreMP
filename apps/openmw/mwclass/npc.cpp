@@ -24,6 +24,8 @@
 #include "../mwmp/ObjectList.hpp"
 #include "../mwmp/CellController.hpp"
 #include "../mwmp/MechanicsHelper.hpp"
+#include "../mwmechanics/addphysics.hpp"
+#include "../mwworld/worldimp.hpp"
 /*
     End of tes3mp addition
 */
@@ -616,6 +618,41 @@ namespace MWClass
             objectList->packetOrigin = mwmp::CLIENT_GAMEPLAY;
             objectList->addObjectHit(victim, ptr);
             objectList->sendObjectHit();
+
+            /*
+                Start of EncoreMP AddPhysics addition
+
+                Apply an impulse to the hit object so it flies away.
+                Mirrors physObject:applyImpulse() from OpenMWAddPhysics.
+            */
+            {
+                MWMechanics::AddPhysicsSystem* lp =
+                    static_cast<MWWorld::World*>(MWBase::Environment::get().getWorld())
+                    ->getAddPhysics();
+
+                if (lp && lp->isRegistered(victim))
+                {
+                    // Direction: from attacker toward victim, with upward kick
+                    osg::Vec3f attackerPos = ptr.getRefData().getPosition().asVec3();
+                    osg::Vec3f victimPos   = victim.getRefData().getPosition().asVec3();
+                    osg::Vec3f dir = victimPos - attackerPos;
+                    float len = dir.length();
+                    if (len > 0.1f) dir /= len;
+
+                    // Impulse scales with weapon skill — heavier hits send objects further
+                    // Capped so objects don't teleport through walls
+                    float impulseMag = std::min(attackStrength * 1200.f, 3500.f);
+
+                    osg::Vec3f impulse = dir * impulseMag;
+                    impulse.z() += impulseMag * 0.25f; // slight upward kick
+
+                    lp->applyImpulse(victim, impulse);
+                }
+            }
+            /*
+                End of EncoreMP AddPhysics addition
+            */
+
             return;
         }
         /*

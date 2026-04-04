@@ -207,6 +207,7 @@ namespace MWWorld
         mSwimHeightScale = mStore.get<ESM::GameSetting>().find("fSwimHeightScale")->mValue.getFloat();
 
         mPhysics.reset(new MWPhysics::PhysicsSystem(resourceSystem, rootNode));
+        mAddPhysics.reset(new MWMechanics::AddPhysicsSystem()); // EncoreMP AddPhysics
 
         if (auto navigatorSettings = DetourNavigator::makeSettingsFromSettingsManager())
         {
@@ -1243,6 +1244,10 @@ namespace MWWorld
             if (ptr == getPlayerPtr())
                 throw std::runtime_error("can not delete player object");
 
+            // EncoreMP AddPhysics: stop simulating this object
+            if (mAddPhysics)
+                mAddPhysics->removeObject(ptr);
+
             ptr.getRefData().setCount(0);
 
             if (ptr.isInCell()
@@ -2108,6 +2113,10 @@ namespace MWWorld
             mSpellPreloadTimer = 0.1f;
             preloadSpells();
         }
+
+        // EncoreMP AddPhysics: step physics simulation every frame
+        if (!paused && mAddPhysics)
+            mAddPhysics->update(duration);
     }
 
     void World::updatePhysics (float duration, bool paused, osg::Timer_t frameStart, unsigned int frameNumber, osg::Stats& stats)
@@ -2511,6 +2520,14 @@ namespace MWWorld
 
         // copy the object and set its count
         Ptr dropped = copyObjectToCell(object, cell, pos, amount, true);
+
+        // EncoreMP AddPhysics: register the dropped item for physics simulation
+        if (mAddPhysics && !dropped.isEmpty())
+        {
+            // Give a small downward velocity so it falls naturally from hand height
+            osg::Vec3f dropVelocity(0.f, 0.f, -40.f);
+            mAddPhysics->registerObject(dropped, dropVelocity);
+        }
 
         // only the player place items in the world, so no need to check actor
         PCDropped(dropped);
@@ -3005,6 +3022,10 @@ namespace MWWorld
     {
         if (isCellActive(cell))
         {
+            // EncoreMP AddPhysics: remove all physics objects in this cell
+            if (mAddPhysics)
+                mAddPhysics->clearCell(cell.getDescription());
+
             const Scene::CellStoreCollection& activeCells = mWorldScene->getActiveCells();
             mwmp::CellController *cellController = mwmp::Main::get().getCellController();
             mWorldScene->unloadCell(activeCells.find(cellController->getCellStore(cell)));
