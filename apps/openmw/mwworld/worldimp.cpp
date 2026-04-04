@@ -96,7 +96,7 @@
 
 #include "contentloader.hpp"
 #include "esmloader.hpp"
-#include <SDL2/SDL.h>  // EncoreMP drag: SDL_GetKeyboardState
+#include <SDL.h>  // EncoreMP drag: SDL_GetKeyboardState
 
 namespace
 {
