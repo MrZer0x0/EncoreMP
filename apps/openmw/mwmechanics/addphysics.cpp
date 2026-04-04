@@ -19,7 +19,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/class.hpp"
-#include "../mwphysics/physicssystem.hpp"
+#include "../mwphysics/raycasting.hpp"
 #include "../mwphysics/collisiontype.hpp"
 
 // TES3MP networking — same pattern used in spellcasting.cpp / repair.cpp
@@ -132,18 +132,19 @@ bool AddPhysicsSystem::isRegistered(const MWWorld::Ptr& ptr) const
 // -----------------------------------------------------------------------
 float AddPhysicsSystem::getGroundZ(const osg::Vec3f& pos) const
 {
-    MWPhysics::PhysicsSystem* physics =
-        MWBase::Environment::get().getWorld()->getPhysicsSystem();
-    if (!physics) return FLT_MIN;
+    // getRayCasting() is available on MWBase::World (unlike getPhysicsSystem())
+    const MWPhysics::RayCastingInterface* rayCasting =
+        MWBase::Environment::get().getWorld()->getRayCasting();
+    if (!rayCasting) return FLT_MIN;
 
     const osg::Vec3f from = pos + osg::Vec3f(0, 0, 4.f);
     const osg::Vec3f to   = pos + osg::Vec3f(0, 0, -2000.f);
 
-    // CollisionType_World | CollisionType_HeightMap — no actors, no doors
-    auto result = physics->castRay(from, to, MWWorld::ConstPtr(),
-                                   std::vector<MWWorld::Ptr>(),
-                                   MWPhysics::CollisionType_World |
-                                   MWPhysics::CollisionType_HeightMap);
+    // World + HeightMap only — не задеваем акторов и двери
+    auto result = rayCasting->castRay(from, to, MWWorld::ConstPtr(),
+                                      std::vector<MWWorld::Ptr>(),
+                                      MWPhysics::CollisionType_World |
+                                      MWPhysics::CollisionType_HeightMap);
 
     if (!result.mHit) return FLT_MIN;
     return result.mHitPos.z();
@@ -156,9 +157,10 @@ float AddPhysicsSystem::getGroundZ(const osg::Vec3f& pos) const
 // -----------------------------------------------------------------------
 void AddPhysicsSystem::syncPosition(const PhysicsObject& obj) const
 {
-    // Look up the live Ptr from refId
+    // searchPtr(name, activeOnly=false) searches by refId across all loaded cells.
+    // searchPtrViaRefId does not exist on MWBase::World — use searchPtr instead.
     MWWorld::Ptr ptr =
-        MWBase::Environment::get().getWorld()->searchPtrViaRefId(obj.refId);
+        MWBase::Environment::get().getWorld()->searchPtr(obj.refId, false, false);
     if (ptr.isEmpty()) return;
 
     // Move the renderer / physics representation
