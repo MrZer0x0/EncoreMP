@@ -1202,16 +1202,14 @@ namespace MWClass
                         MWWorld::CellStore* cell = npc.getCell();
                         if (!cell) return;
 
-                        // copyObjectToCell есть только на конкретном MWWorld::World
-                        MWWorld::World* concreteWorld = static_cast<MWWorld::World*>(world);
-                        MWWorld::Ptr dropped = concreteWorld->copyObjectToCell(
-                            item, cell, dropPos, 1, false);
+                        // placeObject(ptr, cell, pos) is public on MWBase::World
+                        MWWorld::Ptr dropped = world->placeObject(item, cell, dropPos);
 
                         if (!dropped.isEmpty())
                         {
                             // AddPhysics импульс — предмет "вылетает" из рук
                             MWMechanics::AddPhysicsSystem* ap =
-                                concreteWorld->getAddPhysics();
+                                static_cast<MWWorld::World*>(world)->getAddPhysics();
                             if (ap)
                             {
                                 osg::Vec3f impulse(

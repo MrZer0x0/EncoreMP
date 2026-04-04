@@ -3,182 +3,115 @@
  <class>PlayPage</class>
  <widget class="QWidget" name="PlayPage">
   <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>274</width>
-    <height>317</height>
-   </rect>
+   <rect><x>0</x><y>0</y><width>320</width><height>340</height></rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QWidget" name="Scroll" native="true">
      <property name="styleSheet">
       <string notr="true">#Scroll {
-    background-image: url(&quot;:/images/playpage-background.png&quot;);
+    background-image: url(":/images/playpage-background.png");
     background-repeat: no-repeat;
     background-position: top;
 }
 </string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <property name="leftMargin">
-       <number>30</number>
-      </property>
-      <property name="topMargin">
-       <number>100</number>
-      </property>
-      <property name="rightMargin">
-       <number>30</number>
-      </property>
-      <item row="4" column="1">
-       <widget class="QComboBox" name="profilesComboBox">
-        <property name="styleSheet">
-         <string notr="true">#profilesComboBox {
-    padding: 1px 18px 1px 3px;
+      <property name="leftMargin"><number>30</number></property>
+      <property name="topMargin"><number>100</number></property>
+      <property name="rightMargin"><number>30</number></property>
+      <property name="verticalSpacing"><number>6</number></property>
 
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 white, stop:0.2 rgba(0, 0, 0, 25), stop:1 white);
-    border-width: 1px;
-    border-color: rgba(0, 0, 0, 125);
-    border-style: solid;
-    border-radius: 2px;
-
-    font-size: 12pt;
-	color: black;
-}
-
-/*QComboBox gets the &quot;on&quot; state when the popup is open */
-#profilesComboBox:!editable:on {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(0, 0, 0, 75),
-        stop:0.1 rgba(0, 0, 0, 15),
-        stop:0.2 rgba(255, 255, 255, 55));
-
-    border: 1px solid rgba(0, 0, 0, 55);
-}
-
-#profilesComboBox:on { /* shift the text when the popup opens */
-    padding-top: 3px;
-    padding-left: 4px;
-}
-
-#profilesComboBox::drop-down {
-    subcontrol-origin: padding;
-    subcontrol-position: top right;
-
-    border-width: 1px;
-    border-left-width: 1px;
-    border-left-color: darkgray;
-    border-left-style: solid; /* just a single line */
-    border-top-right-radius: 3px; /* same radius as the QComboBox */
-    border-bottom-right-radius: 3px;
-}
-
-#profilesComboBox::down-arrow {
-    image: url(&quot;:/images/down.png&quot;);
-}
-
-#profilesComboBox::down-arrow:on { /* shift the arrow when popup is open */
-    top: 1px;
-    left: 1px;
-}
-
-#profilesComboBox QAbstractItemView {
-    border: 0px;
-}</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLabel" name="profileLabel">
-        <property name="styleSheet">
-         <string notr="true">#profileLabel {
-    font-size: 18pt;
-	color: black;
-}
-</string>
-        </property>
-        <property name="text">
-         <string>Current Content List:</string>
-        </property>
-       </widget>
-      </item>
+      <!-- Play button row 1 -->
       <item row="1" column="1">
        <widget class="QPushButton" name="playButton">
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>85</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>85</height>
-         </size>
-        </property>
+        <property name="minimumSize"><size><width>200</width><height>70</height></size></property>
+        <property name="maximumSize"><size><width>200</width><height>70</height></size></property>
         <property name="styleSheet">
          <string notr="true">#playButton {
     height: 50px;
-    margin-bottom: 30px;
-
+    margin-bottom: 16px;
     background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 200),
-        stop:0.1 rgba(255, 255, 255, 15),
-        stop:0.49 rgba(255, 255, 255, 75),
-        stop:0.5 rgba(0, 0, 0, 0),
-        stop:0.9 rgba(0, 0, 0, 55),
-        stop:1 rgba(0, 0, 0, 100));
-
-    font-size: 26pt;
-    color: black;
-
-    border-right: 1px solid rgba(0, 0, 0, 155);
-    border-left: 1px solid rgba(0, 0, 0, 55);
-    border-top: 1px solid rgba(0, 0, 0, 55);
-    border-bottom: 1px solid rgba(0, 0, 0, 155);
-
+        stop:0 rgba(255,255,255,200), stop:0.1 rgba(255,255,255,15),
+        stop:0.49 rgba(255,255,255,75), stop:0.5 rgba(0,0,0,0),
+        stop:0.9 rgba(0,0,0,55), stop:1 rgba(0,0,0,100));
+    font-size: 26pt; color: black;
+    border-right: 1px solid rgba(0,0,0,155);
+    border-left:  1px solid rgba(0,0,0,55);
+    border-top:   1px solid rgba(0,0,0,55);
+    border-bottom:1px solid rgba(0,0,0,155);
     border-radius: 5px;
 }
-
-#playButton:hover {
-    border-bottom: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(164, 192, 228, 255), stop:1 rgba(255, 255, 255, 0));
-    border-top: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(164, 192, 228, 255), stop:1 rgba(255, 255, 255, 0));
-    border-right: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(164, 192, 228, 255), stop:1 rgba(255, 255, 255, 0));
-    border-left: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(164, 192, 228, 255), stop:1 rgba(255, 255, 255, 0));
-    border-width: 2px;
-    border-style: solid;
-}
-
+#playButton:hover { border: 2px solid rgba(164,192,228,255); }
 #playButton:pressed {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(0, 0, 0, 75),
-        stop:0.1 rgba(0, 0, 0, 15),
-        stop:0.2 rgba(255, 255, 255, 55)
-        stop:0.95 rgba(255, 255, 255, 55),
-        stop:1 rgba(255, 255, 255, 155));
-
-    border: 1px solid rgba(0, 0, 0, 55);
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 rgba(0,0,0,75), stop:0.1 rgba(0,0,0,15),
+        stop:0.2 rgba(255,255,255,55), stop:1 rgba(255,255,255,155));
+    border: 1px solid rgba(0,0,0,55);
 }</string>
         </property>
-        <property name="text">
-         <string>Play</string>
+        <property name="text"><string>Play</string></property>
+       </widget>
+      </item>
+
+      <!-- Server label row 2 -->
+      <item row="2" column="1">
+       <widget class="QLabel" name="serverLabel">
+        <property name="styleSheet">
+         <string notr="true">#serverLabel { font-size: 13pt; color: black; margin-top: 8px; }</string>
+        </property>
+        <property name="text"><string>Server Address:</string></property>
+       </widget>
+      </item>
+
+      <!-- IP input row 3 -->
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="serverAddressEdit">
+        <property name="placeholderText"><string>localhost</string></property>
+        <property name="styleSheet">
+         <string notr="true">#serverAddressEdit {
+    font-size: 12pt; color: black;
+    background: rgba(255,255,255,200);
+    border: 1px solid rgba(0,0,0,120);
+    border-radius: 3px; padding: 3px 6px;
+}</string>
         </property>
        </widget>
       </item>
+
+      <!-- Port label row 4 -->
+      <item row="4" column="1">
+       <widget class="QLabel" name="portLabel">
+        <property name="styleSheet">
+         <string notr="true">#portLabel { font-size: 13pt; color: black; margin-top: 4px; }</string>
+        </property>
+        <property name="text"><string>Port:</string></property>
+       </widget>
+      </item>
+
+      <!-- Port input row 5 -->
       <item row="5" column="1">
+       <widget class="QLineEdit" name="serverPortEdit">
+        <property name="placeholderText"><string>25565</string></property>
+        <property name="styleSheet">
+         <string notr="true">#serverPortEdit {
+    font-size: 12pt; color: black;
+    background: rgba(255,255,255,200);
+    border: 1px solid rgba(0,0,0,120);
+    border-radius: 3px; padding: 3px 6px;
+}</string>
+        </property>
+       </widget>
+      </item>
+
+      <!-- Spacer row 6 -->
+      <item row="6" column="1">
        <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
+        <property name="orientation"><enum>Qt::Vertical</enum></property>
+        <property name="sizeHint" stdset="0"><size><width>20</width><height>30</height></size></property>
        </spacer>
       </item>
+
      </layout>
     </widget>
    </item>

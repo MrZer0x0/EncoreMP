@@ -1,27 +1,40 @@
+/*
+    playpage.cpp
+    EncoreMP: Play page with server IP/Port fields.
+    Replaces profile selector with direct server connection input.
+    Values are saved to tes3mp-client-default.cfg on Play.
+*/
 #include "playpage.hpp"
-
 #include <QListView>
 
 Launcher::PlayPage::PlayPage(QWidget *parent) : QWidget(parent)
 {
-    setObjectName ("PlayPage");
+    setObjectName("PlayPage");
     setupUi(this);
 
-    profilesComboBox->setView(new QListView());
-
-    connect(profilesComboBox, SIGNAL(activated(int)), this, SIGNAL (signalProfileChanged(int)));
     connect(playButton, SIGNAL(clicked()), this, SLOT(slotPlayClicked()));
-
 }
 
-void Launcher::PlayPage::setProfilesModel(QAbstractItemModel *model)
+void Launcher::PlayPage::setServerAddress(const QString& addr)
 {
-    profilesComboBox->setModel(model);
+    serverAddressEdit->setText(addr);
 }
 
-void Launcher::PlayPage::setProfilesIndex(int index)
+void Launcher::PlayPage::setServerPort(const QString& port)
 {
-    profilesComboBox->setCurrentIndex(index);
+    serverPortEdit->setText(port);
+}
+
+QString Launcher::PlayPage::serverAddress() const
+{
+    QString addr = serverAddressEdit->text().trimmed();
+    return addr.isEmpty() ? QString("localhost") : addr;
+}
+
+QString Launcher::PlayPage::serverPort() const
+{
+    QString p = serverPortEdit->text().trimmed();
+    return p.isEmpty() ? QString("25565") : p;
 }
 
 void Launcher::PlayPage::slotPlayClicked()

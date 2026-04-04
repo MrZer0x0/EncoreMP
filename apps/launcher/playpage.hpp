@@ -3,32 +3,29 @@
 
 #include "ui_playpage.h"
 
-class QComboBox;
-class QPushButton;
-class QAbstractItemModel;
+#include <QString>
 
 namespace Launcher
 {
+    // EncoreMP PlayPage: IP/Port input instead of profile selector
     class PlayPage : public QWidget, private Ui::PlayPage
     {
         Q_OBJECT
 
     public:
-        PlayPage(QWidget *parent = nullptr);
-        void setProfilesModel(QAbstractItemModel *model);
+        explicit PlayPage(QWidget *parent = nullptr);
+
+        void setServerAddress(const QString& addr);
+        void setServerPort(const QString& port);
+
+        QString serverAddress() const;
+        QString serverPort() const;
 
     signals:
-        void signalProfileChanged(int index);
         void playButtonClicked();
-
-    public slots:
-        void setProfilesIndex(int index);
 
     private slots:
         void slotPlayClicked();
-
-
-
     };
 }
 #endif

@@ -426,7 +426,7 @@ namespace MWMechanics
 
                     if (smartActor && storage.mStuckJumpCount < 4)
                     {
-                        storage.mJumpTimer -= duration;
+                        storage.mJumpTimer -= 0.016f; // EncoreMP: attack() has no duration param
                         if (storage.mJumpTimer <= 0.f &&
                             MWBase::Environment::get().getWorld()->isOnGround(actor))
                         {
@@ -460,7 +460,7 @@ namespace MWMechanics
                     else if (smartActor &&
                              storage.mFleeState == AiCombatStorage::FleeState_Hide)
                     {
-                        storage.mHideTimer -= duration;
+                        storage.mHideTimer -= 0.016f; // EncoreMP: attack() has no duration param
                         actor.getClass().getCreatureStats(actor)
                             .setMovementFlag(MWMechanics::CreatureStats::Flag_Sneak, true);
                         if (storage.mHideTimer <= 0.f || storage.mLOS)

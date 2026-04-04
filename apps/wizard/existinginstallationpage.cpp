@@ -109,16 +109,15 @@ void Wizard::ExistingInstallationPage::on_browseButton_clicked()
     if (!info.exists())
         return;
 
+    // EncoreMP: .bsa is not required — only .esm checked inside findFiles()
     if (!mWizard->findFiles(QLatin1String("Morrowind"), info.absolutePath()))
     {
         QMessageBox msgBox;
         msgBox.setWindowTitle(tr("Error detecting Morrowind files"));
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setText(QObject::tr(
-            "<b>Morrowind.bsa</b> is missing!<br>\
-            Make sure your Morrowind installation is complete."
-        ));
+        msgBox.setText(QObject::tr("<b>Morrowind.esm</b> not found in selected folder.<br>"
+            "Please select the folder that contains Morrowind.esm."));
         msgBox.exec();
         return;
     }

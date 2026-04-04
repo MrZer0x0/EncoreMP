@@ -28,8 +28,8 @@ endif()
 # Apps and tools
 option(BUILD_OPENMW             "Build OpenMW" ON)
 option(BUILD_LAUNCHER           "Build Launcher" ON)
-option(BUILD_WIZARD             "Build Installation Wizard" ON)
-option(BUILD_MWINIIMPORTER      "Build MWiniImporter" ON)
+option(BUILD_WIZARD             "Build Installation Wizard" ON)    # EncoreMP
+option(BUILD_MWINIIMPORTER      "Build MWiniImporter" ON)          # EncoreMP
 option(BUILD_OPENCS             "Build OpenMW Construction Set" OFF)
 option(BUILD_ESSIMPORTER        "Build ESS (Morrowind save game) importer" OFF)
 option(BUILD_BSATOOL            "Build BSA extractor" OFF)
@@ -40,8 +40,8 @@ option(BUILD_WITH_CODE_COVERAGE "Enable code coverage with gconv" OFF)
 option(BUILD_UNITTESTS          "Enable Unittests with Google C++ Unittest" OFF)
 option(BUILD_BENCHMARKS         "Build benchmarks with Google Benchmark" OFF)
 option(BUILD_OPENMW_MP          "Build OpenMW-MP" ON)
-option(BUILD_BROWSER            "Build tes3mp Server Browser" ON)
-option(BUILD_MASTER             "Build tes3mp Master Server" ON)
+option(BUILD_BROWSER            "Build tes3mp Server Browser" OFF)  # EncoreMP
+option(BUILD_MASTER             "Build tes3mp Master Server" OFF)   # EncoreMP
 
 option(OPENMW_PREFER_LEGACY_OPENGL "Prefer legacy libGL on Linux for this older GL/GLX renderer" ON)
 if(OPENMW_PREFER_LEGACY_OPENGL)
