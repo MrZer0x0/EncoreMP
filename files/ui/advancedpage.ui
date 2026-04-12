@@ -234,7 +234,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="physicsThreadsSpinBox"/>
+          <widget class="QSpinBox" name="physicsThreadsSpinBox" />
          </item>
          <item>
           <spacer name="horizontalSpacer_4">
@@ -305,7 +305,7 @@
               <item row="0" column="1">
                <widget class="QCheckBox" name="smoothMovementCheckBox">
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Makes NPCs and player movement more smooth. Recommended to use with &quot;turn to movement direction&quot; enabled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Makes NPCs and player movement more smooth. Recommended to use with "turn to movement direction" enabled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Smooth movement</string>
@@ -896,7 +896,7 @@ True: In non-combat mode camera is positioned behind the character's shoulder. C
           </spacer>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+          <layout class="QHBoxLayout" name="horizontalLayout_2" />
          </item>
         </layout>
        </item>
@@ -1088,7 +1088,7 @@ True: In non-combat mode camera is positioned behind the character's shoulder. C
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting determines whether the amount of the time the player has spent playing will be displayed for each saved game in the Load menu.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
-             <string>Add &quot;Time Played&quot; to saves</string>
+             <string>Add "Time Played" to saves</string>
             </property>
            </widget>
           </item>
@@ -1169,110 +1169,482 @@ True: In non-combat mode camera is positioned behind the character's shoulder. C
      </widget>
      <widget class="QWidget" name="Testing">
       <attribute name="title">
-       <string>Testing</string>
+       <string>OSG Patch</string>
       </attribute>
-      <layout class="QVBoxLayout">
+      <layout class="QVBoxLayout" name="osgPatchTabLayout">
        <item>
-        <widget class="QLabel" name="testingLabel">
-         <property name="text">
-          <string>These settings are intended for testing mods and will cause issues if used for normal gameplay.</string>
-         </property>
-         <property name="wordWrap">
+        <widget class="QScrollArea" name="osgPatchScrollArea">
+         <property name="widgetResizable">
           <bool>true</bool>
          </property>
+         <widget class="QWidget" name="osgPatchScrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>751</width>
+            <height>1021</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="osgPatchVerticalLayout">
+           <item>
+            <widget class="QLabel" name="testingLabel">
+             <property name="text">
+              <string>Experimental renderer and performance switches for TES3MP/OpenMW. Threading and OpenGL options can improve performance on some systems, but can also reduce stability or lower FPS on others.</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="Line" name="testingLine">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="osgPresetGroupBox">
+             <property name="title">
+              <string>Presets</string>
+             </property>
+             <layout class="QVBoxLayout" name="osgPresetGroupLayout">
+              <item>
+               <widget class="QLabel" name="osgPresetLabel">
+                <property name="text">
+                 <string>Choose a preset and press Apply preset to fill the controls below.</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="osgPresetControlLayout">
+                <item>
+                 <widget class="QLabel" name="osgPresetComboLabel">
+                  <property name="text">
+                   <string>Profile</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="osgPresetComboBox">
+                  <item>
+                   <property name="text">
+                    <string>Custom</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Safe</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Balanced</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Max Performance</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>GPU Heavy</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>CPU Heavy</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="osgPresetApplyButton">
+                  <property name="text">
+                   <string>Apply preset</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_osgPreset">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="osgPresetDescriptionLabel">
+                <property name="text">
+                 <string>Custom mix of OSG Patch settings. Pick a preset and press Apply preset to overwrite the controls below.</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="osgThreadingGroupBox">
+             <property name="title">
+              <string>Renderer threading</string>
+             </property>
+             <layout class="QVBoxLayout" name="osgThreadingGroupLayout">
+              <item>
+               <layout class="QHBoxLayout" name="osgThreadingModelLayout">
+                <item>
+                 <widget class="QLabel" name="osgThreadingModelLabel">
+                  <property name="toolTip">
+                   <string>Select the OSG viewer threading mode used by the game window.</string>
+                  </property>
+                  <property name="text">
+                   <string>OSG threading model</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="osgThreadingModelComboBox">
+                  <item>
+                   <property name="text">
+                    <string>DrawThreadPerContext</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>CullDrawThreadPerContext</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>SingleThreaded</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_osgThreadingModel">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="useConfigureAffinityCheckBox">
+                <property name="toolTip">
+                 <string>Allow OSG to set CPU affinity for its worker threads. Usually best left off, but useful to test on some systems.</string>
+                </property>
+                <property name="text">
+                 <string>Allow OSG CPU affinity / thread pinning</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="osgOpenGlGroupBox">
+             <property name="title">
+              <string>OpenGL and scene optimizations</string>
+             </property>
+             <layout class="QVBoxLayout" name="osgOpenGlGroupLayout">
+              <item>
+               <widget class="QCheckBox" name="objectVboCheckBox">
+                <property name="text">
+                 <string>Use object VBOs</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="objectDisplayListsCheckBox">
+                <property name="text">
+                 <string>Use object display lists</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="smallFeatureCullingCheckBox">
+                <property name="text">
+                 <string>Enable small feature culling</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="occlusionCullingCheckBox">
+                <property name="text">
+                 <string>Enable occlusion culling</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="occlusionChildrenLayout">
+                <item>
+                 <spacer name="occlusionChildrenIndentSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>18</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="occlusionCullingTerrainCheckBox">
+                  <property name="text">
+                   <string>Terrain occluders</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="occlusionCullingStaticsCheckBox">
+                  <property name="text">
+                   <string>Static occluders</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_occlusionChildren">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="forceShadersCheckBox">
+                <property name="text">
+                 <string>Force shaders</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="forcePerPixelLightingCheckBox">
+                <property name="text">
+                 <string>Force per-pixel lighting</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="osgStreamingGroupBox">
+             <property name="title">
+              <string>Streaming and physics</string>
+             </property>
+             <layout class="QVBoxLayout" name="osgStreamingGroupLayout">
+              <item>
+               <layout class="QHBoxLayout" name="preloadThreadsLayout">
+                <item>
+                 <widget class="QLabel" name="preloadThreadsLabel">
+                  <property name="text">
+                   <string>Cell preload threads</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="preloadThreadsSpinBox">
+                  <property name="minimum">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <number>32</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_preloadThreads">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="patchPhysicsThreadsLayout">
+                <item>
+                 <widget class="QLabel" name="patchPhysicsThreadsLabel">
+                  <property name="toolTip">
+                   <string>How many background threads will be used for physics. 0 keeps physics on the main thread.</string>
+                  </property>
+                  <property name="text">
+                   <string>Background physics threads</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="patchPhysicsThreadsSpinBox">
+                  <property name="minimum">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <number>32</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_patchPhysicsThreads">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="deferAabbUpdateCheckBox">
+                <property name="text">
+                 <string>Defer physics AABB updates</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="osgTestingGroupBox">
+             <property name="title">
+              <string>Testing helpers</string>
+             </property>
+             <layout class="QVBoxLayout" name="osgTestingHelpersLayout">
+              <item>
+               <widget class="QCheckBox" name="grabCursorCheckBox">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW will capture control of the cursor if this setting is true.&lt;/p&gt;&lt;p&gt;In “look mode”, OpenMW will center the cursor regardless of the value of this setting (since the cursor/crosshair is always centered in the OpenMW window). However, in GUI mode, this setting determines the behavior when the cursor is moved outside the OpenMW window. If true, the cursor movement stops at the edge of the window preventing access to other applications. If false, the cursor is allowed to move freely on the desktop.&lt;/p&gt;&lt;p&gt;This setting does not apply to the screen where escape has been pressed, where the cursor is never captured. Regardless of this setting “Alt-Tab” or some other operating system dependent key sequence can be used to allow the operating system to regain control of the mouse cursor. This setting interacts with the minimize on focus loss setting by affecting what counts as a focus loss. Specifically on a two-screen configuration it may be more convenient to access the second screen with setting disabled.&lt;/p&gt;&lt;p&gt;Note for developers: it’s desirable to have this setting disabled when running the game in a debugger, to prevent the mouse cursor from becoming unusable when the game pauses on a breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Grab cursor</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="skipMenuCheckBox">
+                <property name="text">
+                 <string>Skip menu and generate default character</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="startDefaultCharacterAtHorizontalLayout">
+                <item>
+                 <spacer name="startDefaultCharacterAtHorizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="startDefaultCharacterAtLabel">
+                  <property name="text">
+                   <string>Start default character at</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="startDefaultCharacterAtField">
+                  <property name="placeholderText">
+                   <string>default cell</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Run script after startup:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="runScriptAfterStartupHorizontalLayout">
+                <item>
+                 <widget class="QLineEdit" name="runScriptAfterStartupField" />
+                </item>
+                <item>
+                 <widget class="QPushButton" name="runScriptAfterStartupBrowseButton">
+                  <property name="text">
+                   <string>Browse…</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer>
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
         </widget>
-       </item>
-       <item>
-        <widget class="Line" name="testingLine">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="grabCursorCheckBox">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenMW will capture control of the cursor if this setting is true.&lt;/p&gt;&lt;p&gt;In “look mode”, OpenMW will center the cursor regardless of the value of this setting (since the cursor/crosshair is always centered in the OpenMW window). However, in GUI mode, this setting determines the behavior when the cursor is moved outside the OpenMW window. If true, the cursor movement stops at the edge of the window preventing access to other applications. If false, the cursor is allowed to move freely on the desktop.&lt;/p&gt;&lt;p&gt;This setting does not apply to the screen where escape has been pressed, where the cursor is never captured. Regardless of this setting “Alt-Tab” or some other operating system dependent key sequence can be used to allow the operating system to regain control of the mouse cursor. This setting interacts with the minimize on focus loss setting by affecting what counts as a focus loss. Specifically on a two-screen configuration it may be more convenient to access the second screen with setting disabled.&lt;/p&gt;&lt;p&gt;Note for developers: it’s desirable to have this setting disabled when running the game in a debugger, to prevent the mouse cursor from becoming unusable when the game pauses on a breakpoint.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Grab cursor</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="skipMenuCheckBox">
-         <property name="text">
-          <string>Skip menu and generate default character</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="startDefaultCharacterAtHorizontalLayout">
-         <item>
-          <spacer name="startDefaultCharacterAtHorizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="startDefaultCharacterAtLabel">
-           <property name="text">
-            <string>Start default character at</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="startDefaultCharacterAtField">
-           <property name="placeholderText">
-            <string>default cell</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Run script after startup:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="runScriptAfterStartupHorizontalLayout">
-         <item>
-          <widget class="QLineEdit" name="runScriptAfterStartupField"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="runScriptAfterStartupBrowseButton">
-           <property name="text">
-            <string>Browse…</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
@@ -1280,6 +1652,6 @@ True: In non-combat mode camera is positioned behind the character's shoulder. C
    </item>
   </layout>
  </widget>
- <resources/>
- <connections/>
+ <resources />
+ <connections />
 </ui>

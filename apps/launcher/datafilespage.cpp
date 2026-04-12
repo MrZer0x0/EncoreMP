@@ -25,6 +25,12 @@
 
 const char *Launcher::DataFilesPage::mDefaultContentListName = "Default";
 
+bool Launcher::DataFilesPage::isGroundcoverCandidate(const QString& fileName)
+{
+    const QString lowered = fileName.toLower();
+    return lowered.contains(QLatin1String("groundcover")) || lowered.contains(QLatin1String("grass"));
+}
+
 Launcher::DataFilesPage::DataFilesPage(Files::ConfigurationManager &cfg, Config::GameSettings &gameSettings, Config::LauncherSettings &launcherSettings, QWidget *parent)
     : QWidget(parent)
     , mCfgMgr(cfg)
@@ -126,6 +132,7 @@ void Launcher::DataFilesPage::populateFileViews(const QString& contentModelName)
     PathIterator pathIterator(paths);
 
     mSelector->setProfileContent(filesInProfile(contentModelName, pathIterator));
+    ui.groundcoverCheckBox->setChecked(mLauncherSettings.isGroundcoverEnabled(contentModelName));
 }
 
 QStringList Launcher::DataFilesPage::filesInProfile(const QString& profileName, PathIterator& pathIterator)
@@ -151,19 +158,27 @@ void Launcher::DataFilesPage::saveSettings(const QString &profile)
    if (profileName.isEmpty())
        profileName = ui.profilesComboBox->currentText();
 
-   //retrieve the files selected for the profile
    ContentSelectorModel::ContentFileList items = mSelector->selectedFiles();
 
-    //set the value of the current profile (not necessarily the profile being saved!)
     mLauncherSettings.setCurrentContentListName(ui.profilesComboBox->currentText());
 
-    QStringList fileNames;
+    QStringList contentFileNames;
+    QStringList groundcoverFileNames;
+    const bool groundcoverEnabled = ui.groundcoverCheckBox->isChecked();
+
     for (const ContentSelectorModel::EsmFile *item : items)
     {
-        fileNames.append(item->fileName());
+        if (groundcoverEnabled && isGroundcoverCandidate(item->fileName()))
+            groundcoverFileNames.append(item->fileName());
+        else
+            contentFileNames.append(item->fileName());
     }
-    mLauncherSettings.setContentList(profileName, fileNames);
-    mGameSettings.setContentList(fileNames);
+
+    QStringList allFileNames = contentFileNames;
+    allFileNames.append(groundcoverFileNames);
+    mLauncherSettings.setContentList(profileName, allFileNames, groundcoverFileNames, groundcoverEnabled);
+    mGameSettings.setContentList(contentFileNames);
+    mGameSettings.setGroundcoverList(groundcoverFileNames);
 }
 
 QStringList Launcher::DataFilesPage::selectedFilePaths()
@@ -316,7 +331,15 @@ void Launcher::DataFilesPage::on_cloneProfileAction_triggered()
     if (profile.isEmpty())
         return;
 
-    mLauncherSettings.setContentList(profile, selectedFilePaths());
+    saveSettings();
+
+    const QString sourceProfile = ui.profilesComboBox->currentText();
+    const QStringList sourceFiles = mLauncherSettings.getContentListFiles(sourceProfile);
+    const QStringList sourceGroundcoverFiles = mLauncherSettings.getGroundcoverFiles(sourceProfile);
+    const bool sourceGroundcoverEnabled = mLauncherSettings.isGroundcoverEnabled(sourceProfile);
+
+    mLauncherSettings.setContentList(profile, sourceFiles, sourceGroundcoverFiles, sourceGroundcoverEnabled);
+    mLauncherSettings.setCurrentContentListName(profile);
     addProfile(profile, true);
 }
 

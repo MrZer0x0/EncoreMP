@@ -28,6 +28,7 @@ varying vec4 passTangent;
 
 varying float euclideanDepth;
 varying float linearDepth;
+varying vec3 passWorldPos;
 
 #if PER_PIXEL_LIGHTING
 varying vec3 passViewPos;
@@ -134,6 +135,7 @@ void main(void)
     vec4 worldPos = osg_ViewMatrixInverse * gl_ModelViewMatrix * displacedVertex;
     worldPos.xy += groundcoverDisplacement(worldPos.xyz, gl_Vertex.z);
     vec4 viewPos = osg_ViewMatrix * worldPos;
+    passWorldPos = worldPos.xyz;
 
     gl_ClipVertex = viewPos;
     euclideanDepth = length(viewPos.xyz);

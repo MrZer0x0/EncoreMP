@@ -8,6 +8,7 @@ set(LAUNCHER
     textslotmsgbox.cpp
     settingspage.cpp
     advancedpage.cpp
+    serverdialog.cpp
 
     utils/cellnameloader.cpp
     utils/profilescombobox.cpp
@@ -27,6 +28,7 @@ set(LAUNCHER_HEADER
     textslotmsgbox.hpp
     settingspage.hpp
     advancedpage.hpp
+    serverdialog.hpp
 
     utils/cellnameloader.hpp
     utils/profilescombobox.hpp
@@ -44,6 +46,7 @@ set(LAUNCHER_HEADER_MOC
     textslotmsgbox.hpp
     settingspage.hpp
     advancedpage.hpp
+    serverdialog.hpp
 
     utils/cellnameloader.hpp
     utils/textinputdialog.hpp
@@ -102,7 +105,7 @@ target_link_libraries(openmw-launcher
     components
 )
 
-target_link_libraries(openmw-launcher Qt5::Widgets Qt5::Core)
+target_link_libraries(openmw-launcher Qt5::Widgets Qt5::Core Qt5::Network)
 
 if (BUILD_WITH_CODE_COVERAGE)
   add_definitions (--coverage)

@@ -280,8 +280,8 @@ namespace MWRender
         mRecastMesh.reset(new RecastMesh(mRootNode, Settings::Manager::getBool("enable recast mesh render", "Navigator")));
         mPathgrid.reset(new Pathgrid(mRootNode));
 
-        if (Settings::Manager::getBool("occlusion culling", "Camera"))
-            mOcclusionCuller = new SceneUtil::OcclusionCuller(Settings::Manager::getInt("occlusion buffer width", "Camera"), Settings::Manager::getInt("occlusion buffer height", "Camera"));
+        if (Settings::Manager::getBool("occlusion culling", "Terrain"))
+            mOcclusionCuller = new SceneUtil::OcclusionCuller(Settings::Manager::getInt("occlusion buffer width", "Terrain"), Settings::Manager::getInt("occlusion buffer height", "Terrain"));
 
         mObjects.reset(new Objects(mResourceSystem, sceneRoot, mUnrefQueue.get(), mOcclusionCuller.get()));
 
@@ -333,12 +333,12 @@ namespace MWRender
         if (mOcclusionCuller.valid())
         {
             mTerrainOccluder.reset(new Terrain::TerrainOccluder(mTerrainStorage.get(), ESM::Land::REAL_SIZE));
-            mTerrainOccluder->setLodLevel(std::max(0, Settings::Manager::getInt("occlusion terrain lod", "Camera")));
+            mTerrainOccluder->setLodLevel(std::max(0, Settings::Manager::getInt("occlusion terrain lod", "Terrain")));
             sceneRoot->addCullCallback(new SceneOcclusionCallback(
                 mOcclusionCuller.get(),
                 mTerrainOccluder.get(),
-                std::max(1, Settings::Manager::getInt("occlusion terrain radius", "Camera")),
-                Settings::Manager::getBool("occlusion culling terrain", "Camera")));
+                std::max(1, Settings::Manager::getInt("occlusion terrain radius", "Terrain")),
+                Settings::Manager::getBool("occlusion culling terrain", "Terrain")));
         }
 
         if (Settings::Manager::getBool("enabled", "Groundcover"))
@@ -377,7 +377,7 @@ namespace MWRender
         mWater.reset(new Water(sceneRoot->getParent(0), sceneRoot, mResourceSystem, mViewer->getIncrementalCompileOperation(), resourcePath));
 
         mCamera.reset(new Camera(mViewer->getCamera()));
-        if (Settings::Manager::getBool("view over shoulder", "Camera"))
+        if (Settings::Manager::getBool("view over shoulder", "Terrain"))
             mViewOverShoulderController.reset(new ViewOverShoulderController(mCamera.get()));
 
         mScreenshotManager.reset(new ScreenshotManager(viewer, mRootNode, sceneRoot, mResourceSystem, mWater.get()));
@@ -417,11 +417,11 @@ namespace MWRender
 
         osg::Camera::CullingMode cullingMode = osg::Camera::DEFAULT_CULLING|osg::Camera::FAR_PLANE_CULLING;
 
-        if (!Settings::Manager::getBool("small feature culling", "Camera"))
+        if (!Settings::Manager::getBool("small feature culling", "Terrain"))
             cullingMode &= ~(osg::CullStack::SMALL_FEATURE_CULLING);
         else
         {
-            mViewer->getCamera()->setSmallFeatureCullingPixelSize(Settings::Manager::getFloat("small feature culling pixel size", "Camera"));
+            mViewer->getCamera()->setSmallFeatureCullingPixelSize(Settings::Manager::getFloat("small feature culling pixel size", "Terrain"));
             cullingMode |= osg::CullStack::SMALL_FEATURE_CULLING;
         }
 
@@ -435,11 +435,11 @@ namespace MWRender
         NifOsg::Loader::setIntersectionDisabledNodeMask(Mask_Effect);
         Nif::NIFFile::setLoadUnsupportedFiles(Settings::Manager::getBool("load unsupported nif files", "Models"));
 
-        mNearClip = Settings::Manager::getFloat("near clip", "Camera");
-        mViewDistance = Settings::Manager::getFloat("viewing distance", "Camera");
-        float fov = Settings::Manager::getFloat("field of view", "Camera");
+        mNearClip = Settings::Manager::getFloat("near clip", "Terrain");
+        mViewDistance = Settings::Manager::getFloat("viewing distance", "Terrain");
+        float fov = Settings::Manager::getFloat("field of view", "Terrain");
         mFieldOfView = std::min(std::max(1.f, fov), 179.f);
-        float firstPersonFov = Settings::Manager::getFloat("first person field of view", "Camera");
+        float firstPersonFov = Settings::Manager::getFloat("first person field of view", "Terrain");
         mFirstPersonFieldOfView = std::min(std::max(1.f, firstPersonFov), 179.f);
         mStateUpdater->setFogEnd(mViewDistance);
 
@@ -1154,14 +1154,14 @@ namespace MWRender
     {
         for (Settings::CategorySettingVector::const_iterator it = changed.begin(); it != changed.end(); ++it)
         {
-            if (it->first == "Camera" && it->second == "field of view")
+            if (it->first == "Terrain" && it->second == "field of view")
             {
-                mFieldOfView = Settings::Manager::getFloat("field of view", "Camera");
+                mFieldOfView = Settings::Manager::getFloat("field of view", "Terrain");
                 updateProjectionMatrix();
             }
-            else if (it->first == "Camera" && it->second == "viewing distance")
+            else if (it->first == "Terrain" && it->second == "viewing distance")
             {
-                mViewDistance = Settings::Manager::getFloat("viewing distance", "Camera");
+                mViewDistance = Settings::Manager::getFloat("viewing distance", "Terrain");
                 if(!Settings::Manager::getBool("use distant fog", "Fog"))
                     mStateUpdater->setFogEnd(mViewDistance);
                 updateProjectionMatrix();

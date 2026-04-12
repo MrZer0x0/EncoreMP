@@ -18,8 +18,8 @@
 class QListWidgetItem;
 class QStackedWidget;
 class QStringList;
-class QStringListModel;
 class QString;
+class QLabel;
 
 namespace Launcher
 {
@@ -29,6 +29,7 @@ namespace Launcher
     class UnshieldThread;
     class SettingsPage;
     class AdvancedPage;
+    class ServerDialog;
 
     enum FirstRunDialogResult
     {
@@ -57,6 +58,7 @@ namespace Launcher
     public slots:
         void changePage(QListWidgetItem *current, QListWidgetItem *previous);
         void play();
+        void runServer();
         void help();
 
     private slots:
@@ -75,6 +77,7 @@ namespace Launcher
         bool setupGameData();
 
         void setVersionLabel();
+        void updateWatermarkPosition();
 
         void loadSettings();
         void saveSettings();
@@ -83,6 +86,7 @@ namespace Launcher
         bool startProgram(const QString &name, const QStringList &arguments, bool detached = false);
 
         void closeEvent(QCloseEvent *event) override;
+        void resizeEvent(QResizeEvent *event) override;
 
         PlayPage *mPlayPage;
         GraphicsPage *mGraphicsPage;
@@ -92,6 +96,8 @@ namespace Launcher
 
         Process::ProcessInvoker *mGameInvoker;
         Process::ProcessInvoker *mWizardInvoker;
+        ServerDialog *mServerDialog;
+        QLabel *mWatermarkLabel;
 
         Files::ConfigurationManager mCfgMgr;
 

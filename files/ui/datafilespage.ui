@@ -10,6 +10,16 @@
     <widget class="QWidget" name="contentSelectorWidget" native="true"/>
    </item>
    <item>
+    <widget class="QCheckBox" name="groundcoverCheckBox">
+     <property name="toolTip">
+      <string>When enabled, checked plugins with &quot;grass&quot; or &quot;groundcover&quot; in the filename are saved as groundcover entries.</string>
+     </property>
+     <property name="text">
+      <string>Treat checked plugins with &quot;grass&quot; or &quot;groundcover&quot; in the filename as groundcover</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="profileGroupBox">
      <property name="focusPolicy">
       <enum>Qt::NoFocus</enum>

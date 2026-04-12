@@ -30,6 +30,9 @@ namespace Launcher
         void on_runScriptAfterStartupBrowseButton_clicked();
         void slotAnimSourcesToggled(bool checked);
         void slotViewOverShoulderToggled(bool checked);
+        void slotApplyOsgPreset();
+        void slotOsgPresetSelectionChanged();
+        void slotOsgPatchControlChanged();
 
     private:
         Config::GameSettings &mGameSettings;
@@ -43,6 +46,11 @@ namespace Launcher
         void loadCellsForAutocomplete(QStringList filePaths);
         void loadSettingBool(QCheckBox *checkbox, const std::string& setting, const std::string& group);
         void saveSettingBool(QCheckBox *checkbox, const std::string& setting, const std::string& group);
+        void applyOsgPreset(const QString& presetName);
+        QString currentOsgPreset() const;
+        void updateOsgPresetDescription(const QString& presetName);
+
+        bool mUpdatingOsgPresetUi = false;
     };
 }
 #endif

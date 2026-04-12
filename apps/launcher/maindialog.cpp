@@ -10,15 +10,18 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 #include <QTextCodec>
+#include <QLabel>
+#include <QResizeEvent>
+#include <QByteArray>
 
 #include "playpage.hpp"
 #include "graphicspage.hpp"
-#include <QFile>
 #include <QTextStream>
-#include <QRegExp>
+#include <QFile>
 #include "datafilespage.hpp"
 #include "settingspage.hpp"
 #include "advancedpage.hpp"
+#include "serverdialog.hpp"
 
 using namespace Process;
 
@@ -38,6 +41,17 @@ Launcher::MainDialog::MainDialog(QWidget *parent)
 
     mGameInvoker = new ProcessInvoker();
     mWizardInvoker = new ProcessInvoker();
+    mServerDialog = new ServerDialog(this);
+    mWatermarkLabel = new QLabel(centralwidget);
+    const QByteArray watermarkEncoded = QByteArray("VEVTM01QIDAuOC4xIFplcjBDdXN0b20=");
+    const QString watermarkText = QString::fromUtf8(QByteArray::fromBase64(watermarkEncoded));
+    mWatermarkLabel->setText(watermarkText);
+    mWatermarkLabel->setObjectName(QStringLiteral("zer0customWatermark"));
+    mWatermarkLabel->setProperty("wm_b64", QString::fromUtf8(watermarkEncoded));
+    mWatermarkLabel->setProperty("wm_guard", QString::number(qHash(QString::fromUtf8(watermarkEncoded))));
+    mWatermarkLabel->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    mWatermarkLabel->setStyleSheet(QStringLiteral("QLabel#zer0customWatermark { color: rgba(255, 255, 255, 88); font-size: 16px; font-weight: 600; background: transparent; }"));
+    mWatermarkLabel->adjustSize();
 
     connect(mWizardInvoker->getProcess(), SIGNAL(started()),
             this, SLOT(wizardStarted()));
@@ -57,18 +71,22 @@ Launcher::MainDialog::MainDialog(QWidget *parent)
 
     QPushButton *helpButton = new QPushButton(tr("Help"));
     QPushButton *playButton = new QPushButton(tr("Play"));
+    QPushButton *serverButton = new QPushButton(tr("Run Server"));
     buttonBox->button(QDialogButtonBox::Close)->setText(tr("Close"));
     buttonBox->addButton(helpButton, QDialogButtonBox::HelpRole);
+    buttonBox->addButton(serverButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(playButton, QDialogButtonBox::AcceptRole);
 
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(close()));
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(play()));
+    connect(serverButton, SIGNAL(clicked()), this, SLOT(runServer()));
     connect(buttonBox, SIGNAL(helpRequested()), this, SLOT(help()));
 
     // Remove what's this? button
     setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
     createIcons();
+    updateWatermarkPosition();
 }
 
 Launcher::MainDialog::~MainDialog()
@@ -129,24 +147,23 @@ void Launcher::MainDialog::createPages()
     mGraphicsPage = new GraphicsPage(this);
     mSettingsPage = new SettingsPage(mCfgMgr, mGameSettings, mLauncherSettings, this);
     mAdvancedPage = new AdvancedPage(mGameSettings, this);
+    mPlayPage->setServerConsoleWidget(mServerDialog);
 
-    // EncoreMP: load saved server address/port from tes3mp-client-default.cfg
     {
-        QString cfgPath = QString::fromUtf8(
-            mCfgMgr.getUserConfigPath().string().c_str()) + "tes3mp-client-default.cfg";
+        QString cfgPath = QString::fromUtf8(mCfgMgr.getUserConfigPath().string().c_str()) + "/tes3mp-client-default.cfg";
         QFile cfgFile(cfgPath);
         QString addr = "localhost", port = "25565";
         if (cfgFile.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             QTextStream in(&cfgFile);
-            while (!in.atEnd()) {
+            while (!in.atEnd())
+            {
                 QString line = in.readLine().trimmed();
                 if (line.startsWith("destinationAddress"))
                     addr = line.section('=', 1).trimmed();
                 else if (line.startsWith("port") && !line.startsWith("password"))
                     port = line.section('=', 1).trimmed();
             }
-            cfgFile.close();
         }
         mPlayPage->setServerAddress(addr);
         mPlayPage->setServerPort(port);
@@ -163,8 +180,8 @@ void Launcher::MainDialog::createPages()
     iconWidget->setCurrentItem(iconWidget->item(0), QItemSelectionModel::Select);
 
     connect(mPlayPage, SIGNAL(playButtonClicked()), this, SLOT(play()));
+    connect(mPlayPage, SIGNAL(serverButtonClicked()), this, SLOT(runServer()));
 
-    // EncoreMP: profile signals removed (no profile combobox on play page)
     // Using Qt::QueuedConnection because signal is emitted in a subthread and slot is in the main thread
     connect(mDataFilesPage, SIGNAL(signalLoadedCellsChanged(QStringList)), mAdvancedPage, SLOT(slotLoadedCellsChanged(QStringList)), Qt::QueuedConnection);
 
@@ -215,23 +232,7 @@ Launcher::FirstRunDialogResult Launcher::MainDialog::showFirstRunDialog()
 
 void Launcher::MainDialog::setVersionLabel()
 {
-    // Add version information to bottom of the window
-    Version::Version v = Version::getOpenmwVersion(mGameSettings.value("resources").toUtf8().constData());
-
-    QString revision(QString::fromUtf8(v.mCommitHash.c_str()));
-    QString tag(QString::fromUtf8(v.mTagHash.c_str()));
-
-    versionLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    if (!v.mVersion.empty() && (revision.isEmpty() || revision == tag))
-        versionLabel->setText(tr("OpenMW %1 release").arg(QString::fromUtf8(v.mVersion.c_str())));
-    else
-        versionLabel->setText(tr("OpenMW development (%1)").arg(revision.left(10)));
-
-    // Add the compile date and time
-    auto compileDate = QLocale(QLocale::C).toDate(QString(__DATE__).simplified(), QLatin1String("MMM d yyyy"));
-    auto compileTime = QLocale(QLocale::C).toTime(QString(__TIME__).simplified(), QLatin1String("hh:mm:ss"));
-    versionLabel->setToolTip(tr("Compiled on %1 %2").arg(QLocale::system().toString(compileDate, QLocale::LongFormat),
-                                                         QLocale::system().toString(compileTime, QLocale::ShortFormat)));
+    versionLabel->setText(QStringLiteral("TES3MP 0.8.1 Zer0Custom"));
 }
 
 bool Launcher::MainDialog::setup()
@@ -303,10 +304,11 @@ bool Launcher::MainDialog::setupLauncherSettings()
     mLauncherSettings.setMultiValueEnabled(true);
 
     QString userPath = QString::fromUtf8(mCfgMgr.getUserConfigPath().string().c_str());
+    QDir userDir(userPath);
 
     QStringList paths;
     paths.append(QString(Config::LauncherSettings::sLauncherConfigFileName));
-    paths.append(userPath + QString(Config::LauncherSettings::sLauncherConfigFileName));
+    paths.append(userDir.filePath(QString(Config::LauncherSettings::sLauncherConfigFileName)));
 
     for (const QString &path : paths)
     {
@@ -338,10 +340,13 @@ bool Launcher::MainDialog::setupGameSettings()
     QString localPath = QString::fromUtf8(mCfgMgr.getLocalPath().string().c_str());
     QString userPath = QString::fromUtf8(mCfgMgr.getUserConfigPath().string().c_str());
     QString globalPath = QString::fromUtf8(mCfgMgr.getGlobalPath().string().c_str());
+    QDir localDir(localPath);
+    QDir userDir(userPath);
+    QDir globalDir(globalPath);
 
     // Load the user config file first, separately
     // So we can write it properly, uncontaminated
-    QString path = userPath + QLatin1String("openmw.cfg");
+    QString path = userDir.filePath(QLatin1String("openmw.cfg"));
     QFile file(path);
 
     qDebug() << "Loading config file:" << path.toUtf8().constData();
@@ -363,9 +368,9 @@ bool Launcher::MainDialog::setupGameSettings()
 
     // Now the rest - priority: user > local > global
     QStringList paths;
-    paths.append(globalPath + QString("openmw.cfg"));
-    paths.append(localPath + QString("openmw.cfg"));
-    paths.append(userPath + QString("openmw.cfg"));
+    paths.append(globalDir.filePath(QString("openmw.cfg")));
+    paths.append(localDir.filePath(QString("openmw.cfg")));
+    paths.append(userDir.filePath(QString("openmw.cfg")));
 
     for (const QString &path2 : paths)
     {
@@ -442,32 +447,40 @@ bool Launcher::MainDialog::setupGraphicsSettings()
 
     // Ensure to clear previous settings in case we had already loaded settings.
     mEngineSettings.clear();
-
-    // Create the settings manager and load default settings file
+    // Load default settings. Prefer defaults.bin when available, but also
+    // support a plain settings-default.cfg for portable/client-only builds.
     const std::string localDefault = (mCfgMgr.getLocalPath() / "defaults.bin").string();
     const std::string globalDefault = (mCfgMgr.getGlobalPath() / "defaults.bin").string();
+    const std::string localDefaultCfg = (mCfgMgr.getLocalPath() / "settings-default.cfg").string();
+    const std::string globalDefaultCfg = (mCfgMgr.getGlobalPath() / "settings-default.cfg").string();
     std::string defaultPath;
+    bool defaultIsTextCfg = false;
 
-    // Prefer the defaults.bin in the current directory.
     if (boost::filesystem::exists(localDefault))
         defaultPath = localDefault;
     else if (boost::filesystem::exists(globalDefault))
         defaultPath = globalDefault;
-    // Something's very wrong if we can't find the file at all.
+    else if (boost::filesystem::exists(localDefaultCfg))
+    {
+        defaultPath = localDefaultCfg;
+        defaultIsTextCfg = true;
+    }
+    else if (boost::filesystem::exists(globalDefaultCfg))
+    {
+        defaultPath = globalDefaultCfg;
+        defaultIsTextCfg = true;
+    }
     else {
         cfgError(tr("Error reading OpenMW configuration file"),
-                 tr("<br><b>Could not find defaults.bin</b><br><br> \
-                     The problem may be due to an incomplete installation of OpenMW.<br> \
-                     Reinstalling OpenMW may resolve the problem."));
+                 tr("<br><b>Could not find defaults.bin or settings-default.cfg</b><br><br>                      The problem may be due to an incomplete installation of OpenMW.<br>                      Reinstalling OpenMW may resolve the problem."));
         return false;
     }
 
-    // Load the default settings, report any parsing errors.
     try {
-        mEngineSettings.loadDefault(defaultPath);
+        mEngineSettings.loadDefault(defaultPath, !defaultIsTextCfg);
     }
     catch (std::exception& e) {
-        std::string msg = std::string("<br><b>Error reading defaults.bin</b><br><br>") + e.what();
+        std::string msg = std::string("<br><b>Error reading default settings</b><br><br>") + e.what();
         cfgError(tr("Error reading OpenMW configuration file"), tr(msg.c_str()));
         return false;
     }
@@ -527,6 +540,7 @@ bool Launcher::MainDialog::writeSettings()
     mGraphicsPage->saveSettings();
     mSettingsPage->saveSettings();
     mAdvancedPage->saveSettings();
+    mPlayPage->saveServerSettings();
 
     QString userPath = QString::fromUtf8(mCfgMgr.getUserConfigPath().string().c_str());
     QDir dir(userPath);
@@ -542,7 +556,7 @@ bool Launcher::MainDialog::writeSettings()
     }
 
     // Game settings
-    QFile file(userPath + QString("openmw.cfg"));
+    QFile file(dir.filePath(QString("openmw.cfg")));
 
     if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
         // File cannot be opened or created
@@ -570,7 +584,7 @@ bool Launcher::MainDialog::writeSettings()
     }
 
     // Launcher settings
-    file.setFileName(userPath + QString(Config::LauncherSettings::sLauncherConfigFileName));
+    file.setFileName(dir.filePath(QString(Config::LauncherSettings::sLauncherConfigFileName)));
 
     if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate)) {
         // File cannot be opened or created
@@ -589,6 +603,25 @@ bool Launcher::MainDialog::writeSettings()
     file.close();
 
     return true;
+}
+
+void Launcher::MainDialog::updateWatermarkPosition()
+{
+    if (mWatermarkLabel == nullptr)
+        return;
+
+    mWatermarkLabel->adjustSize();
+    const int margin = 14;
+    const QSize size = mWatermarkLabel->sizeHint();
+    mWatermarkLabel->move(centralwidget->width() - size.width() - margin,
+                          centralwidget->height() - size.height() - margin);
+    mWatermarkLabel->raise();
+}
+
+void Launcher::MainDialog::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    updateWatermarkPosition();
 }
 
 void Launcher::MainDialog::closeEvent(QCloseEvent *event)
@@ -611,7 +644,11 @@ void Launcher::MainDialog::wizardFinished(int exitCode, QProcess::ExitStatus exi
     setup();
 
     if (setupGameData() && reloadSettings())
+    {
         show();
+        raise();
+        activateWindow();
+    }
 }
 
 void Launcher::MainDialog::play()
@@ -630,10 +667,8 @@ void Launcher::MainDialog::play()
         return;
     }
 
-    // EncoreMP: сохраняем IP и порт в tes3mp-client-default.cfg
     {
-        QString cfgPath = QString::fromUtf8(
-            mCfgMgr.getUserConfigPath().string().c_str()) + "tes3mp-client-default.cfg";
+        QString cfgPath = QString::fromUtf8(mCfgMgr.getUserConfigPath().string().c_str()) + "/tes3mp-client-default.cfg";
         QFile cfgFile(cfgPath);
         QStringList lines;
         bool foundAddr = false, foundPort = false;
@@ -647,11 +682,17 @@ void Launcher::MainDialog::play()
         const QString newPort = mPlayPage->serverPort();
         for (QString& line : lines)
         {
-            QString t = line.trimmed();
+            const QString t = line.trimmed();
             if (t.startsWith("destinationAddress"))
-                { line = "destinationAddress = " + newAddr; foundAddr = true; }
+            {
+                line = "destinationAddress = " + newAddr;
+                foundAddr = true;
+            }
             else if (t.startsWith("port") && !t.startsWith("password"))
-                { line = "port = " + newPort; foundPort = true; }
+            {
+                line = "port = " + newPort;
+                foundPort = true;
+            }
         }
         if (!foundAddr) lines << "destinationAddress = " + newAddr;
         if (!foundPort) lines << "port = " + newPort;
@@ -659,13 +700,29 @@ void Launcher::MainDialog::play()
         {
             QTextStream out(&cfgFile);
             for (const QString& line : lines) out << line << "\n";
-            cfgFile.close();
         }
     }
 
-    // EncoreMP: запускаем tes3mp клиент, не tes3mp-browser
-    if (mGameInvoker->startProcess(QLatin1String("tes3mp"), true))
+    QStringList arguments;
+    arguments.append(QLatin1String("--connect=") + mPlayPage->serverAddress() + QLatin1String(":") + mPlayPage->serverPort());
+
+    if (mGameInvoker->startProcess(QLatin1String("tes3mp"), arguments, true))
+    {
+        if (mServerDialog != nullptr && mServerDialog->isRunning())
+            return;
+
         return qApp->quit();
+    }
+}
+
+void Launcher::MainDialog::runServer()
+{
+    if (!writeSettings())
+        return;
+
+    mPlayPage->saveServerSettings();
+    mPlayPage->switchToServerConsoleTab();
+    mServerDialog->startServer();
 }
 
 void Launcher::MainDialog::help()

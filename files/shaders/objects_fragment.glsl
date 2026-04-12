@@ -115,9 +115,9 @@ void main()
 #endif
 
 #if @parallax
-    vec3 cameraPos = (gl_ModelViewMatrixInverse * vec4(0,0,0,1)).xyz;
+    vec3 parallaxCameraPos = (gl_ModelViewMatrixInverse * vec4(0,0,0,1)).xyz;
     vec3 objectPos = (gl_ModelViewMatrixInverse * vec4(passViewPos, 1)).xyz;
-    vec3 eyeDir = normalize(cameraPos - objectPos);
+    vec3 eyeDir = normalize(parallaxCameraPos - objectPos);
     vec2 offset = getParallaxOffset(eyeDir, tbnTranspose, normalTex.a, (passTangent.w > 0.0) ? -1.f : 1.f);
     adjustedDiffuseUV += offset; // only offset diffuse for now, other textures are more likely to be using a completely different UV set
 
@@ -262,8 +262,8 @@ void main()
     // OPTIMIZED: Simplified caustics with depth check and distance fade
 #if (OBJECT_CAUSTICS == 1)
     if (!isInterior && wPos.z < waterH && waterDepth > 5.0 && distanceToFragment < MAX_CAUSTICS_DISTANCE) {
-        float causticsIntensity = zcaustics(wPos.xy * 0.01, osg_SimulationTime * 0.5) * 1.3;
-        float causticsBlend = clamp(waterDepth * 0.008, 0.0, 0.9) / (1.0 + waterDepth / 1200.0);
+        float causticsIntensity = zcaustics(wPos.xy * 0.01, osg_SimulationTime * 0.5) * 1.55;
+        float causticsBlend = clamp(waterDepth * 0.010, 0.0, 0.94) / (1.0 + waterDepth / 1100.0);
         
         // Применяем плавное затухание по дистанции
         causticsBlend *= causticsFade;
@@ -275,8 +275,7 @@ void main()
     // Применяем attenuation ТОЛЬКО если камера под водой
     if (cameraUnderwater && !isInterior && waterDepth > 0.0) {
 #if (ATTENUATION == 1)
-        vec3 attenuation = calculateWaterAttenuation(waterDepth * attenuation_strength, isInterior);
-        gl_FragData[0].xyz *= attenuation;
+        gl_FragData[0].xyz = applyUnderwaterMedium(gl_FragData[0].xyz, waterDepth, isInterior);
 #endif
     }
 

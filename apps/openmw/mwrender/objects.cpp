@@ -53,14 +53,14 @@ void Objects::insertBegin(const MWWorld::Ptr& ptr)
         {
             cellnode->addCullCallback(new CellOcclusionCallback(
                 mOcclusionCuller.get(),
-                Settings::Manager::getFloat("occlusion occluder min radius", "Camera"),
-                Settings::Manager::getFloat("occlusion occluder max radius", "Camera"),
-                Settings::Manager::getFloat("occlusion occluder shrink factor", "Camera"),
-                Settings::Manager::getInt("occlusion occluder mesh resolution", "Camera"),
-                Settings::Manager::getInt("occlusion occluder max mesh resolution", "Camera"),
-                Settings::Manager::getFloat("occlusion occluder inside threshold", "Camera"),
-                Settings::Manager::getFloat("occlusion occluder max distance", "Camera"),
-                Settings::Manager::getBool("occlusion culling statics", "Camera")));
+                Settings::Manager::getFloat("occlusion occluder min radius", "Terrain"),
+                Settings::Manager::getFloat("occlusion occluder max radius", "Terrain"),
+                Settings::Manager::getFloat("occlusion occluder shrink factor", "Terrain"),
+                Settings::Manager::getInt("occlusion occluder mesh resolution", "Terrain"),
+                Settings::Manager::getInt("occlusion occluder max mesh resolution", "Terrain"),
+                Settings::Manager::getFloat("occlusion occluder inside threshold", "Terrain"),
+                Settings::Manager::getFloat("occlusion occluder max distance", "Terrain"),
+                Settings::Manager::getBool("occlusion culling statics", "Terrain")));
         }
         mRootNode->addChild(cellnode);
         mCellSceneNodes[ptr.getCell()] = cellnode;

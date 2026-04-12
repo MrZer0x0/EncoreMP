@@ -1,4 +1,3 @@
-
 # Allow using MSVC_DEBUG_INFORMATION_FORMAT instead of string-replacing /Zi for ccache compatibility
 # Yes, this really does need to be here
 if(POLICY CMP0141)
@@ -28,27 +27,22 @@ endif()
 # Apps and tools
 option(BUILD_OPENMW             "Build OpenMW" ON)
 option(BUILD_LAUNCHER           "Build Launcher" ON)
-option(BUILD_WIZARD             "Build Installation Wizard" ON)    # EncoreMP
-option(BUILD_MWINIIMPORTER      "Build MWiniImporter" ON)          # EncoreMP
-option(BUILD_OPENCS             "Build OpenMW Construction Set" OFF)
-option(BUILD_ESSIMPORTER        "Build ESS (Morrowind save game) importer" OFF)
-option(BUILD_BSATOOL            "Build BSA extractor" OFF)
-option(BUILD_ESMTOOL            "Build ESM inspector" OFF)
-option(BUILD_NIFTEST            "Build nif file tester" OFF)
+option(BUILD_WIZARD             "Build Installation Wizard" ON)
+option(BUILD_MWINIIMPORTER      "Build MWiniImporter" ON)
+option(BUILD_OPENCS             "Build OpenMW Construction Set" ON)
+option(BUILD_ESSIMPORTER        "Build ESS (Morrowind save game) importer" ON)
+option(BUILD_BSATOOL            "Build BSA extractor" ON)
+option(BUILD_ESMTOOL            "Build ESM inspector" ON)
+option(BUILD_NIFTEST            "Build nif file tester" ON)
 option(BUILD_DOCS               "Build documentation." OFF )
 option(BUILD_WITH_CODE_COVERAGE "Enable code coverage with gconv" OFF)
 option(BUILD_UNITTESTS          "Enable Unittests with Google C++ Unittest" OFF)
 option(BUILD_BENCHMARKS         "Build benchmarks with Google Benchmark" OFF)
 option(BUILD_OPENMW_MP          "Build OpenMW-MP" ON)
-option(BUILD_BROWSER            "Build tes3mp Server Browser" OFF)  # EncoreMP
-option(BUILD_MASTER             "Build tes3mp Master Server" OFF)   # EncoreMP
+option(BUILD_BROWSER            "Build tes3mp Server Browser" OFF)
+option(BUILD_MASTER             "Build tes3mp Master Server" OFF)
 
-option(OPENMW_PREFER_LEGACY_OPENGL "Prefer legacy libGL on Linux for this older GL/GLX renderer" ON)
-if(OPENMW_PREFER_LEGACY_OPENGL)
-    set(OpenGL_GL_PREFERENCE LEGACY)
-else()
-    set(OpenGL_GL_PREFERENCE GLVND)
-endif()
+set(OpenGL_GL_PREFERENCE LEGACY)  # Use LEGACY as we use GL2; GLNVD is for GL3 and up.
 
 if (NOT BUILD_LAUNCHER AND NOT BUILD_BROWSER AND NOT BUILD_OPENCS AND NOT BUILD_WIZARD)
    set(USE_QT FALSE)
@@ -579,9 +573,12 @@ if(OPENMW_LTO_BUILD)
             set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
         else()
             message(WARNING "Requested option OPENMW_LTO_BUILD not supported by this compiler: ${HAVE_IPO_OUTPUT}")
+            if(MSVC)
+                message(STATUS "Note: Flags used to be set manually for this setting with MSVC. We now rely on CMake for this. Upgrade CMake to at least 3.13 to re-enable this setting.")
+            endif()
         endif()
     else()
-        message(WARNING "Requested option OPENMW_LTO_BUILD not supported by this cmake version: ${CMAKE_VERSION}. Upgrade CMake to at least 3.9 to enable IPO/LTO support.")
+        message(WARNING "Requested option OPENMW_LTO_BUILD not supported by this cmake version: ${CMAKE_VERSION}. Upgrade CMake to at least 3.9 to enable support for certain compilers. Newer CMake versions support more compilers.")
     endif()
 endif()
 
@@ -984,6 +981,12 @@ elseif(NOT APPLE)
         INSTALL(FILES "${INSTALL_SOURCE}/tes3mp-client-default.cfg" DESTINATION ".")
         INSTALL(FILES "${INSTALL_SOURCE}/tes3mp-server-default.cfg" DESTINATION ".")
         # End of tes3mp addition
+         
+        # Start of tes3mp addition
+        IF(BUILD_OPENMW_MP)
+            INSTALL(PROGRAMS "${INSTALL_SOURCE}/tes3mp-server.exe" DESTINATION ".")
+        ENDIF(BUILD_OPENMW_MP)
+        # End of tes3mp addition
         INSTALL(FILES "${INSTALL_SOURCE}/gamecontrollerdb.txt" DESTINATION ".")
 
         INSTALL(DIRECTORY "${INSTALL_SOURCE}/resources" DESTINATION ".")
@@ -1144,6 +1147,7 @@ endif(OPENMW_OSX_DEPLOYMENT AND APPLE)
 # Doxygen Target -- simply run 'make doc' or 'make doc_pages'
 # output directory for 'make doc'       is "${OpenMW_BINARY_DIR}/docs/Doxygen"
 # output directory for 'make doc_pages' is "${DOXYGEN_PAGES_OUTPUT_DIR}" if defined
+#                                       or "${OpenMW_BINARY_DIR}/docs/Pages" otherwise
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
     # determine output directory for doc_pages

@@ -5,7 +5,6 @@
 #include <chrono>
 #include <thread>
 #include <algorithm>
-#include <cctype>
 #include <sstream>
 #include <vector>
 
@@ -91,11 +90,13 @@ namespace
 
     std::string trimCopy(const std::string& value)
     {
-        std::string::size_type start = value.find_first_not_of(" \t\r\n");
+        std::string::size_type start = value.find_first_not_of(" 	
+");
         if (start == std::string::npos)
             return std::string();
 
-        std::string::size_type end = value.find_last_not_of(" \t\r\n");
+        std::string::size_type end = value.find_last_not_of(" 	
+");
         return value.substr(start, end - start + 1);
     }
 
@@ -1173,6 +1174,7 @@ void OMW::Engine::go()
     mViewer = new osgViewer::Viewer;
     mViewer->setReleaseContextAtEndOfFrameHint(false);
     mViewer->setThreadingModel(osgViewer::ViewerBase::DrawThreadPerContext);
+
 #if OSG_VERSION_GREATER_OR_EQUAL(3,5,5)
     // Do not try to outsmart the OS thread scheduler (see bug #4785).
     mViewer->setUseConfigureAffinity(false);

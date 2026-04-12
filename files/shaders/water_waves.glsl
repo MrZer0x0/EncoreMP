@@ -98,7 +98,7 @@ float zcaustics(vec2 p, float t) {
     l = min(l, length(0.5 - fract(k + n)));
     
     // Усилитель для более яркой каустики
-    return pow(l, 4.0) * 6.0;  // Увеличено с 5.5 до 6.0
+    return pow(l, 4.0) * 6.8;  // усилено для чуть более явной каустики
 }
 
 // -----------------------------------------------------------------------------
@@ -106,7 +106,9 @@ float zcaustics(vec2 p, float t) {
 // -----------------------------------------------------------------------------
 
 // Коэффициенты атенуации для линейного RGB в воде
-const vec3 MU_WATER = vec3(0.6, 0.04, 0.01);
+const vec3 MU_WATER = vec3(0.12, 0.07, 0.18);
+const vec3 UNDERWATER_SCATTER_DAY = vec3(0.22, 0.25, 0.15);
+const vec3 UNDERWATER_SCATTER_INTERIOR = vec3(0.16, 0.17, 0.11);
 const float UNITS_TO_METRES = 0.014;
 
 // ============================================================================
@@ -149,6 +151,30 @@ vec3 calculateWaterAttenuation(float waterDepth, bool isInterior) {
     
     // Экспоненциальная атенуация
     return exp(-MU_WATER * waterDepth * UNITS_TO_METRES);
+}
+
+vec3 calculateUnderwaterScatterColor(bool isInterior) {
+    return isInterior ? UNDERWATER_SCATTER_INTERIOR : UNDERWATER_SCATTER_DAY;
+}
+
+float calculateUnderwaterHaze(float waterDepth) {
+    return clamp(1.0 - exp(-waterDepth * UNITS_TO_METRES * 0.42), 0.0, 0.56);
+}
+
+vec3 applyUnderwaterMedium(vec3 color, float waterDepth, bool isInterior) {
+    if (waterDepth <= 0.0) {
+        return color;
+    }
+
+    float balancedDepth = min(waterDepth, 140.0);
+    vec3 attenuated = color * calculateWaterAttenuation(balancedDepth * attenuation_strength * 0.85, isInterior);
+    float haze = calculateUnderwaterHaze(balancedDepth);
+    haze *= 0.82 + 0.18 * smoothstep(8.0, 55.0, balancedDepth);
+
+    vec3 scatterColor = calculateUnderwaterScatterColor(isInterior);
+    vec3 uniformTint = mix(vec3(1.0), vec3(0.94, 0.98, 0.88), smoothstep(6.0, 42.0, balancedDepth));
+    vec3 attenuatedBalanced = mix(attenuated, attenuated * uniformTint, 0.40);
+    return mix(attenuatedBalanced, scatterColor, haze);
 }
 
 #endif

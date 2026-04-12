@@ -20,6 +20,51 @@ Launcher::AdvancedPage::AdvancedPage(Config::GameSettings &gameSettings, QWidget
     setObjectName ("AdvancedPage");
     setupUi(this);
 
+    // Keep the advanced tabs focused on the most useful launcher settings.
+    if (animationsGroup)
+        animationsGroup->hide();
+
+    if (osgTestingGroupBox)
+        osgTestingGroupBox->hide();
+
+    if (AdvancedTabWidget)
+    {
+        const int bugFixesIndex = AdvancedTabWidget->indexOf(BugFixes);
+        if (bugFixesIndex != -1)
+            AdvancedTabWidget->removeTab(bugFixesIndex);
+
+        const int miscellaneousIndex = AdvancedTabWidget->indexOf(Miscellaneous);
+        if (miscellaneousIndex != -1)
+            AdvancedTabWidget->removeTab(miscellaneousIndex);
+    }
+
+    connect(osgPresetApplyButton, &QPushButton::clicked,
+            this, &Launcher::AdvancedPage::slotApplyOsgPreset);
+    connect(osgPresetComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, [this](int) { slotOsgPresetSelectionChanged(); });
+
+    connect(osgThreadingModelComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, [this](int) { slotOsgPatchControlChanged(); });
+    connect(preloadThreadsSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, [this](int) { slotOsgPatchControlChanged(); });
+    connect(patchPhysicsThreadsSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this, [this](int) { slotOsgPatchControlChanged(); });
+
+    for (QCheckBox* checkbox : {useConfigureAffinityCheckBox, objectVboCheckBox, objectDisplayListsCheckBox,
+                                 smallFeatureCullingCheckBox, occlusionCullingCheckBox,
+                                 occlusionCullingTerrainCheckBox, occlusionCullingStaticsCheckBox,
+                                 forceShadersCheckBox, forcePerPixelLightingCheckBox,
+                                 deferAabbUpdateCheckBox})
+    {
+        connect(checkbox, &QCheckBox::toggled,
+                this, [this](bool) { slotOsgPatchControlChanged(); });
+    }
+
+    connect(physicsThreadsSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            patchPhysicsThreadsSpinBox, &QSpinBox::setValue);
+    connect(patchPhysicsThreadsSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            physicsThreadsSpinBox, &QSpinBox::setValue);
+
     for(const char * name : Launcher::enumerateOpenALDevices())
     {
         audioDeviceSelectorComboBox->addItem(QString::fromUtf8(name), QString::fromUtf8(name));
@@ -79,6 +124,88 @@ namespace
     double convertToUnits(double CellGridRadius)
     {
         return CellSizeInUnits * CellGridRadius - 1024;
+    }
+
+    struct OsgPatchPreset
+    {
+        const char* name;
+        const char* description;
+        const char* threadingModel;
+        bool useConfigureAffinity;
+        bool objectVbo;
+        bool objectDisplayLists;
+        bool smallFeatureCulling;
+        bool occlusionCulling;
+        bool occlusionCullingTerrain;
+        bool occlusionCullingStatics;
+        bool forceShaders;
+        bool forcePerPixelLighting;
+        int preloadThreads;
+        int physicsThreads;
+        bool deferAabbUpdate;
+    };
+
+    constexpr std::array<OsgPatchPreset, 5> sOsgPatchPresets{{
+        {
+            "Safe",
+            "Maximum stability first: single-threaded rendering, conservative physics, and no occlusion culling. Good as a baseline on problematic drivers.",
+            "SingleThreaded", false,
+            true, false,
+            true,
+            false, false, false,
+            true, false,
+            1, 0, false
+        },
+        {
+            "Balanced",
+            "Default all-round preset: keeps common optimizations enabled without pushing the renderer too aggressively.",
+            "DrawThreadPerContext", false,
+            true, false,
+            true,
+            true, true, true,
+            true, false,
+            1, 1, true
+        },
+        {
+            "Max Performance",
+            "Aggressive performance preset: simpler shader path, single-threaded rendering, and extra background work where it usually helps most.",
+            "SingleThreaded", false,
+            true, false,
+            true,
+            true, true, true,
+            false, false,
+            2, 1, true
+        },
+        {
+            "GPU Heavy",
+            "Bias toward GPU-side rendering quality: richer shader path, per-pixel lighting, and fewer CPU-side culling reductions.",
+            "DrawThreadPerContext", false,
+            true, false,
+            false,
+            false, false, false,
+            true, true,
+            2, 1, true
+        },
+        {
+            "CPU Heavy",
+            "Bias toward CPU-side visibility work to reduce GPU pressure: stronger culling and simpler shading, useful when Draw/GPU are the bottleneck.",
+            "CullDrawThreadPerContext", false,
+            true, false,
+            true,
+            true, true, true,
+            false, false,
+            1, 1, true
+        }
+    }};
+
+    const OsgPatchPreset* findOsgPatchPreset(const QString& name)
+    {
+        for (const OsgPatchPreset& preset : sOsgPatchPresets)
+        {
+            if (name == QString::fromUtf8(preset.name))
+                return &preset;
+        }
+        return nullptr;
     }
 }
 
@@ -215,8 +342,29 @@ bool Launcher::AdvancedPage::loadSettings()
         screenshotFormatComboBox->setCurrentIndex(screenshotFormatComboBox->findText(screenshotFormatString));
     }
 
-    // Testing
+    // OSG Patch / Testing
     {
+        mUpdatingOsgPresetUi = true;
+
+        int threadingModelIndex = osgThreadingModelComboBox->findText(
+            QString::fromStdString(Settings::Manager::getString("threading model", "OSG")));
+        if (threadingModelIndex < 0)
+            threadingModelIndex = 0;
+        osgThreadingModelComboBox->setCurrentIndex(threadingModelIndex);
+
+        loadSettingBool(useConfigureAffinityCheckBox, "use configure affinity", "OSG");
+        loadSettingBool(objectVboCheckBox, "object vbo", "Video");
+        loadSettingBool(objectDisplayListsCheckBox, "object display lists", "Video");
+        loadSettingBool(smallFeatureCullingCheckBox, "small feature culling", "Camera");
+        loadSettingBool(occlusionCullingCheckBox, "occlusion culling", "Camera");
+        loadSettingBool(occlusionCullingTerrainCheckBox, "occlusion culling terrain", "Camera");
+        loadSettingBool(occlusionCullingStaticsCheckBox, "occlusion culling statics", "Camera");
+        loadSettingBool(forceShadersCheckBox, "force shaders", "Shaders");
+        loadSettingBool(forcePerPixelLightingCheckBox, "force per pixel lighting", "Shaders");
+        preloadThreadsSpinBox->setValue(Settings::Manager::getInt("preload num threads", "Cells"));
+        patchPhysicsThreadsSpinBox->setValue(Settings::Manager::getInt("async num threads", "Physics"));
+        loadSettingBool(deferAabbUpdateCheckBox, "defer aabb update", "Physics");
+
         loadSettingBool(grabCursorCheckBox, "grab cursor", "Input");
 
         bool skipMenu = mGameSettings.value("skip-menu").toInt() == 1;
@@ -229,6 +377,9 @@ bool Launcher::AdvancedPage::loadSettings()
 
         startDefaultCharacterAtField->setText(mGameSettings.value("start"));
         runScriptAfterStartupField->setText(mGameSettings.value("script-run"));
+
+        mUpdatingOsgPresetUi = false;
+        slotOsgPatchControlChanged();
     }
     return true;
 }
@@ -378,8 +529,31 @@ void Launcher::AdvancedPage::saveSettings()
             Settings::Manager::setString("screenshot format", "General", screenshotFormatString);
     }
 
-    // Testing
+    // OSG Patch / Testing
     {
+        const std::string threadingModel = osgThreadingModelComboBox->currentText().toStdString();
+        if (threadingModel != Settings::Manager::getString("threading model", "OSG"))
+            Settings::Manager::setString("threading model", "OSG", threadingModel);
+
+        saveSettingBool(useConfigureAffinityCheckBox, "use configure affinity", "OSG");
+        saveSettingBool(objectVboCheckBox, "object vbo", "Video");
+        saveSettingBool(objectDisplayListsCheckBox, "object display lists", "Video");
+        saveSettingBool(smallFeatureCullingCheckBox, "small feature culling", "Camera");
+        saveSettingBool(occlusionCullingCheckBox, "occlusion culling", "Camera");
+        saveSettingBool(occlusionCullingTerrainCheckBox, "occlusion culling terrain", "Camera");
+        saveSettingBool(occlusionCullingStaticsCheckBox, "occlusion culling statics", "Camera");
+        saveSettingBool(forceShadersCheckBox, "force shaders", "Shaders");
+        saveSettingBool(forcePerPixelLightingCheckBox, "force per pixel lighting", "Shaders");
+
+        const int preloadThreads = preloadThreadsSpinBox->value();
+        if (preloadThreads != Settings::Manager::getInt("preload num threads", "Cells"))
+            Settings::Manager::setInt("preload num threads", "Cells", preloadThreads);
+
+        const int patchPhysicsThreads = patchPhysicsThreadsSpinBox->value();
+        if (patchPhysicsThreads != Settings::Manager::getInt("async num threads", "Physics"))
+            Settings::Manager::setInt("async num threads", "Physics", patchPhysicsThreads);
+
+        saveSettingBool(deferAabbUpdateCheckBox, "defer aabb update", "Physics");
         saveSettingBool(grabCursorCheckBox, "grab cursor", "Input");
 
         int skipMenu = skipMenuCheckBox->checkState() == Qt::Checked;
@@ -396,6 +570,118 @@ void Launcher::AdvancedPage::saveSettings()
             mGameSettings.setValue("script-run", scriptRun);
     }
 }
+
+void Launcher::AdvancedPage::applyOsgPreset(const QString& presetName)
+{
+    const OsgPatchPreset* preset = findOsgPatchPreset(presetName);
+    if (preset == nullptr)
+        return;
+
+    mUpdatingOsgPresetUi = true;
+
+    int threadingModelIndex = osgThreadingModelComboBox->findText(QString::fromUtf8(preset->threadingModel));
+    if (threadingModelIndex >= 0)
+        osgThreadingModelComboBox->setCurrentIndex(threadingModelIndex);
+
+    useConfigureAffinityCheckBox->setChecked(preset->useConfigureAffinity);
+    objectVboCheckBox->setChecked(preset->objectVbo);
+    objectDisplayListsCheckBox->setChecked(preset->objectDisplayLists);
+    smallFeatureCullingCheckBox->setChecked(preset->smallFeatureCulling);
+    occlusionCullingCheckBox->setChecked(preset->occlusionCulling);
+    occlusionCullingTerrainCheckBox->setChecked(preset->occlusionCullingTerrain);
+    occlusionCullingStaticsCheckBox->setChecked(preset->occlusionCullingStatics);
+    forceShadersCheckBox->setChecked(preset->forceShaders);
+    forcePerPixelLightingCheckBox->setChecked(preset->forcePerPixelLighting);
+    preloadThreadsSpinBox->setValue(preset->preloadThreads);
+    patchPhysicsThreadsSpinBox->setValue(preset->physicsThreads);
+    deferAabbUpdateCheckBox->setChecked(preset->deferAabbUpdate);
+
+    mUpdatingOsgPresetUi = false;
+    slotOsgPatchControlChanged();
+}
+
+QString Launcher::AdvancedPage::currentOsgPreset() const
+{
+    const QString threadingModel = osgThreadingModelComboBox->currentText();
+
+    for (const OsgPatchPreset& preset : sOsgPatchPresets)
+    {
+        if (threadingModel != QString::fromUtf8(preset.threadingModel))
+            continue;
+        if (useConfigureAffinityCheckBox->isChecked() != preset.useConfigureAffinity)
+            continue;
+        if (objectVboCheckBox->isChecked() != preset.objectVbo)
+            continue;
+        if (objectDisplayListsCheckBox->isChecked() != preset.objectDisplayLists)
+            continue;
+        if (smallFeatureCullingCheckBox->isChecked() != preset.smallFeatureCulling)
+            continue;
+        if (occlusionCullingCheckBox->isChecked() != preset.occlusionCulling)
+            continue;
+        if (occlusionCullingTerrainCheckBox->isChecked() != preset.occlusionCullingTerrain)
+            continue;
+        if (occlusionCullingStaticsCheckBox->isChecked() != preset.occlusionCullingStatics)
+            continue;
+        if (forceShadersCheckBox->isChecked() != preset.forceShaders)
+            continue;
+        if (forcePerPixelLightingCheckBox->isChecked() != preset.forcePerPixelLighting)
+            continue;
+        if (preloadThreadsSpinBox->value() != preset.preloadThreads)
+            continue;
+        if (patchPhysicsThreadsSpinBox->value() != preset.physicsThreads)
+            continue;
+        if (deferAabbUpdateCheckBox->isChecked() != preset.deferAabbUpdate)
+            continue;
+
+        return QString::fromUtf8(preset.name);
+    }
+
+    return QStringLiteral("Custom");
+}
+
+void Launcher::AdvancedPage::updateOsgPresetDescription(const QString& presetName)
+{
+    const OsgPatchPreset* preset = findOsgPatchPreset(presetName);
+    if (preset != nullptr)
+    {
+        osgPresetDescriptionLabel->setText(QString::fromUtf8(preset->description));
+        return;
+    }
+
+    osgPresetDescriptionLabel->setText(tr("Custom mix of OSG Patch settings. Pick a preset and press Apply preset to overwrite the controls below."));
+}
+
+void Launcher::AdvancedPage::slotApplyOsgPreset()
+{
+    applyOsgPreset(osgPresetComboBox->currentText());
+}
+
+void Launcher::AdvancedPage::slotOsgPresetSelectionChanged()
+{
+    if (mUpdatingOsgPresetUi)
+        return;
+
+    updateOsgPresetDescription(osgPresetComboBox->currentText());
+}
+
+void Launcher::AdvancedPage::slotOsgPatchControlChanged()
+{
+    if (mUpdatingOsgPresetUi)
+        return;
+
+    const QString presetName = currentOsgPreset();
+
+    const bool oldState = osgPresetComboBox->blockSignals(true);
+    int presetIndex = osgPresetComboBox->findText(presetName);
+    if (presetIndex < 0)
+        presetIndex = osgPresetComboBox->findText(QStringLiteral("Custom"));
+    if (presetIndex >= 0)
+        osgPresetComboBox->setCurrentIndex(presetIndex);
+    osgPresetComboBox->blockSignals(oldState);
+
+    updateOsgPresetDescription(presetName);
+}
+
 
 void Launcher::AdvancedPage::loadSettingBool(QCheckBox *checkbox, const std::string &setting, const std::string &group)
 {

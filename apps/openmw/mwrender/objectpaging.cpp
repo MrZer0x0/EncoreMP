@@ -574,13 +574,13 @@ namespace MWRender
         copyop.mCopyMask = copyMask;
 
         const bool buildOccluders = mOcclusionCuller.valid()
-            && Settings::Manager::getBool("occlusion culling", "Camera")
-            && Settings::Manager::getBool("occlusion culling statics", "Camera");
+            && Settings::Manager::getBool("occlusion culling", "Terrain")
+            && Settings::Manager::getBool("occlusion culling statics", "Terrain");
         osg::ref_ptr<PagedOccluderData> pagedOccluderData;
-        const float occluderMinRadius = Settings::Manager::getFloat("occlusion occluder min radius", "Camera");
-        const int occluderMeshRes = Settings::Manager::getInt("occlusion occluder mesh resolution", "Camera");
-        const int occluderMaxMeshRes = Settings::Manager::getInt("occlusion occluder max mesh resolution", "Camera");
-        const float occluderShrinkFactor = Settings::Manager::getFloat("occlusion occluder shrink factor", "Camera");
+        const float occluderMinRadius = Settings::Manager::getFloat("occlusion occluder min radius", "Terrain");
+        const int occluderMeshRes = Settings::Manager::getInt("occlusion occluder mesh resolution", "Terrain");
+        const int occluderMaxMeshRes = Settings::Manager::getInt("occlusion occluder max mesh resolution", "Terrain");
+        const float occluderShrinkFactor = Settings::Manager::getFloat("occlusion occluder shrink factor", "Terrain");
         if (buildOccluders)
             pagedOccluderData = new PagedOccluderData;
         for (const auto& pair : nodes)
@@ -731,7 +731,7 @@ namespace MWRender
         {
             udc->addUserObject(pagedOccluderData);
             if (mOcclusionCuller.valid())
-                group->addCullCallback(new PagedOccluderCallback(mOcclusionCuller.get(), Settings::Manager::getFloat("occlusion occluder max distance", "Camera")));
+                group->addCullCallback(new PagedOccluderCallback(mOcclusionCuller.get(), Settings::Manager::getFloat("occlusion occluder max distance", "Terrain")));
         }
 
         return group;

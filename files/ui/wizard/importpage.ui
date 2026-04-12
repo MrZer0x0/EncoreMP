@@ -51,6 +51,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="groundcoverCheckBox">
+     <property name="text">
+      <string>Import plugins with &quot;grass&quot; or &quot;groundcover&quot; in the filename as groundcover</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
